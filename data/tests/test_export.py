@@ -9,7 +9,6 @@ from uuid import UUID, uuid4
 
 import duckdb
 import pytest
-from conftest import MakeRepo, Rows, column
 
 from patient_data.errors import PatientDataError
 from patient_data.export import export_package
@@ -17,6 +16,8 @@ from patient_data.package import load_package
 from patient_data.settings import MANIFEST_FILE, PATIENTS_FILE, StageSettings
 from patient_data.stages import build_bronze, build_silver
 from patient_data.utils.identifiers import canonical_json, sha256_bytes, silver_id
+
+from .helpers import MakeRepo, Rows, column
 
 
 def _exported(settings: StageSettings) -> Path:
@@ -223,8 +224,8 @@ def test_invalid_manifest_source_path_reports_package_failure(
     assert any("source path" in issue for issue in caught.value.issues)
 
 
-def test_seed_import_path_does_not_load_duckdb() -> None:
-    code = "import sys, patient_data.seed; print('duckdb' in sys.modules)"
+def test_package_validation_import_does_not_load_duckdb() -> None:
+    code = "import sys, patient_data.package; print('duckdb' in sys.modules)"
     result = subprocess.run(
         [sys.executable, "-c", code], capture_output=True, text=True, check=True
     )

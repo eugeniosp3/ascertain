@@ -23,7 +23,11 @@ def settings(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Settings:
     for name in Settings.model_fields:
         monkeypatch.delenv(name.upper(), raising=False)
     return Settings(
-        app_env="test", database_url=None, demo_mode=True, cors_origins=("http://localhost:5173",)
+        app_env="test",
+        database_url=None,
+        demo_mode=True,
+        cors_origins=("http://localhost:5173",),
+        summary_provider="template",  # Tests never call the summary LLM unless they opt in.
     )
 
 

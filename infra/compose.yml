@@ -36,6 +36,10 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:5173","http://127.0.0.1:5173"]}
       MIGRATE_ON_STARTUP: ${MIGRATE_ON_STARTUP:-true}
       SEED_ON_STARTUP: ${SEED_ON_STARTUP:-true}
+      SUMMARY_PROVIDER: ${SUMMARY_PROVIDER:-llm}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.llm7.io/v1}
+      LLM_MODEL: ${LLM_MODEL:-gemma-3-27b}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-20}
     ports:
       - "127.0.0.1:${BACKEND_PORT:-10051}:8000"
     depends_on:
@@ -98,6 +102,8 @@ services:
     environment:
       PATIENT_DATA_TEST_DATABASE_URL: postgresql+psycopg://test_runner:test_only@test-db:5432/ascertain_tests
       TEST_DATABASE_URL: postgresql+psycopg://test_runner:test_only@test-db:5432/ascertain_tests
+      # Automated checks never call the external summary model.
+      SUMMARY_PROVIDER: template
     depends_on:
       test-db:
         condition: service_healthy

@@ -238,6 +238,28 @@ describe('composable patient form', () => {
     expect(onSave).not.toHaveBeenCalled()
   })
 
+  it('keeps keyboard focus in a list editor after removing its final row', async () => {
+    render(<PatientForm onSave={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+    const addCondition = screen.getByRole('button', { name: 'Add condition' })
+    addCondition.focus()
+    await user.keyboard('{Enter}')
+    screen.getByRole('button', { name: 'Remove condition 1' }).focus()
+    await user.keyboard('{Enter}')
+    await waitFor(() => expect(addCondition).toHaveFocus())
+
+    await user.click(screen.getByRole('radio', { name: 'Reported allergies' }))
+    const addAllergy = screen.getByRole('button', { name: 'Add allergy' })
+    addAllergy.focus()
+    await user.keyboard('{Enter}{Enter}')
+    // Removing an earlier row keeps focus on the button that now belongs to the next row.
+    screen.getByRole('button', { name: 'Remove allergy 1' }).focus()
+    await user.keyboard('{Enter}')
+    expect(screen.getByRole('button', { name: 'Remove allergy 1' })).toHaveFocus()
+    await user.keyboard('{Enter}')
+    await waitFor(() => expect(addAllergy).toHaveFocus())
+  })
+
   it('clears the reported list explicitly when choosing a known absence', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     render(<PatientForm patient={patient} onSave={onSave} onCancel={vi.fn()} />)
@@ -576,6 +598,21 @@ describe('patient form page integration', () => {
     expect(screen.queryByLabelText(/^First name/)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(props.onCancel).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows a malformed ID rejected with 422 as not found, without a futile retry', async () => {
+    vi.mocked(api.getPatient).mockRejectedValueOnce(
+      new ApiError(422, 'validation_error', 'Request validation failed.'),
+    )
+    const { props } = renderPage({ patientId: 'not-a-patient-id' })
+    expect(
+      await screen.findByText('Patient not found. This record may have been removed.'),
+    ).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/^First name/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Request validation failed.')).not.toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Back' }))
     expect(props.onCancel).toHaveBeenCalledTimes(1)
   })
 

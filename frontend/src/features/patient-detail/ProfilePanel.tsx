@@ -1,8 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { partialMatchKey, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Check, Copy } from 'lucide-react'
 import { api, type PatientDetail, type ProfileDetails } from '@/api'
-import { patientKeys } from '@/app/query-keys'
+import { notificationKeys, patientKeys } from '@/app/query-keys'
 import { Button } from '@/components/ui/button'
 import { formatDate, formatDateTime } from '@/utils/dates'
 import { ConfirmDelete } from './ConfirmDelete'
@@ -161,14 +161,14 @@ export function ProfilePanel({
       onDeleted()
       await client.cancelQueries({
         predicate: ({ queryKey: k }) =>
-          k[0] === 'patients' &&
-          (k[1] === patient.id || (k[1] === 'detail' && k[2] === patient.id)),
+          partialMatchKey(k, patientKeys.patient(patient.id)) ||
+          partialMatchKey(k, patientKeys.detail(patient.id)),
       })
       client.removeQueries({ queryKey: patientKeys.detail(patient.id) })
-      client.removeQueries({ queryKey: ['patients', patient.id] })
+      client.removeQueries({ queryKey: patientKeys.patient(patient.id) })
       await Promise.all([
         client.invalidateQueries({ queryKey: patientKeys.lists() }),
-        client.invalidateQueries({ queryKey: ['notifications'] }),
+        client.invalidateQueries({ queryKey: notificationKeys.all }),
       ])
     },
   })

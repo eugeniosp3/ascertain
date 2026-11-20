@@ -1,8 +1,8 @@
 # Patient data contract
 
-**Current handoff:** keep `data/assets/bronze/bronze.duckdb` and `data/assets/silver/silver.duckdb` in the project. The later PostgreSQL seed script will read these files. JSONL/export and package-seed sections below document the existing optional prototype, not the selected final seed input.
+**Current handoff:** backend reads `data/assets/bronze/bronze.duckdb` and `data/assets/silver/silver.duckdb` directly. JSONL exports are optional inspection artifacts. PostgreSQL seeding is owned by backend.
 
-Implemented data contract for [patients_100.csv](../../reference/prior-auth-pack/data/patients_100.csv) only. The current export contract is `patient-export-v2`, with transformation rules `patient-rules-v1`. The application-facing patient projection remains provisional until backend approves its schema. Source code lives under `data/src/patient_data/`, with reusable abstractions in `utils/`; see [IMPLEMENTATION.md](IMPLEMENTATION.md).
+Implemented data contract for [patients_100.csv](../../reference/prior-auth-pack/data/patients_100.csv) only. The current export contract is `patient-export-v2`, with transformation rules `patient-rules-v1`. The optional JSONL patient projection is versioned separately from backend's approved direct-DuckDB import. Source code lives under `data/src/patient_data/`, with reusable abstractions in `utils/`; see [IMPLEMENTATION.md](IMPLEMENTATION.md).
 
 ## Files and tables
 
@@ -60,7 +60,7 @@ Produce only `patients.jsonl` and `manifest.json`. The JSONL file has 100 record
 
 Use ISO dates, UTC timestamps ending in `Z`, JSON booleans/nulls, and exact decimal strings. Do not route decimals through binary floating point or export processing times as application audit times.
 
-The current patient projection follows the early patient section of [backend/docs/DATA_MODEL.md](../../backend/docs/DATA_MODEL.md). That backend sketch is explicitly deferred, so the manifest labels this projection `provisional`; final application agreement is still required. Its current rules are:
+The optional JSONL projection follows the early patient mapping and remains labelled `provisional` in its manifest. Backend's authoritative mapping is [DATA_MODEL.md](../../backend/docs/DATA_MODEL.md), implemented by its direct-DuckDB reader. The relevant source mappings are:
 
 | Source | Patient export |
 | --- | --- |
@@ -85,16 +85,10 @@ Publish a complete temporary package to `data/assets/exports/<dataset-key>/` onl
 
 ## Backend and infra handoff
 
-Data owns source normalization, patient export, and the public `patient_data.seed` command with its mandatory preflight checks. Backend owns application models, migrations, patient UUID rules, and one reusable persistence operation. The command supplies validated records and an existing connection to that operation; the operation must not commit independently. The outer seed transaction retains the manifest and patient lineage and records completion only when the whole patient import succeeds.
+Backend's [DuckDB reader](../../backend/app/utils/duckdb_source.py) attaches both stage files read-only, validates them with the shared data checks, maps stored clean values to `ImportedPatient`, and retains source strings and lineage. It does not call the CSV cleaner or depend on an optional export.
 
-Before any patient or seed-marker insert, validate the package, authenticate and query the configured database, verify migration/schema readiness, check `patients` and `seed_runs`, inspect required columns/types/constraints, and verify needed permissions. All required checks must pass. Failed or blocked checks exit nonzero without seed writes. `--check-only` runs read-only validation and never invokes the writer.
+The backend-owned command is `python -m app.seed`, implemented by [app.seed](../../backend/app/seed.py) and [services/seeding.py](../../backend/app/services/seeding.py). That service owns migration/schema readiness, required columns/types/constraints/permissions, transaction settings, import locks, patient inserts, fixture/assignment steps, and durable completion markers.
 
-Compare destination columns with backend metadata, not directly with all 76 CSV headers. Compatible extra nullable/defaulted columns may be accepted; missing required columns, incompatible types, or extra required columns with no value/default fail the check. The seed command never repairs the application schema; Alembic owns that work.
+The shared `DatabaseInspector` and `TargetContract` remain in this data package because the real backend imports them. Their schema checks are reusable; they are not another seeding implementation.
 
-For a real seed, acquire the bounded shared patient-import lock and recheck completion/conflict state within the transaction before inserts. Reuse the same connection for checks and writes. Any write failure rolls back patients and the seed marker together. A readiness check alone does not guarantee a later run; the real seed always repeats it.
-
-Repeated normal startup must preserve application edits and deletions. A changed export does not automatically authorize replacing application data.
-
-The shared application plan needs one patient-only seed path through the data command: consume `patients.jsonl`, preserve its three lineage UUIDs and original row number, and require no other datasets. The writer contract is `target_contract()` plus `write_patients(package, connection, *, seed_run_id)`, defined by `PatientPersistence` in `seed.py`. Backend has not supplied this writer or its migrations. Keep one automatic seed path and review the provisional target requirements together before enabling real writes.
-
-Infra packages the selected patient export, data seed entry point, and backend writer together, then runs migrations followed by the data seed command before starting the API. The seed import path does not load DuckDB or rebuild data. Set `PATIENT_SEED_DATABASE_URL`, `PATIENT_SEED_SCHEMA`, `PATIENT_SEED_PACKAGE_DIR`, and `PATIENT_SEED_WRITER`; the application's general `DATABASE_URL` is not used as a fallback. See the runnable commands and settings in [README.md](../README.md).
+Infra builds the snapshots from the committed source during image construction, then runs Alembic followed by `app.seed` before starting the API when initialization is enabled. Repeated imports preserve application edits and deletions; failures or conflicting source versions are handled by backend's seed contract. See the [backend runbook](../../backend/README.md) for command configuration and acceptance tests.

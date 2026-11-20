@@ -39,6 +39,49 @@ describe('patient form validation', () => {
       expect(result.error.issues.some((issue) => issue.path[0] === field)).toBe(true)
   })
 
+  it('accepts January 1, 1900 as the earliest date of birth', () => {
+    expect(patientFormSchema.safeParse({ ...valid, date_of_birth: '1900-01-01' }).success).toBe(
+      true,
+    )
+    const result = patientFormSchema.safeParse({ ...valid, date_of_birth: '1899-12-31' })
+    expect(result.success).toBe(false)
+    if (!result.success)
+      expect(result.error.issues).toEqual([
+        expect.objectContaining({
+          path: ['date_of_birth'],
+          message: 'Date of birth must be on or after January 1, 1900.',
+        }),
+      ])
+  })
+
+  it('accepts a last visit on the date of birth and rejects one before it', () => {
+    for (const last_visit of ['', '1980-01-02', '1980-01-03']) {
+      expect(patientFormSchema.safeParse({ ...valid, last_visit }).success).toBe(true)
+    }
+    const result = patientFormSchema.safeParse({ ...valid, last_visit: '1980-01-01' })
+    expect(result.success).toBe(false)
+    if (!result.success)
+      expect(result.error.issues).toEqual([
+        expect.objectContaining({
+          path: ['last_visit'],
+          message: 'Last visit cannot be before the date of birth.',
+        }),
+      ])
+  })
+
+  it('compares visit order only when both dates are valid', () => {
+    const result = patientFormSchema.safeParse({
+      ...valid,
+      date_of_birth: '1980-02-30',
+      last_visit: '1970-01-01',
+    })
+    expect(result.success).toBe(false)
+    if (!result.success)
+      expect(result.error.issues.map((issue) => [issue.path, issue.message])).toEqual([
+        [['date_of_birth'], 'Enter a valid date.'],
+      ])
+  })
+
   it('requires a reported list and distinguishes unknown from no known allergies', () => {
     expect(patientFormSchema.safeParse({ ...valid, allergy_status: 'reported' }).success).toBe(
       false,

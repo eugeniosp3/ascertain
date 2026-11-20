@@ -2,7 +2,7 @@
 
 [Project overview](../README.md) · [Project punch card](../reference/PROGRESS.md)
 
-FastAPI, Pydantic, SQLAlchemy, PostgreSQL, and Alembic power the patient dashboard. The API includes patient CRUD, notes, discussion, source-file links, per-user unread counts, summaries, and dashboard totals. The reviewed model uses eight tables and accounts for all 76 fields in the 100-patient dataset.
+FastAPI, Pydantic, SQLAlchemy, PostgreSQL, and Alembic power the patient dashboard. The API includes patient CRUD, notes, discussion, source-file links, per-user unread counts, summaries, and dashboard totals. The reviewed model uses nine tables and accounts for all 76 fields in the 100-patient dataset.
 
 FastAPI handles HTTP and publishes OpenAPI; Pydantic validates requests and responses; SQLAlchemy and psycopg handle database operations; Alembic versions the schema. Small routers call named services, while shared utilities handle dates, pagination and source-data checks.
 
@@ -53,7 +53,7 @@ The container build uses the data package to reproduce the validated snapshots f
 - Comments are separate from clinical notes. Only their author may edit/delete them. Linked notes must belong to the same patient.
 - Every comment response includes viewer-specific `is_unread`. It is true only for another author's comment created after that viewer's patient read watermark. Own comments and anonymous reads return false; editing a comment does not reset its read state.
 - Discussion cursors keep pagination stable when comments are deleted. Explicit acknowledgments advance a per-user read watermark; normal GETs do not mark discussion read.
-- Summaries use current profiles and active notes, with no external model key. Comments and deleted notes never become summary input.
+- Summaries use current profiles and active notes. Summaries are written by a free keyless LLM endpoint (LLM7, open-weight gemma-3-27b) when reachable, falling back to the deterministic template; set SUMMARY_PROVIDER=template to disable. All data is fictional. The latest LLM summary is stored per patient (`patient_summaries`) and reused while `sha256(model + FACTS)` is unchanged; template fallbacks are never stored. Comments and deleted notes never become summary input. Settings: `SUMMARY_PROVIDER`, `LLM_BASE_URL`, `LLM_MODEL`, `LLM_TIMEOUT_SECONDS` (see the [API contract](docs/API_CONTRACT.md)).
 - Attachments are HTTPS URL metadata. The backend neither uploads files nor downloads external URLs.
 
 ## Structure and write ownership
@@ -89,7 +89,7 @@ uv run --frozen mypy app
 uv run --frozen pytest
 ```
 
-Backend verification on 2026-11-20: **301 tests passed** against a disposable PostgreSQL database, including API, migration, seed rollback/idempotence, ownership, same-patient links, unread concurrency, safe validation messages, OpenAPI error contracts, assigned workload filtering, and repeat-safe assignment backfills. Ruff lint/format checks and strict mypy also passed. These are backend checks; integrated browser acceptance remains a separate gate.
+**337 tests pass** against a disposable PostgreSQL database. They cover the API, migrations, seed rollback and idempotence, ownership, same-patient links, unread concurrency, safe validation messages, OpenAPI error contracts, assigned workload filtering, assignment backfills, and the LLM summary with its template fallback and stored-summary reuse. Ruff lint and format checks and strict mypy also pass.
 
 The clean-room check (`python3 infra/scripts/verify_stack.py --live-browser`) builds a fresh isolated stack, migrates and seeds it, exercises the API over HTTP, checks restart persistence, and runs the live browser journeys against it.
 

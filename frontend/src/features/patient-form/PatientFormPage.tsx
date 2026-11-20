@@ -67,8 +67,11 @@ function PatientFormSession({ patientId, actorId, onCancel, onSaved }: PatientFo
     }
   }
 
+  // A malformed ID is rejected with 422 before lookup and can never succeed, so it is missing too.
   const missing =
-    patientId !== undefined && isApiError(patient.error) && patient.error.status === 404
+    patientId !== undefined &&
+    isApiError(patient.error) &&
+    (patient.error.status === 404 || patient.error.status === 422)
   return (
     <section className="patient-form-page" aria-labelledby="patient-form-title">
       <header className="patient-form-header">

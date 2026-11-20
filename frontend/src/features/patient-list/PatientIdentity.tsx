@@ -16,17 +16,15 @@ export function PatientIdentity({
   patient,
   index,
   context,
-  avatar = true,
 }: {
   patient: PatientListItem
   index: number
   context: PatientLinkContext
-  avatar?: boolean
 }) {
   const name = getPatientName(patient)
   return (
     <div className="ac-patient-identity">
-      {avatar && <PatientAvatar name={name} />}
+      <PatientAvatar name={name} />
       <div className="ac-patient-text">
         <PatientOpenLink
           patient={patient}

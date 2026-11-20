@@ -16,12 +16,6 @@ npm run dev
 
 Open the local URL printed by Vite. The app defaults to User A (the first actual `/users` result), preserving a valid saved choice. Use the demo-user picker to switch identities. API mode uses FastAPI/PostgreSQL; `VITE_DATA_MODE=demo` is the explicit temporary-memory option whose edits reset on reload. Zustand persists sidebar, actor and theme preferences, not clinical records or drafts.
 
-To use the real API transport, configure [.env.example](.env.example) values in an ignored `.env.local`, or run:
-
-```sh
-VITE_DATA_MODE=api npm run dev
-```
-
 Identity discovery validates the saved user against `/users`; absent or stale choices fall back to its first actual result. Failed discovery does not fabricate an identity or fall back to fixture data. Browser calls use `/api`; the dev proxy forwards them to `API_PROXY_TARGET` (default `http://127.0.0.1:8000`) with the prefix removed. `VITE_DATA_MODE` and `VITE_API_BASE` are build-time public settings. The adapter maps backend notification/list fields, follows chronological comment cursors, and acknowledges exact displayed-prefix boundaries.
 
 ## Verify and build
@@ -33,13 +27,16 @@ npm run typecheck
 npm test
 npm run e2e -- --workers=2
 npm run e2e:api -- --workers=2
+# Live journeys against an already-running compiled API-mode stack (no servers are started):
+PLAYWRIGHT_LIVE_BASE_URL=http://localhost:10050 npm run e2e:live
+# Or, from the repository root, build an isolated stack and run them: python3 infra/scripts/verify_stack.py --live-browser
 # Build for deployment when needed:
 npm run build
 ```
 
 The production build is in `dist/`. Playwright uses installed Chrome and isolated browser contexts. The demo suite starts Vite on port 4174; the API suite starts API mode on 4175 and intercepts HTTP responses. `PLAYWRIGHT_BASE_URL` and `PLAYWRIGHT_API_BASE_URL` can instead point at existing frontend servers. These HTTP fixtures do not prove database persistence. Test results and review fixes are recorded in the project-manager update.
 
-Infra can use `npm ci` and `npm run build`, serve `dist/` with SPA fallback, and forward `/api/` to FastAPI. A build intended to demonstrate live integration must explicitly use `VITE_DATA_MODE=api`; provide Chrome for the browser checks in CI. Docker, Compose, database seeding and workflow wiring are owned by infra/backend/data.
+Infra can use `npm ci` and `npm run build`, serve `dist/` with SPA fallback, and forward `/api/` to FastAPI. Builds use API mode by default; provide Chrome for the browser checks in CI. Docker, Compose, database seeding and workflow wiring are owned by infra/backend/data.
 
 ## Organization and state
 
@@ -92,11 +89,11 @@ This stack replaces the Mantine, React Router and React Hook Form suggestions in
 - **Frontend:** everything under `frontend/src`, the package scripts and lockfile, the Vite dev proxy, the UI tests, and the frontend sections of the root README.
 - **Data:** source cleanup, DuckDB transformations, lineage IDs, versioned seed exports, and coordination of the shared data model with backend.
 - **Backend:** application persistence, Alembic migrations, validated imports and startup seeds, comment authorship and validation, and the OpenAPI contract. Frontend consumes API records, not DuckDB tables or raw exports.
-- **Infra:** `frontend/Dockerfile`, nginx (SPA fallback and `/api` prefix stripping), Compose, `.env.example` and the CI workflow. The frontend supplies working commands and checks that the result runs.
+- **Infra:** `infra/docker/frontend.Dockerfile`, nginx (SPA fallback and `/api` prefix stripping), Compose, `.env.example` and the CI workflow. The frontend supplies working commands and checks that the result runs.
 
 ## Checklist
 
-Checked items record implementation with scoped evidence; they do not certify every interaction or the final integrated candidate. The dated handoff distinguishes demo, HTTP-contract and live results. Known review failures below remain open, and master acceptance belongs to PM/Opus QA. Items marked *(addition)* are selected features beyond the original brief.
+Checked items record implementation with scoped evidence; they do not certify every interaction or the final integrated candidate. The dated handoff distinguishes demo, HTTP-contract and live results. Known review failures below remain open. Items marked *(addition)* are selected features beyond the original brief.
 
 ### 1. Agree on the API contract
 

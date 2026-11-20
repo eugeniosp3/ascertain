@@ -357,8 +357,8 @@ def test_put_requires_nullable_and_defaulted_fields(
         {"allergies": ["   "]},
         {"conditions": [{"code": None, "label": "  "}]},
         {"conditions": [{"code": "X", "label": "Valid", "unapproved": True}]},
-        {"date_of_birth": (date.today() + timedelta(days=1)).isoformat()},
-        {"last_visit": (date.today() + timedelta(days=1)).isoformat()},
+        {"date_of_birth": (dates.utc_today() + timedelta(days=1)).isoformat()},
+        {"last_visit": (dates.utc_today() + timedelta(days=1)).isoformat()},
         {"mrn": "server-owned"},
         {"source_patient_id": "server-owned"},
         {"source_record": {"secret": "original"}},
@@ -447,6 +447,12 @@ def test_search_escapes_like_wildcards(
     response = api_client.get("/patients", params={"q": literal}).json()
     assert response["total"] == 1
     assert response["items"][0]["id"] == str(wanted.id)
+
+
+def test_search_with_nul_character_is_a_safe_422(api_client: TestClient) -> None:
+    response = api_client.get("/patients", params={"q": "a\x00b"})
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "invalid_value"
 
 
 @pytest.mark.parametrize(

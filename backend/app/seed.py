@@ -1,7 +1,7 @@
 """Selected runtime seed command: ``python -m app.seed [--check-only]``.
 
-Infra must run Alembic, then this command, then start the API. Do not also wire
-``patient_data.seed``: that JSONL package prototype is not the runtime input.
+Infra must run Alembic, then this command, then start the API. This command reads
+the validated DuckDB snapshots directly; JSONL exports are not runtime inputs.
 """
 
 import argparse

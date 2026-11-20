@@ -73,3 +73,11 @@ def test_add_validates_before_appending() -> None:
 def test_models_reject_extra_fields(model: type[DataModel], payload: dict[str, object]) -> None:
     with pytest.raises(ValidationError, match="extra_forbidden"):
         model.model_validate(payload)
+
+
+def test_validation_error_rendering_hides_input_values() -> None:
+    private_value = "PRIVATE-PATIENT-VALUE"
+    with pytest.raises(ValidationError) as caught:
+        CheckResult.model_validate({"name": "source", "status": private_value})
+    assert private_value not in str(caught.value)
+    assert private_value not in repr(caught.value.errors(include_input=False))

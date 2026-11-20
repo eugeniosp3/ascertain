@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { emptyPatientValues, toPatientWrite } from '../features/patient-form/mapping'
 import { patientFormSchema } from '../features/patient-form/schema'
 import { demoId } from '../fixtures/demo-data'
+import { isApiError } from './client'
 import { validateComment, validateNote, validatePatient } from './validation'
 
 const form = {
@@ -13,6 +14,16 @@ const form = {
 const write = toPatientWrite(form)
 
 afterEach(() => vi.useRealTimers())
+
+function fieldErrors(run: () => unknown): Record<string, string> | undefined {
+  try {
+    run()
+  } catch (error) {
+    if (isApiError(error)) return error.fieldErrors
+    throw error
+  }
+  return undefined
+}
 
 describe('patient form and mock validation follow backend limits', () => {
   it.each([
@@ -98,6 +109,33 @@ describe('patient form and mock validation follow backend limits', () => {
       { ...write, allergies: ['a'.repeat(501)], allergy_status: 'reported' as const },
     ])
       expect(() => validatePatient(value)).toThrow()
+  })
+
+  it('accepts birth dates from January 1, 1900 and rejects earlier ones on date_of_birth', () => {
+    expect(validatePatient({ ...write, date_of_birth: '1900-01-01' }).date_of_birth).toBe(
+      '1900-01-01',
+    )
+    for (const date_of_birth of ['1899-12-31', '0001-01-01']) {
+      expect(fieldErrors(() => validatePatient({ ...write, date_of_birth }))).toEqual({
+        date_of_birth: 'Date of birth must be on or after January 1, 1900.',
+      })
+    }
+  })
+
+  it('rejects a last visit before the date of birth and accepts the same day or none', () => {
+    const born = { ...write, date_of_birth: '1980-01-02' }
+    expect(validatePatient({ ...born, last_visit: '1980-01-02' }).last_visit).toBe('1980-01-02')
+    expect(validatePatient({ ...born, last_visit: '1980-01-03' }).last_visit).toBe('1980-01-03')
+    expect(validatePatient({ ...born, last_visit: null }).last_visit).toBeNull()
+    expect(fieldErrors(() => validatePatient({ ...born, last_visit: '1980-01-01' }))).toEqual({
+      last_visit: 'Last visit cannot be before the date of birth.',
+    })
+    // The earliest-birth-date rule still applies to the birth date itself.
+    expect(
+      fieldErrors(() =>
+        validatePatient({ ...born, date_of_birth: '1899-12-31', last_visit: '1899-12-30' }),
+      ),
+    ).toEqual({ date_of_birth: 'Date of birth must be on or after January 1, 1900.' })
   })
 })
 

@@ -29,19 +29,6 @@ export const commentSchema = z.object({
     .refine((ids) => new Set(ids).size === ids.length, 'Note references must be distinct.'),
 })
 
-export function fieldMessage(errors: unknown[]): string | undefined {
-  for (const error of errors) {
-    if (typeof error === 'string') return error
-    if (
-      error &&
-      typeof error === 'object' &&
-      'message' in error &&
-      typeof error.message === 'string'
-    )
-      return error.message
-  }
-}
-
 const NOTE_TITLE_MAX = 80
 
 /**

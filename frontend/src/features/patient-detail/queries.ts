@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { api, dataMode } from '@/api'
-import { patientKeys } from '@/app/query-keys'
+import { api } from '@/api'
+import { notificationKeys, patientKeys } from '@/app/query-keys'
 import { patientDetailOptions } from '@/app/patient-query'
 
 export function usePatientDetail(patientId: string, actorId: string) {
@@ -14,7 +14,6 @@ export function usePatientNotes(patientId: string, actorId: string, enabled = tr
     queryKey: patientKeys.notes(patientId),
     queryFn: ({ signal }) => api.listNotes(patientId, { actorId, signal }),
     enabled,
-    meta: { dataMode },
   })
 }
 
@@ -23,8 +22,8 @@ export async function invalidateActivity(client: QueryClient, patientId: string)
   await Promise.all([
     client.invalidateQueries({ queryKey: patientKeys.lists() }),
     client.invalidateQueries({ queryKey: patientKeys.detail(patientId) }),
-    client.invalidateQueries({ queryKey: ['patients', patientId, 'comments'] }),
-    client.invalidateQueries({ queryKey: ['notifications'] }),
+    client.invalidateQueries({ queryKey: patientKeys.allComments(patientId) }),
+    client.invalidateQueries({ queryKey: notificationKeys.all }),
   ])
 }
 

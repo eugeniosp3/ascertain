@@ -1,4 +1,4 @@
-"""Typed versions, paths, and environment settings for the patient pipeline.
+"""Typed versions and paths for the patient pipeline.
 
 Version constants are part of the data contract: changing a field rule or the export
 mapping must advance ``TRANSFORMATION_VERSION`` or ``EXPORT_CONTRACT_VERSION`` so new
@@ -8,8 +8,7 @@ lineage UUIDs and a new dataset key are produced.
 from datetime import date
 from pathlib import Path
 
-from pydantic import ConfigDict, Field, SecretStr
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import ConfigDict, Field
 
 from patient_data.utils.models import DataModel
 
@@ -76,27 +75,3 @@ class StageSettings(DataModel):
     @property
     def exports_dir(self) -> Path:
         return self.assets_dir / "exports"
-
-
-class SeedSettings(BaseSettings):
-    """Seed configuration from ``PATIENT_SEED_*`` environment variables or CLI overrides.
-
-    Variables: ``PATIENT_SEED_DATABASE_URL`` (secret, never printed), ``PATIENT_SEED_SCHEMA``,
-    ``PATIENT_SEED_PACKAGE_DIR``, ``PATIENT_SEED_WRITER`` and the timeout settings.
-    """
-
-    model_config = SettingsConfigDict(env_prefix="PATIENT_SEED_", extra="ignore")
-
-    database_url: SecretStr | None = Field(
-        default=None,
-        validation_alias="PATIENT_SEED_DATABASE_URL",
-    )
-    schema_name: str | None = Field(default=None, validation_alias="PATIENT_SEED_SCHEMA")
-    package_dir: Path | None = None
-    writer: str | None = Field(
-        default=None,
-        description="Backend persistence operation as 'module:attribute'.",
-    )
-    connect_timeout_s: int = Field(default=5, ge=1, le=120)
-    statement_timeout_ms: int = Field(default=15_000, ge=100, le=600_000)
-    lock_timeout_ms: int = Field(default=10_000, ge=100, le=600_000)

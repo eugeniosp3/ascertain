@@ -8,7 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { fieldDescription, fieldMessage } from './form-errors'
+import { fieldMessage } from '@/utils/form-errors'
+import { fieldDescription } from './form-errors'
 import type { PatientFormValues } from './schema'
 import type { PatientFormBinding } from './use-patient-form'
 

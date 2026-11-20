@@ -3,10 +3,20 @@
 from datetime import UTC, date, datetime
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models import Patient, User
+from app.services.summaries import age_article
+
+
+@pytest.mark.parametrize(
+    ("age", "article"),
+    [(8, "an"), (11, "an"), (18, "an"), (80, "an"), (89, "an"), (7, "a"), (21, "a"), (90, "a")],
+)
+def test_age_article_matches_spoken_english(age: int, article: str) -> None:
+    assert age_article(age) == article
 
 
 def test_summary_unknown_values_age_and_missing_patient(

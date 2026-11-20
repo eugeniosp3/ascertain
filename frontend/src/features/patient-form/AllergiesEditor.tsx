@@ -1,10 +1,11 @@
 import { PATIENT_FIELD_LIMITS as limits } from '@/api/constraints'
-import { useId } from 'react'
+import { useId, useRef } from 'react'
 import { FormField } from '@/components/shared/FormField'
 import { InlineError } from '@/components/shared/InlineError'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { fieldDescription, fieldMessage } from './form-errors'
+import { fieldMessage } from '@/utils/form-errors'
+import { fieldDescription } from './form-errors'
 import { PatientInput } from './PatientInput'
 import type { PatientFormBinding } from './use-patient-form'
 
@@ -16,6 +17,7 @@ const statuses = [
 
 export function AllergiesEditor({ binding }: { binding: PatientFormBinding }) {
   const id = useId()
+  const addButton = useRef<HTMLButtonElement>(null)
   const { form, serverFields, clearServerField } = binding
   return (
     <div className="patient-form-repeat">
@@ -94,9 +96,14 @@ export function AllergiesEditor({ binding }: { binding: PatientFormBinding }) {
                             // Blurring before click can change validation height and move the target.
                             onMouseDown={(event) => event.preventDefault()}
                             onClick={(event) => {
-                              event.currentTarget.focus()
+                              const remove = event.currentTarget
+                              remove.focus()
                               clearServerField('allergies')
                               void field.removeValue(index)
+                              // Removing the final row unmounts this button; keep focus in the editor.
+                              requestAnimationFrame(() => {
+                                if (!remove.isConnected) addButton.current?.focus()
+                              })
                             }}
                           >
                             Remove allergy
@@ -104,6 +111,7 @@ export function AllergiesEditor({ binding }: { binding: PatientFormBinding }) {
                         </div>
                       ))}
                       <Button
+                        ref={addButton}
                         id={`${id}-add`}
                         data-patient-field="allergies"
                         aria-label="Add allergy"

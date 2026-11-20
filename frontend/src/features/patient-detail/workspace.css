@@ -70,8 +70,9 @@
   color: var(--muted-foreground);
   white-space: nowrap;
 }
+/* Essential identity values at 14px; their labels stay at 12px (AST-006). */
 .pw-facts dd {
-  font-size: 13px;
+  font-size: 14px;
   overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
 }
@@ -344,7 +345,8 @@
   max-width: 100%;
   min-height: 32px;
   padding: 4px 10px;
-  border: 1px solid var(--ac-lilac-border);
+  /* Actionable edge (AST-009): control border, 3.78:1 Light / 3.66:1 Dark on the lilac fill. */
+  border: 1px solid var(--ac-control-border);
   border-radius: 8px;
   background: var(--ac-lilac);
   color: var(--ac-lilac-ink);

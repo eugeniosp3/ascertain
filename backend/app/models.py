@@ -1,8 +1,10 @@
-"""PostgreSQL application tables: patients, users, clinical notes, discussion, seed markers.
+"""PostgreSQL application tables: patients, users, clinical notes, discussion, seed markers,
+and stored patient summaries.
 
-See ``MODEL_CONTRACT.md`` for the exact names other modules rely on and ``DATA_MODEL.md``
-for the design rationale and the complete 76-field source mapping. Constraint names are
-explicit so services can map integrity errors and migrations stay reviewable.
+See ``docs/MODEL_CONTRACT.md`` for the exact names other modules rely on and
+``docs/DATA_MODEL.md`` for the design rationale and the complete 76-field source mapping.
+Constraint names are explicit so services can map integrity errors and migrations stay
+reviewable.
 """
 
 from __future__ import annotations
@@ -13,6 +15,7 @@ from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import (
+    CHAR,
     Boolean,
     CheckConstraint,
     Date,
@@ -482,3 +485,29 @@ class DiscussionRead(Base):
 
     user: Mapped[User] = relationship()
     patient: Mapped[Patient] = relationship()
+
+
+class PatientSummary(Base):
+    """The latest LLM-written summary for one patient, reused while ``facts_hash`` matches.
+
+    ``facts_hash`` is sha256(model + FACTS); template fallbacks are never stored.
+    """
+
+    __tablename__ = "patient_summaries"
+    __table_args__ = (
+        PrimaryKeyConstraint("patient_id", name="patient_summaries_pkey"),
+        ForeignKeyConstraint(
+            ["patient_id"],
+            ["patients.id"],
+            name="patient_summaries_patient_id_fkey",
+            ondelete="CASCADE",
+        ),
+        CheckConstraint(_one_of("method", ("llm",)), name="patient_summaries_method"),
+    )
+
+    patient_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    method: Mapped[str] = mapped_column(Text, nullable=False)
+    model: Mapped[str | None] = mapped_column(Text, nullable=True)
+    facts_hash: Mapped[str] = mapped_column(CHAR(64), nullable=False)
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

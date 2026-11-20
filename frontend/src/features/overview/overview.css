@@ -309,9 +309,23 @@
 }
 
 .ac-chart-range button[aria-pressed='true'] {
+  position: relative;
   background: var(--ac-lilac);
   color: var(--ac-lilac-ink);
   font-weight: 600;
+}
+
+/* Selection edge (AST-005): 2px ink bar, 15.6:1 Light / 11.1:1 Dark on the lilac fill; focus keeps
+   the perimeter ring. */
+.ac-chart-range button[aria-pressed='true']::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  bottom: 2px;
+  left: 8px;
+  border-bottom: 2px solid var(--ac-ink);
+  border-radius: 1px;
+  pointer-events: none;
 }
 
 .ac-visits-chart {

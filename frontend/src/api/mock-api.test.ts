@@ -551,7 +551,7 @@ describe('demo conversation and notes API', () => {
     const summary = await api.getSummary(patient.id, first)
     expect(summary.summary).not.toContain('UNIQUE_CLINICAL_CONTENT')
     expect(summary.summary).not.toContain('DISCUSSION_ONLY_SECRET')
-    expect(summary.method).toBe('template')
+    expect(summary).toMatchObject({ method: 'llm', model: 'gemma-3-27b' })
     const profile = await api.getPatient(patient.id, first)
     await api.updatePatient(
       patient.id,

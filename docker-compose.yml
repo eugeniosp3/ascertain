@@ -3,4 +3,6 @@ name: ascertain
 include:
   - path: ./infra/compose.yml
     project_directory: .
+    # Shell/.env values still win; the template, not a developer .env, fills gaps
+    # when a caller such as verify_stack.py supplies its own --env-file.
     env_file: ./.env.example

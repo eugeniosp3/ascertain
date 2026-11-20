@@ -24,7 +24,7 @@ No source DuckDB file is opened for writes.
 ## Conventions
 
 - Every table uses a `uuid` primary key `id`, except the link and read-marker tables, which use
-  composite keys. The ORM default is `uuid.uuid4()` and the server default is `gen_random_uuid()`.
+  composite keys, and `patient_summaries`, whose primary key is its `patient_id` FK. The ORM default is `uuid.uuid4()` and the server default is `gen_random_uuid()`.
 - Every timestamp is `timestamptz`, and the ORM uses `datetime` values with a timezone.
   `created_at` and `updated_at` default to `now()` on the server. The ORM sets `updated_at` to
   `now()` on every ORM UPDATE, and CHECK constraints require `updated_at >= created_at`.
@@ -229,6 +229,18 @@ do not make a comment unread again. To mark comments read, upsert with
 `last_read_at = GREATEST(existing, cutoff)`, where `cutoff` is the client's newest seen
 `created_at` clamped to `now()`. The marker never moves backwards. A missing row means
 nothing has been read.
+
+### `PatientSummary` → `patient_summaries`
+
+The latest LLM-written summary of one patient; at most one row per patient.
+
+Columns: `patient_id` (PK `patient_summaries_pkey`; FK `patient_summaries_patient_id_fkey` →
+`patients.id` CASCADE), `summary Text` (not null), `method Text` (not null; CHECK
+`patient_summaries_method`: `method IN ('llm')`), `model Text` (nullable),
+`facts_hash CHAR(64)` (not null; hex `sha256(model + FACTS)`), `generated_at DateTime(tz)`
+(not null). No relationships. The summaries service upserts on `patient_id`
+(`ON CONFLICT DO UPDATE`), reuses a row only while `facts_hash` matches the current FACTS,
+and never stores template fallbacks. Migration `20261120_0003`.
 
 ### `SeedRun` → `seed_runs`
 

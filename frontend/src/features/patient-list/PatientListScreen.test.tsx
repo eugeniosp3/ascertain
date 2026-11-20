@@ -6,7 +6,7 @@ import {
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defaultListSearch, validateListSearch, type ListView } from './search-params'
 import PatientListScreen from './PatientListScreen'
@@ -62,8 +62,9 @@ describe('patient list states', () => {
       data: undefined,
     })
     renderList()
-    expect(await screen.findByLabelText('Loading patients')).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent('Loading patients…')
+    expect(await screen.findByRole('status')).toHaveTextContent('Loading patients…')
+    // The skeleton is decorative so loading is announced once, by the status region.
+    expect(document.querySelector('.ac-list-skeleton')).toHaveAttribute('aria-hidden', 'true')
     expect(screen.queryByText('No patients yet')).not.toBeInTheDocument()
   })
   it('shows a directory empty state without manufacturing patient rows', async () => {
@@ -89,6 +90,33 @@ describe('patient list states', () => {
     })
     renderList('notifications')
     expect(await screen.findByRole('heading', { name: 'You’re all caught up' })).toBeInTheDocument()
+  })
+  it('keeps a just-typed trailing space after the debounced search commits to the URL', async () => {
+    // Real router on the real list path: the commit is a replace navigation the screen observes.
+    const root = createRootRoute({ component: Outlet })
+    const route = createRoute({
+      getParentRoute: () => root,
+      path: '/patients',
+      validateSearch: validateListSearch,
+      component: () => <PatientListScreen view="patients" />,
+    })
+    const router = createRouter({
+      routeTree: root.addChildren([route]),
+      history: createMemoryHistory({ initialEntries: ['/patients'] }),
+    })
+    render(<RouterProvider router={router} />)
+    const input = await screen.findByRole('searchbox', { name: 'Search patients' })
+    fireEvent.change(input, { target: { value: 'John ' } })
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ q: 'John' }))
+    // Let every render of the committed navigation settle before reading the draft.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 300)))
+    expect(router.state.location.search).toMatchObject({ q: 'John', page: 1 })
+    expect(mocks.list).toHaveBeenLastCalledWith(
+      { ...defaultListSearch, q: 'John' },
+      'patients',
+      'demo-one',
+    )
+    expect(input).toHaveValue('John ')
   })
   it('shows a genuine API failure with a working retry action', async () => {
     mocks.list.mockReturnValue({

@@ -1,9 +1,9 @@
 """Typed patient export package: one JSONL line per patient plus a manifest.
 
-The ``record`` projection follows the patient section of ``backend/docs/DATA_MODEL.md``. That
-backend mapping is still an unapproved draft, so the application-facing fields here are
-**provisional** until backend agrees them (``Manifest.application_projection``). The
-lineage UUIDs and the complete ``source_record`` follow the approved data contract.
+The optional ``record`` projection preserves the earlier export format. The runtime
+backend defines its own approved model and maps stored DuckDB values directly, so this
+export is not its application contract (``Manifest.application_projection``). The
+lineage UUIDs and the complete ``source_record`` follow the data contract.
 
 JSON conventions: ISO dates, UTC timestamps ending in ``Z``, exact decimal strings (never
 binary floats), JSON booleans and nulls. All models are strict and reject extra keys so a
@@ -232,7 +232,7 @@ class Manifest(ExportModel):
     uuid_namespace_version: NonEmptyText
     application_projection: Literal["provisional"] = Field(
         default="provisional",
-        description="record fields follow backend's unapproved draft mapping.",
+        description="Optional export projection; runtime backend maps DuckDB values directly.",
     )
     source: SourceSummary
     patients: PatientsFileSummary

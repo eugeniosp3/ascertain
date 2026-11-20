@@ -1,5 +1,7 @@
 # Implementation handoffs
 
+> These are dated coordination logs between the agent teams, kept to show how the project was built. Paths under `/tmp` or `/var/folders` refer to local evidence files that are not part of this repository.
+
 [Project overview](../../README.md) · [Project punch card](../PROGRESS.md)
 
 This folder records agreements between implementation owners so parallel work uses compatible interfaces and clear file ownership.

@@ -77,8 +77,8 @@ def parse_decimal(text: str) -> Decimal:
         raise FieldValueError("expected a plain decimal number such as 12.5")
     try:
         value = Decimal(text)
-    except InvalidOperation as error:  # pragma: no cover - the pattern already guards this
-        raise FieldValueError("expected a plain decimal number such as 12.5") from error
+    except InvalidOperation:  # pragma: no cover - the pattern already guards this
+        raise FieldValueError("expected a plain decimal number such as 12.5") from None
     exponent = value.normalize().as_tuple().exponent
     if isinstance(exponent, int) and exponent < -DECIMAL_SCALE:
         raise FieldValueError(
@@ -95,8 +95,8 @@ def parse_iso_date(text: str) -> date:
         raise FieldValueError("expected a YYYY-MM-DD date")
     try:
         return date.fromisoformat(text)
-    except ValueError as error:
-        raise FieldValueError("not a valid calendar date") from error
+    except ValueError:
+        raise FieldValueError("not a valid calendar date") from None
 
 
 def parse_utc_timestamp(text: str) -> datetime:
@@ -105,16 +105,16 @@ def parse_utc_timestamp(text: str) -> datetime:
         raise FieldValueError("expected a UTC timestamp such as 2021-03-04T14:22:31Z")
     try:
         return datetime.strptime(text, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
-    except ValueError as error:
-        raise FieldValueError("not a valid calendar date and time") from error
+    except ValueError:
+        raise FieldValueError("not a valid calendar date and time") from None
 
 
 def parse_flag(text: str) -> bool:
     """Map ``Y``/``N`` to true/false; any other value is an error, not a null."""
     try:
         return _FLAGS[text]
-    except KeyError as error:
-        raise FieldValueError("expected Y or N") from error
+    except KeyError:
+        raise FieldValueError("expected Y or N") from None
 
 
 def split_semicolon_list(text: str) -> list[str]:

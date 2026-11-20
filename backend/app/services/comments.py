@@ -59,7 +59,7 @@ def comment_responses(
             NoteLinkResponse(
                 id=note.id,
                 title=title,
-                label=title if deleted else f"{title} · {note.timestamp:%Y-%m-%d}",
+                label=title if deleted else f"{title} · {note.timestamp.astimezone(UTC):%Y-%m-%d}",
                 timestamp=note.timestamp,
                 url=f"/patients/{note.patient_id}/notes/{note.id}",
                 is_deleted=deleted,

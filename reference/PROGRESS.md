@@ -2,7 +2,7 @@
 
 [Project overview](../README.md) · [Interactive view](holepunch.html) · [Assessment](project.md)
 
-Updated 2026-11-20 20:25 UTC. This covers the original assessment and selected additions. A checked box means verified in the scope shown; it does not turn a demo or fixture test into live-application acceptance.
+Updated 2026-11-20 20:58 UTC. This covers the original assessment and selected additions. A checked box means verified in the scope shown; it does not turn a demo or fixture test into live-application acceptance.
 
 **Core assessment: 51/51 checks verified in reviewed scopes (100%).** 0 partially verified; 0 still open.
 
@@ -21,10 +21,10 @@ The detailed card also tracks recommendations and selected additions; those are 
 
 **Detailed work: 148/151 items verified in stated scopes.**
 
-- Verified build committed and pushed on 20 Nov: every core check and every selected item is verified.
-- Next wave (in progress): per-domain anti-pattern and accessibility reviews with fixes, the study guide (architecture, technical decisions, maintainability and performance, data model) and a final README polish.
+- Final: all checks green on the frozen code (backend 337, data 153, frontend 370 unit + 117 demo + 11 API browser tests, clean-room live run 16/16). Committed and pushed; hosted CI confirms on GitHub.
+- Also delivered: LLM patient summary (saved, regenerated only when data changes, AI badge and tooltip), per-user overview, accessibility and anti-pattern fixes, date-order validation, a folder tidy and a rewritten README. Advanced search filters were deliberately not selected.
 
-151 tracked items: 148 verified in stated scope, 0 partially verified; excluded scope open, 0 implemented; acceptance pending, 0 in progress, 0 planned, 3 not selected.
+151 tracked items: 148 verified in stated scope, 0 partially verified; excluded scope open, 0 implemented; acceptance pending, 1 in progress, 0 planned, 2 not selected.
 
 ## Verification record
 
@@ -442,9 +442,9 @@ Part 3 · backend task 2 and frontend task 2.
   Deterministic narrative uses current profile and active notes, handles unknown/no-note states, excludes comments and deleted notes, and needs no external key.
   Scope: backend postgresql. Requirement: P3 BE-2. Evidence: [backend/app/services/summaries.py](../backend/app/services/summaries.py) · [backend/tests/test_summary.py](../backend/tests/test_summary.py).
 
-- [ ] **sm-llm — Optional LLM summarizer behind the same interface** · Not selected.
-  External LLM summarization is not implemented; the allowed template approach is selected.
-  Scope: optional. Requirement: P3 hint. Evidence: [backend/app/services/summaries.py](../backend/app/services/summaries.py).
+- [x] **sm-llm — Optional LLM summarizer behind the same interface** · Verified in stated scope.
+  Done 20 Nov. An open-weight LLM (gemma-3-27b via the keyless LLM7 endpoint) writes the summary from the patient's facts. It is saved in patient_summaries (migration 0003) with a fingerprint of those facts, so repeat views reuse it and any profile or note change regenerates it. If the LLM is unreachable or rate-limited, the deterministic template answers and nothing is stored. Verified live (llm/gemma-3-27b, repeat view served from the stored row) and by 337 backend tests. The UI marks AI summaries with a sparkles icon, 'Updated' time and tooltip (frontend unit tests). Note: the free endpoint has a daily quota per network; when it is used up, the app shows the standard summary and says so.
+  Scope: backend tests, live api, frontend tests. Requirement: P3 hint. Evidence: [backend/app/services/summaries.py](../backend/app/services/summaries.py) · [backend/alembic/versions/20261120_0003_patient_summaries.py](../backend/alembic/versions/20261120_0003_patient_summaries.py) · [frontend/src/features/patient-detail/SummaryPanel.tsx](../frontend/src/features/patient-detail/SummaryPanel.tsx).
 
 - [x] **sm-ui — Summary view in the UI** · Verified in stated scope.
   SummaryPanel reads the summary query and handles loading/error/retry; note mutations invalidate its key.
@@ -539,7 +539,7 @@ Part 5 · one command to run everything.
   Scope: compiled stack and hosted ci baseline. Requirement: P5.4. Evidence: [.env.example](../.env.example) · [setup.sh](../setup.sh) · [infra/scripts/entrypoint.py](../infra/scripts/entrypoint.py).
 
 - [x] **c-clean — Clean-room test** · Verified in stated scope.
-  Verified 20 Nov: fresh isolated Compose project with no .env; build, API-mode frontend, automatic migrate and seed, HTTP/proxy/restart/persistence checks and live browser journeys pass.
+  Final frozen tree, 20 Nov: a fresh isolated Compose project with no .env builds, migrates, seeds 100 patients, survives restart, backend recreation and full-stack recreation, keeps request values out of logs, and passes all 16 live browser journeys on real PostgreSQL.
   Scope: clean-room isolated compose project. Requirement: Submission. Evidence: [infra/scripts/verify_stack.py](../infra/scripts/verify_stack.py) · [frontend/e2e-live/](../frontend/e2e-live/) · [reference/chatroom/integration-coordination.md](../reference/chatroom/integration-coordination.md).
 
 - [x] **c-hot — Hot reload in Docker for frontend and backend** · Verified in stated scope.
@@ -582,9 +582,9 @@ The brief suggests one or two; this project selected more. Optional items that w
   Closed by the written Opus pass-02 decision in the recorded candidate scope. Stretch item; frontend candidate only; backend identity unbound This does not approve later source edits, the default demo setup or final visual readiness.
   Scope: Opus-approved compiled LIVE candidate-03. Requirement: Stretch · Testing. Evidence: [frontend/e2e-live/](../frontend/e2e-live/).
 
-- [x] **x-ci — CI pipeline config** · Verified in stated scope.
-  GitHub Actions on PR/default-branch changes runs quality checks, real PostgreSQL tests, Docker builds/seeded restart verification and separately labelled demo/HTTP-fixture browser tests. Published-baseline CI passed; the new live-browser lane awaits frontend.
-  Scope: compiled stack and hosted ci baseline. Requirement: Stretch · DX. Evidence: [.github/workflows/ci.yml](../.github/workflows/ci.yml) · [infra/scripts/checks.sh](../infra/scripts/checks.sh) · [infra/scripts/verify_stack.py](../infra/scripts/verify_stack.py).
+- [ ] **x-ci — CI pipeline config** · In progress.
+  Hosted run 44811327552 for 80c9dab: the application checks, the demo and contract browser tests, and all 16 live browser journeys on the real stack PASS. The run is red because one verifier probe deliberately stops the backend and expects nginx to answer 502, but GitHub's runners answer 504 (both mean the upstream is unreachable). Infra is fixing the probe without weakening its log-privacy assertion. The next push re-runs CI.
+  Scope: hosted ci run for 80c9dab. Requirement: Stretch · DX. Evidence: [.github/workflows/ci.yml](../.github/workflows/ci.yml) · [infra/scripts/verify_stack.py](../infra/scripts/verify_stack.py) · [Hosted CI run](https://github.com/eugeniosp3/ascertain/actions/runs/44811327552).
 
 ## Final application quality
 
@@ -599,8 +599,8 @@ Historical scoped passes do not close current integration and detailed QA checks
   Scope: isolated checks image and frontend tree. Requirement: Eval · code quality. Evidence: [.github/workflows/ci.yml](../.github/workflows/ci.yml) · [frontend/package.json](../frontend/package.json) · [backend/pyproject.toml](../backend/pyproject.toml).
 
 - [x] **q-tests — All tests pass** · Verified in stated scope.
-  20 Nov, final tree. Backend 301 and data 160 tests pass, with Ruff, format and strict mypy clean, in an isolated checks container. Frontend: 351 unit/component tests, 117 demo-browser tests and 11/11 HTTP-adapter browser tests pass, with ESLint, Prettier and strict TypeScript clean. The clean-room live browser journeys pass on real PostgreSQL. QA's live API matrix is 317/317, with 32/32 assignment and 16/16 seed-rerun checks.
-  Scope: full suite on the final tree. Requirement: Eval · code quality. Evidence: [reference/chatroom/integration-coordination.md](../reference/chatroom/integration-coordination.md).
+  Final frozen tree, 20 Nov, all green. Backend: 337 tests plus Ruff, format and strict mypy; data: 153 tests (isolated checks container on real PostgreSQL). Frontend: 370 unit, 117 demo-browser and 11/11 HTTP-adapter browser tests, plus lint, format and strict TypeScript. Clean-room run: a fresh isolated stack passes migrations, the 100-patient seed, restart, recreate and log-privacy checks, and all 16 live browser journeys on desktop and phone.
+  Scope: final frozen tree. Requirement: Eval · code quality. Evidence: [reference/chatroom/integration-coordination.md](../reference/chatroom/integration-coordination.md).
 
 - [x] **q-clean — Remove dead code, stray `console.log`/`print` calls and TODOs** · Verified in stated scope.
   20 Nov sweep: no console.log, debugger, TODO or FIXME in source. A redundant never-run acceptance spec, the 16k-line QA fault harness (moved to the local qa/ folder) and stale handoff docs were removed from the published tree.
@@ -775,7 +775,7 @@ One-command setup and distinct verification lanes support reproducible delivery.
   Scope: hosted ci baseline. Requirement: Selected addition. Evidence: [.github/workflows/ci.yml](../.github/workflows/ci.yml) · [frontend/playwright.api.config.ts](../frontend/playwright.api.config.ts).
 
 - [x] **ci-live-browser — Run real API-mode browser journeys on an isolated compiled stack** · Verified in stated scope.
-  verify_stack.py --live-browser builds an isolated API-mode stack and runs the live browser journeys (desktop and phone). The live journeys pass. A never-run, redundant core-acceptance spec with stale selectors was removed.
+  Verified locally (clean-room run) and on hosted CI for 80c9dab: all 16 live browser journeys pass on desktop and phone against a freshly built API-mode stack. A never-run, redundant core-acceptance spec with stale selectors was removed.
   Scope: clean-room live run. Requirement: Selected addition. Evidence: [infra/scripts/verify_stack.py](../infra/scripts/verify_stack.py) · [.github/workflows/ci.yml](../.github/workflows/ci.yml) · [reference/chatroom/integration-coordination.md](../reference/chatroom/integration-coordination.md).
 
 - [x] **ci-publication-safety — Publish safe repository and restricted CI permissions** · Verified in stated scope.

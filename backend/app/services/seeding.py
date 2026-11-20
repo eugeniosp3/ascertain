@@ -60,7 +60,7 @@ from app.utils.duckdb_source import (
     load_duckdb_source,
 )
 
-# Shared with the data package prototype so manually invoked importers also serialize.
+# One advisory-lock key, so startup and manually invoked seed runs serialize.
 PATIENT_IMPORT_LOCK_KEY = int.from_bytes(
     hashlib.sha256(b"ascertain:patient-import:v1").digest()[:8], "big", signed=True
 )

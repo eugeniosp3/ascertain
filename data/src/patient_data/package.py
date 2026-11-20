@@ -1,7 +1,7 @@
 """Serialize, read, and fully validate a patient package (``patients.jsonl`` + manifest).
 
-This module deliberately has no DuckDB dependency: the seed command imports it to
-validate the shipped package at application startup without stage files.
+This module has no DuckDB dependency, so optional exports can be validated without
+opening either stage file. Runtime application seeding reads DuckDB directly in backend.
 
 Validation is end-to-end. Besides checksums, counts, versions, and identity, every record
 is re-derived from its own ``source_record`` with the current field rules and export
@@ -314,7 +314,7 @@ def load_package(
         raise PatientDataError(
             "manifest.json does not match the manifest model",
             [_validation_problem(MANIFEST_FILE, error)],
-        ) from error
+        ) from None
     report.add(
         "package.manifest.canonical",
         "passed" if serialize_manifest(manifest) == manifest_bytes else "failed",

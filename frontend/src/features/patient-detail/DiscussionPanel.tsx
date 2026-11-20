@@ -2,7 +2,7 @@ import { useId, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { RefreshCw } from 'lucide-react'
 import { api, type Comment, type CommentPageParams } from '@/api'
-import { patientKeys } from '@/app/query-keys'
+import { patientKeys, userKeys } from '@/app/query-keys'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -14,6 +14,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { InlineError } from '@/components/shared/InlineError'
+import { formatCount } from '@/utils/count'
 import { getFormErrors } from '@/utils/form-errors'
 import { CommentForm } from './CommentForm'
 import { CommentItem } from './CommentItem'
@@ -44,22 +45,23 @@ function DiscussionVisit({ patientId, actorId, active, onNoteOpen }: Props) {
   }>({ cursor: null, previous: [], snapshot: 0 })
   const [posted, setPosted] = useState<Comment | null>(null)
   const [editingIds, setEditingIds] = useState<Set<string>>(() => new Set())
+  // Edit and delete results: the edited or deleted comment's own controls may be gone.
+  const [announcement, setAnnouncement] = useState('')
   const editing = editingIds.size > 0
   const params: CommentPageParams =
     position.cursor === null
       ? { page: 1, page_size: pageSize }
       : { cursor: position.cursor, page_size: pageSize }
-  const page: {
-    key: { visit: string; snapshot: number; page_size: number; cursor: string | null }
-    params: CommentPageParams
-  } = {
-    key: { visit, snapshot: position.snapshot, page_size: pageSize, cursor: position.cursor },
-    params,
+  const pageKey = {
+    visit,
+    snapshot: position.snapshot,
+    page_size: pageSize,
+    cursor: position.cursor,
   }
   // Discussion query: the viewer and page are part of cache identity, and inactive panels do not fetch.
   const comments = useQuery({
-    queryKey: patientKeys.comments(patientId, actorId, page.key),
-    queryFn: ({ signal }) => api.listComments(patientId, page.params, { actorId, signal }),
+    queryKey: patientKeys.comments(patientId, actorId, pageKey),
+    queryFn: ({ signal }) => api.listComments(patientId, params, { actorId, signal }),
     enabled: active,
     // A visit keeps its chronological snapshot until Refresh or a related mutation.
     // Counts still revalidate globally; a read receipt must not restart page one's snapshot.
@@ -68,8 +70,9 @@ function DiscussionVisit({ patientId, actorId, active, onNoteOpen }: Props) {
     refetchOnReconnect: false,
   })
   const users = useQuery({
-    queryKey: ['users'],
-    queryFn: ({ signal }) => api.listUsers({ actorId, signal }),
+    // Shared directory key: the actor selector already caches the same user list.
+    queryKey: userKeys.all,
+    queryFn: ({ signal }) => api.listUsers({ signal }),
     enabled: active,
   })
   // Read acknowledgement: wait for a settled displayed page before asking the hook to mark comments read.
@@ -79,7 +82,7 @@ function DiscussionVisit({ patientId, actorId, active, onNoteOpen }: Props) {
     active && comments.isSuccess && !comments.isFetching,
     comments.data?.items ?? noComments,
     comments.data?.read_through,
-    JSON.stringify(page.key),
+    JSON.stringify(pageKey),
   )
   const refresh = () => {
     setPosition((current) => ({ cursor: null, previous: [], snapshot: current.snapshot + 1 }))
@@ -140,8 +143,13 @@ function DiscussionVisit({ patientId, actorId, active, onNoteOpen }: Props) {
             ? 'Comments that were unread during this visit keep their New label.'
             : ''}
       </p>
+      {/* aria-live without role="status", so status queries in the discussion stay unambiguous. */}
+      <p className="sr-only" aria-live="polite">
+        {announcement}
+      </p>
       {comments.isPending && (
         <div role="status" aria-label="Loading discussion" className="grid gap-3">
+          <span className="sr-only">Loading discussion…</span>
           <Skeleton className="h-28 w-full" />
           <Skeleton className="h-28 w-full" />
         </div>
@@ -177,14 +185,14 @@ function DiscussionVisit({ patientId, actorId, active, onNoteOpen }: Props) {
                   onNoteOpen={onNoteOpen}
                   active={active}
                   onEditingChange={(value) => changeEditing(comment.id, value)}
+                  onAnnounce={setAnnouncement}
                 />
               ))}
             </ol>
           )}
           <div className="pw-comment-pager">
             <span className="text-sm text-muted-foreground">
-              Page {position.previous.length + 1} · {comments.data.total}{' '}
-              {comments.data.total === 1 ? 'comment' : 'comments'}
+              Page {position.previous.length + 1} · {formatCount(comments.data.total, 'comment')}
             </span>
             {pageable && (
               <div className="flex flex-wrap items-center gap-2">

@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { api, ApiError } from '@/api'
 import { patientKeys } from '@/app/query-keys'
 import { toIsoTimestamp } from '@/utils/dates'
 import { NoteForm } from './NoteForm'
 import { NoteView } from './NoteView'
+import { NotesPanel } from './NotesPanel'
 import { noteSchema } from './schema'
 import { renderFeature } from './test-utils'
 import { actorId, patientId, makeNote } from './test-data'
@@ -128,4 +130,60 @@ describe('canonical note view', () => {
     expect(back).toHaveBeenCalledOnce()
     expect(client.getQueryState(patientKeys.summary(patientId))?.isInvalidated).toBe(true)
   })
+
+  it('keeps a cached note readable when a background refetch fails', async () => {
+    const note = makeNote({ content: 'Cached note\nStill readable' })
+    const getNote = vi
+      .spyOn(api, 'getNote')
+      .mockResolvedValueOnce(note)
+      .mockRejectedValueOnce(new ApiError(0, 'network', 'Connection interrupted.'))
+    const { client } = renderFeature(
+      <NoteView patientId={patientId} actorId={actorId} noteId={note.id} onBack={vi.fn()} />,
+    )
+    expect(await screen.findByRole('heading', { name: 'Cached note' })).toBeVisible()
+    await act(() => client.refetchQueries({ queryKey: patientKeys.note(patientId, note.id) }))
+    expect(getNote).toHaveBeenCalledTimes(2)
+    expect(await screen.findByRole('button', { name: 'Retry' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Cached note' })).toBeVisible()
+    expect(screen.getByText(/Still readable/, { selector: 'p' })).toBeVisible()
+  })
+})
+
+it('returns focus to Add note when the composer is cancelled', async () => {
+  vi.spyOn(api, 'listNotes').mockResolvedValue([])
+  renderFeature(
+    <NotesPanel
+      patientId={patientId}
+      actorId={actorId}
+      active
+      onNoteOpen={vi.fn()}
+      onBack={vi.fn()}
+    />,
+  )
+  const add = screen.getByRole('button', { name: 'Add note' })
+  await userEvent.click(add)
+  expect(add).toBeDisabled()
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(add).toBeEnabled()
+  expect(add).toHaveFocus()
+})
+
+it('announces a deleted note and returns focus to the Notes heading', async () => {
+  const note = makeNote({ content: 'Delete me' })
+  vi.spyOn(api, 'getNote').mockResolvedValue(note)
+  vi.spyOn(api, 'listNotes').mockResolvedValue([])
+  vi.spyOn(api, 'deleteNote').mockResolvedValue()
+  const props = { patientId, actorId, active: true, onNoteOpen: vi.fn(), onBack: vi.fn() }
+  const { client, rerender } = renderFeature(<NotesPanel {...props} noteId={note.id} />)
+  await userEvent.click(await screen.findByRole('button', { name: 'Delete note' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Delete note' }))
+  await waitFor(() => expect(props.onBack).toHaveBeenCalledOnce())
+  expect(screen.getByText('Note deleted.')).toBeInTheDocument()
+  // The route clears the note ID after Back; the list heading then receives focus.
+  rerender(
+    <QueryClientProvider client={client}>
+      <NotesPanel {...props} />
+    </QueryClientProvider>,
+  )
+  await waitFor(() => expect(screen.getByRole('heading', { name: 'Clinical notes' })).toHaveFocus())
 })

@@ -1,4 +1,4 @@
-import { formatCount as formatNumber } from './aggregation'
+import { formatNumber } from './aggregation'
 import type { OverviewProjection } from './projection'
 
 /**

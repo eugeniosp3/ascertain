@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Link, useLocation, useNavigate, useSearch } from '@tanstack/react-router'
 import { Bell, CheckCheck, LoaderCircle, Plus, SearchX, Users } from 'lucide-react'
 import { useActor } from '@/app/actor-context'
@@ -21,8 +21,10 @@ export default function PatientListScreen({ view }: { view: ListView }) {
   const rawSearch = useSearch({ strict: false })
   // URL state: validated search parameters drive both the API query and the visible controls.
   const search = useMemo(() => validateListSearch(rawSearch), [rawSearch])
+  // Draft resync key: the history index, not the entry key. The location store updates before the
+  // match store, so a replace-commit's new key can render with the old q and drop a trailing space.
   const navigationKey = useLocation({
-    select: (location) => location.state.__TSR_key ?? location.href,
+    select: (location) => String(location.state.__TSR_index),
   })
   const query = usePatientList(search, view, actorId)
   const summary = useNotificationSummary(actorId)
@@ -70,6 +72,9 @@ export default function PatientListScreen({ view }: { view: ListView }) {
       updateListView(view, actorId, { restoreFocus: false })
     }
   }, [query.isFetching, needsClamp, data?.items.length, view, actorId])
+  // Stable row props: let the results table's memoized rows and columns skip unrelated renders.
+  const context = useMemo(() => ({ actorId, view, search }), [actorId, view, search])
+  const focusHeading = useCallback(() => heading.current?.focus(), [])
 
   if (!actorId) return <ActorRequired />
   // Result states: render loading, failure with retry, populated results or a meaningful empty view.
@@ -122,7 +127,7 @@ export default function PatientListScreen({ view }: { view: ListView }) {
         ) : query.isError ? (
           'Patient list unavailable'
         ) : data ? (
-          `${data.total} ${data.total === 1 ? 'patient' : 'patients'}${filtered ? ' matching your filters' : ''}`
+          `${formatCount(data.total, 'patient')}${filtered ? ' matching your filters' : ''}`
         ) : (
           ''
         )}
@@ -142,7 +147,8 @@ export default function PatientListScreen({ view }: { view: ListView }) {
             </Button>
           </div>
         ) : query.isPending ? (
-          <div className="ac-list-skeleton" aria-label="Loading patients">
+          // Decorative placeholder: the results status above announces loading once.
+          <div className="ac-list-skeleton" aria-hidden="true">
             {Array.from({ length: 8 }, (_, index) => (
               <div key={index}>
                 <Skeleton className="ac-skeleton-avatar" />
@@ -158,9 +164,9 @@ export default function PatientListScreen({ view }: { view: ListView }) {
             items={data.items}
             total={data.total}
             busy={query.isFetching || needsClamp}
-            context={{ actorId, view, search }}
+            context={context}
             onChange={changeSearch}
-            onFocusHeading={() => heading.current?.focus()}
+            onFocusHeading={focusHeading}
           />
         ) : (
           <div className="ac-empty">

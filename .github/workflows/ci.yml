@@ -15,6 +15,7 @@ concurrency:
 env:
   COMPOSE_PROJECT_NAME: ascertain-ci-${{ github.run_id }}-${{ github.run_attempt }}
   COMPOSE_ANSI: never
+  SUMMARY_PROVIDER: template
 
 jobs:
   verify:
@@ -42,13 +43,17 @@ jobs:
           docker compose version
           python3 --version
           docker compose --profile checks config --quiet
+          docker compose -f infra/docker-compose.dev.yml --profile checks config --quiet
+          for script in setup.sh infra/scripts/*.sh; do
+            sh -n "$script"
+          done
 
       - name: Build images and run application checks
         env:
           VITE_DATA_MODE: demo
         run: |
           docker compose --profile checks build
-          docker compose --profile checks run --rm checks
+          docker compose --profile checks run --rm -e SUMMARY_PROVIDER=template checks
           docker compose --profile checks run --rm -e VITE_DATA_MODE=demo frontend-checks
 
       - name: Verify application startup, HTTP routing, and database persistence

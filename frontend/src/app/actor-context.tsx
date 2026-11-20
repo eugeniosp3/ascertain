@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, type ReactNode } from 're
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/api'
 import type { User } from '@/api/types'
+import { userKeys } from './query-keys'
 import { useUIStore } from './ui-store'
 
 interface ActorContextValue {
@@ -21,7 +22,7 @@ export function ActorProvider({ children }: { children: ReactNode }) {
   const selectedId = useUIStore((state) => state.selectedActorId)
   const setSelectedId = useUIStore((state) => state.setSelectedActorId)
   const query = useQuery({
-    queryKey: ['demo-users'],
+    queryKey: userKeys.all,
     queryFn: ({ signal }) => api.listUsers({ signal }),
     staleTime: 5 * 60_000,
   })

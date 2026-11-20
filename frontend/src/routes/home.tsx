@@ -76,10 +76,9 @@ export default function HomePage() {
               </Link>
             </Button>
           </div>
+          {/* Plain text: the charts' status and alert regions announce this same projection once. */}
           {projection.isPending ? (
-            <p className="ac-overview-note" role="status">
-              Loading recent visits…
-            </p>
+            <p className="ac-overview-note">Loading recent visits…</p>
           ) : projection.isError && !projection.data ? (
             <p className="ac-overview-note">Recent visits are unavailable.</p>
           ) : recent.length > 0 ? (

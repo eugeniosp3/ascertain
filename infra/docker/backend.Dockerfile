@@ -1,4 +1,5 @@
 # syntax=docker/dockerfile:1
+# check=error=true
 # Multi-platform digests keep Apple Silicon and Linux CI on the same image release.
 ARG PYTHON_IMAGE=python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df
 FROM ghcr.io/astral-sh/uv:0.12.18@sha256:3adc3706091ce7c2fe595e669628caedd6d951551b92b258b7e7dbe06d9440bc AS uv
@@ -11,13 +12,13 @@ RUN uv venv --python /usr/local/bin/python /opt/venv
 
 FROM dependencies AS runtime-dependencies
 # Both application locks are authoritative. Conflicting pins fail the build.
-RUN uv export --project /build/backend --frozen --no-dev --no-emit-local --output-file /tmp/backend.txt > /dev/null \
-    && uv export --project /build/data --frozen --no-dev --no-emit-local --output-file /tmp/data.txt > /dev/null \
+RUN uv export --project /build/backend --locked --no-dev --no-emit-local --output-file /tmp/backend.txt > /dev/null \
+    && uv export --project /build/data --locked --no-dev --no-emit-local --output-file /tmp/data.txt > /dev/null \
     && uv pip sync --python /opt/venv/bin/python --require-hashes /tmp/backend.txt /tmp/data.txt
 
 FROM dependencies AS check-dependencies
-RUN uv export --project /build/backend --frozen --no-emit-local --output-file /tmp/backend.txt > /dev/null \
-    && uv export --project /build/data --frozen --no-emit-local --output-file /tmp/data.txt > /dev/null \
+RUN uv export --project /build/backend --locked --no-emit-local --output-file /tmp/backend.txt > /dev/null \
+    && uv export --project /build/data --locked --no-emit-local --output-file /tmp/data.txt > /dev/null \
     && uv pip sync --python /opt/venv/bin/python --require-hashes /tmp/backend.txt /tmp/data.txt
 
 FROM ${PYTHON_IMAGE} AS application

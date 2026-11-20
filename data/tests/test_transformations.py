@@ -1,10 +1,10 @@
 """Field parsing, row transformation, patient rules, and the export projection."""
 
+import traceback
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
-from conftest import Rows, column
 
 from patient_data.errors import PatientDataError
 from patient_data.models import ProfileDetails
@@ -33,6 +33,8 @@ from patient_data.utils.transformations import (
     restore_source_scale,
     split_semicolon_list,
 )
+
+from .helpers import Rows, column
 
 RULES = {rule.name: rule for rule in PATIENT_FIELDS}
 
@@ -90,6 +92,7 @@ def test_error_messages_never_contain_the_value() -> None:
                 "field", kind, pattern=r"[0-9]+"
             ).parse(secret)
         assert secret not in str(caught.value)
+        assert secret not in "".join(traceback.format_exception(caught.value))
 
 
 def test_blank_policy_is_explicit_per_field() -> None:

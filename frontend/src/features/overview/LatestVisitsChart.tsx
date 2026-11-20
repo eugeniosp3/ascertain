@@ -1,6 +1,6 @@
-import { useId, useMemo, useRef, useState, type PointerEvent } from 'react'
+import { useId, useRef, useState, type PointerEvent } from 'react'
 import {
-  formatCount,
+  formatNumber,
   formatMonthTick,
   formatPercentage,
   niceAxisMax,
@@ -37,17 +37,14 @@ export function LatestVisitsChart({
   const [showTable, setShowTable] = useState(false)
   const id = useId()
   const area = useRef<HTMLDivElement>(null)
-  const { months, outside } = useMemo(() => visitWindow(visits, range), [visits, range])
-  const axisMax = useMemo(() => niceAxisMax(Math.max(...months.map((m) => m.count))), [months])
-  const points = useMemo(
-    () =>
-      months.map((month, index) => ({
-        ...month,
-        x: (index / (months.length - 1)) * 100,
-        y: 100 - (month.count / axisMax) * 100,
-      })),
-    [months, axisMax],
-  )
+  // At most twelve months: derived on every render like the paths below, with nothing to memoize.
+  const { months, outside } = visitWindow(visits, range)
+  const axisMax = niceAxisMax(Math.max(...months.map((m) => m.count)))
+  const points = months.map((month, index) => ({
+    ...month,
+    x: (index / (months.length - 1)) * 100,
+    y: 100 - (month.count / axisMax) * 100,
+  }))
   const partialIndex = points.length - 1
   const lastComplete = points[partialIndex - 1]!
   const current = points[partialIndex]!
@@ -56,7 +53,7 @@ export function LatestVisitsChart({
   const active = points[activeIndex]!
   const activePartial = activeIndex === partialIndex
   const monthName = (label: string, partial: boolean) => (partial ? `${label} (partial)` : label)
-  const valueText = `${monthName(active.label, activePartial)}: ${formatCount(active.count)} of ${formatCount(total)} patients (${formatPercentage(active.count, total)})`
+  const valueText = `${monthName(active.label, activePartial)}: ${formatNumber(active.count)} of ${formatNumber(total)} patients (${formatPercentage(active.count, total)})`
   // Complete months form the solid line and its fill; the running month is a separate dashed leg.
   const line = points
     .slice(0, partialIndex)
@@ -107,10 +104,10 @@ export function LatestVisitsChart({
         <div
           className="ac-visits-y"
           aria-hidden="true"
-          style={{ width: `${formatCount(axisMax).length + 0.5}ch` }}
+          style={{ width: `${formatNumber(axisMax).length + 0.5}ch` }}
         >
-          <span style={{ top: '0%' }}>{formatCount(axisMax)}</span>
-          <span style={{ top: '50%' }}>{formatCount(axisMax / 2)}</span>
+          <span style={{ top: '0%' }}>{formatNumber(axisMax)}</span>
+          <span style={{ top: '50%' }}>{formatNumber(axisMax / 2)}</span>
           <span style={{ top: '100%' }}>0</span>
         </div>
         <div className="ac-visits-plot" onPointerMove={inspect} onPointerDown={inspect}>
@@ -139,7 +136,7 @@ export function LatestVisitsChart({
               style={{ left: `${active.x}%`, transform: `translateX(-${active.x}%)` }}
             >
               <span>{monthName(active.label, activePartial)}</span>
-              <strong>{formatCount(active.count)}</strong>
+              <strong>{formatNumber(active.count)}</strong>
               <span>
                 {active.count === 1 ? 'patient' : 'patients'} ·{' '}
                 {formatPercentage(active.count, total)}
@@ -150,7 +147,6 @@ export function LatestVisitsChart({
           <input
             // Pointer inspection belongs to the plot; the native range gives keyboard and AT control.
             className="ac-visits-input"
-            id={`${id}-month`}
             aria-label="Inspect month, use arrow keys"
             type="range"
             min="0"
@@ -206,7 +202,7 @@ export function LatestVisitsChart({
             {[...months, ...outside].map((bucket) => (
               <tr key={bucket.key}>
                 <th scope="row">{monthName(bucket.label, bucket.key === current.key)}</th>
-                <td>{formatCount(bucket.count)}</td>
+                <td>{formatNumber(bucket.count)}</td>
                 <td>{formatPercentage(bucket.count, total)}</td>
               </tr>
             ))}

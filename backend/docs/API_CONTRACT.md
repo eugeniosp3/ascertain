@@ -10,7 +10,7 @@ IDs are application UUID strings. `source_patient_id` and `mrn` are separate dis
 
 Errors use `{error: {code, message, fields: [{path, code, message}]}}`. Paths are arrays such as `["body", "date_of_birth"]`. Handle 401/403, 404, 409, 410, 422, and 503 explicitly; unexpected failures return a generic 500. A 204 has no response body.
 
-Validation messages come from a fixed public catalog and never echo submitted values or exception context. Phone/email errors describe the required format; future dates and clinical timestamps explain the time restriction. Allergy consistency errors target `["body", "allergies"]` so the form can show how to fix the list or status. Each operation declares its applicable failure statuses with the shared `ErrorResponse` schema in OpenAPI, including its 422 response.
+Validation messages come from a fixed public catalog and never echo submitted values or exception context. Phone/email errors describe the required format; future dates and clinical timestamps explain the time restriction. `date_of_birth` and `last_visit` are compared with the server's UTC calendar day, the same day used for age, because the API does not know the viewer's time zone. Known limitation: east of UTC, between local midnight and UTC midnight, today's local date is still a future date in UTC and returns `date_in_future`. A date of birth before 1900-01-01 returns `date_of_birth_too_early`, and a last visit before the date of birth returns `last_visit_before_birth` at `["body", "last_visit"]`. A value PostgreSQL cannot store, such as a NUL character, returns 422 `invalid_value`. Allergy consistency errors target `["body", "allergies"]` so the form can show how to fix the list or status. Each operation declares its applicable failure statuses with the shared `ErrorResponse` schema in OpenAPI, including its 422 response.
 
 ## Patients and overview
 
@@ -48,17 +48,28 @@ For charts, fetch one complete paged assigned projection keyed by actor and scop
 | `GET /patients/{patient_id}/notes` | Array of active notes, newest clinical timestamp first |
 | `POST /patients/{patient_id}/notes` | 201 from `{timestamp, content, title?}`; title defaults to `Clinical note` |
 | `GET /patients/{patient_id}/notes/{note_id}` | Openable detail; deleted notes return 410 |
-| `PUT /patients/{patient_id}/notes/{note_id}` | Author replaces title, clinical timestamp, and content |
+| `PUT /patients/{patient_id}/notes/{note_id}` | Author replaces title, clinical timestamp, and content; an omitted title resets to `Clinical note` |
 | `DELETE /patients/{patient_id}/notes/{note_id}` | Author creates a content-free tombstone; existing comment links remain identifiable |
 | `POST /patients/{patient_id}/notes/{note_id}/attachments` | Author adds HTTPS URL metadata |
 | `DELETE /patients/{patient_id}/notes/{note_id}/attachments/{attachment_id}` | Author removes metadata only |
-| `GET /patients/{patient_id}/summary` | `{patient_id, summary, generated_at, method: "template"}` |
+| `GET /patients/{patient_id}/summary` | `{patient_id, summary, generated_at, method: "llm" \| "template", model}`; `model` is the LLM name when `method` is `"llm"`, otherwise `null` |
 
 Notes return `author`, clinical `timestamp`, application `created_at`/`updated_at`, and `attachments`. Titles are at most 80 characters; note content at most 20,000. Clinical timestamps must include a timezone and cannot be in the future. These canonical API/storage limits supersede smaller specimen form limits in the HTML mock.
 
 Attachment input is `{display_name, source_url, media_type?, source_description?}`. URLs must be HTTPS without embedded credentials. The application stores a reference; it neither uploads nor fetches the external file. No attachment files came with the dataset.
 
-Summaries use current editable profile facts and active clinical notes. They exclude discussion comments and deleted notes and require no external API key.
+Summaries use current editable profile facts and active clinical notes. They exclude discussion comments and deleted notes and require no API key.
+
+Summaries are written by a free keyless LLM endpoint (LLM7, open-weight gemma-3-27b) when reachable, falling back to the deterministic template; set SUMMARY_PROVIDER=template to disable. All data is fictional.
+
+The deterministic template text is the FACTS block. The backend reads it from the database, ends that read transaction, and sends it as the user message to the OpenAI-compatible `POST {LLM_BASE_URL}/chat/completions` (`max_tokens` 350, `temperature` 0.2, timeout `LLM_TIMEOUT_SECONDS`) with a system prompt that allows only the given facts. Any error, timeout, non-200 status, unexpected JSON shape or empty content returns the template with `method: "template"` and logs one warning containing only the exception class name. The latest successful LLM summary is stored per patient in `patient_summaries` with `facts_hash = sha256(model + FACTS)`. A request whose hash matches the stored row returns that row (same text and `generated_at`) without an LLM call; any profile or active-note change, or a model change, produces a new call and an upsert. Template fallbacks are never stored, and `SUMMARY_PROVIDER=template` never reads or writes the table. `generated_at` is the stored row's time, or the request time for the template.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `SUMMARY_PROVIDER` | `llm` | `llm` or `template` (never calls the network) |
+| `LLM_BASE_URL` | `https://api.llm7.io/v1` | OpenAI-compatible base URL, HTTP(S) only |
+| `LLM_MODEL` | `gemma-3-27b` | Model name sent and returned as `model` (`gpt-oss:20b` also works on LLM7) |
+| `LLM_TIMEOUT_SECONDS` | `10` | Request timeout, 1-60 seconds |
 
 ## Discussion and notifications
 

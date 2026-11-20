@@ -26,13 +26,17 @@ export function FormField({
         {required && <span aria-hidden="true"> *</span>}
       </Label>
       {description && (
-        <p id={`${htmlFor}-description`} className="text-sm text-muted-foreground">
+        <p id={`${htmlFor}-description`} className="text-sm max-md:text-base text-muted-foreground">
           {description}
         </p>
       )}
       {children}
       {error && (
-        <p id={`${htmlFor}-error`} className="text-sm text-destructive" role="alert">
+        <p
+          id={`${htmlFor}-error`}
+          className="text-sm max-md:text-base text-destructive"
+          role="alert"
+        >
           {error}
         </p>
       )}

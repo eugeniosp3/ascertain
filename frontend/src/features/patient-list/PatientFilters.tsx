@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { ArrowDownAZ, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -62,6 +62,7 @@ export default function PatientFilters({
     return () => window.clearTimeout(timer)
   }, [draft, search.q, navigationKey])
   const sort = tableSorting(search)[0]
+  const searchInput = useRef<HTMLInputElement>(null)
   return (
     <div className="ac-filters ac-surface">
       <div className="ac-search">
@@ -70,6 +71,7 @@ export default function PatientFilters({
         </Label>
         <Search aria-hidden="true" />
         <Input
+          ref={searchInput}
           id="patient-search"
           type="search"
           value={draft}
@@ -86,7 +88,7 @@ export default function PatientFilters({
             onClick={() => {
               setDraft('')
               onChange({ q: '', page: 1 }, true)
-              document.getElementById('patient-search')?.focus()
+              searchInput.current?.focus()
             }}
           >
             <X aria-hidden="true" />

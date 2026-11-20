@@ -126,6 +126,7 @@ function WorkspaceVisit({
           <div className="pw-body">
             {patient.isPending && (
               <div className="pw-scroll grid gap-4" role="status" aria-label="Loading patient">
+                <span className="sr-only">Loading patient…</span>
                 <Skeleton className="h-8 w-1/2" />
                 <Skeleton className="h-44 w-full" />
                 <Skeleton className="h-44 w-full" />
@@ -157,6 +158,9 @@ function WorkspaceVisit({
               <Tabs
                 value={tab}
                 onValueChange={(value) => onTabChange(value as PatientWorkspaceTab)}
+                // Opening Discussion marks comments read, so arrow keys only move focus;
+                // Enter or Space chooses the tab (manual activation).
+                activationMode="manual"
                 className="pw-tabs"
               >
                 {patient.isError && (

@@ -1,4 +1,4 @@
-"""Small typed responses for the foundation's diagnostic endpoints."""
+"""Typed responses for the /health liveness and /ready database checks."""
 
 from typing import Literal
 

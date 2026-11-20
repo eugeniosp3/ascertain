@@ -80,13 +80,11 @@ Pre-publication local checks recorded passing linting, formatting, typing, 193 b
 
 Published baseline commit `611bda5` passed [hosted CI](https://github.com/eugeniosp3/ascertain/actions/runs/44781809472), including the frontend quality suite, desktop/mobile demo journeys, intercepted HTTP-contract tests, and real seeded container startup/restart checks. This supersedes the earlier pre-publication CI status above; it does not certify a live database-backed browser journey.
 
-The live lane uses `npm run e2e:live -- --workers=1`, `playwright.live.config.ts`, `e2e-live/`, and required `PLAYWRIGHT_LIVE_BASE_URL`. A previous staged functional candidate passed 16 cases; that evidence does not cover subsequent assignment, default-user or restoration changes. The final compiled run follows those application changes and retains the current suite's JSON result. The project manager coordinates shared lifecycle and the final review.
-
-The isolated backend-only checks for source `34e2150b…` passed 236 backend tests, 160 data tests, Ruff and mypy. Ordinary pytest collection imported no fault modules. The checks image contained 101 verified copied source files and all 30 approved harness files, with no fault artifact directories. Evidence is retained locally under `infra/artifacts/backend-post-opr-20261120T191801Z-2e9937db/`; the new assignment snapshot still requires its own verification.
+The live lane uses `npm run e2e:live -- --workers=1`, `playwright.live.config.ts`, `e2e-live/`, and required `PLAYWRIGHT_LIVE_BASE_URL`. On commit `80c9dab`, all 16 hosted live browser cases passed, but the job failed afterward because the stopped-backend probe expected 502 and received 504. The corrected ordinary verifier passes locally; hosted CI must rerun the correction. [delivery-review.md](delivery-review.md) records the result and scope. The project manager coordinates publication and the final review.
 
 ## Opus platform follow-up
 
-- [ ] OPR-002: request-value-free nginx summaries and API error-detail suppression are implemented; isolated search/entity/upstream-failure log verification remains pending the stable candidate.
-- [ ] OPR-007: entry HTML/SPA `no-cache` and immutable hashed-asset headers are implemented; nginx configuration validation passes, with runtime header assertions prepared.
-- [x] OPR-008 packaging: Git/Docker exclusions and evidence preservation are verified; backend opt-out collection/lint/type checks and actual checks-image exclusion passed on the frozen post-OPR source. QA owns acceptance of published evidence, and the final assignment image will be rechecked.
+- [x] OPR-002 local verification: request-value-free nginx summaries and API error-detail suppression pass the isolated search/entity/upstream-failure privacy checks with the corrected 502/504 probe. Hosted rerun remains pending.
+- [x] OPR-007 local verification: entry HTML/SPA `no-cache`, immutable hashed assets, missing-asset handling and content-type protection pass runtime assertions in the complete isolated verifier.
+- [x] OPR-008 packaging: generated QA evidence stays local under ignored `qa/`; Git and Docker build exclusions remain in place. The removed backend fault harness is not part of the application package.
 - [x] OPR-001 configuration: fresh setup uses API mode; demo mode is opt-in. Existing environment values and the running shared stack are updated separately through the coordinated cutover.

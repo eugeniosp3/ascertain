@@ -36,7 +36,7 @@ export default tseslint.config(
         'error',
         {
           allowConstantExport: true,
-          allowExportNames: ['buttonVariants', 'badgeVariants', 'tabsListVariants'],
+          allowExportNames: ['buttonVariants', 'tabsListVariants'],
         },
       ],
     },

@@ -1,5 +1,5 @@
 import { ApiError } from './client'
-import type { NotificationSummary, PatientDetail, PatientListItem } from './types'
+import type { NotificationSummary, PatientDetail, PatientListItem, PatientSummary } from './types'
 
 export type PatientListItemDto = Omit<PatientListItem, 'middle_initial'> & {
   middle_initial?: string | null
@@ -35,6 +35,30 @@ export function notificationSummaryFromDto(value: unknown): NotificationSummary 
   return {
     unread_comments_count: count('unread_comments'),
     patients_with_unread_comments: count('patients_with_unread'),
+  }
+}
+
+const SUMMARY_METHODS: readonly unknown[] = ['llm', 'template'] satisfies PatientSummary['method'][]
+
+// The summary method is a closed set: an unknown method is an invalid response, not a new label.
+export function patientSummaryFromDto(value: unknown): PatientSummary {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) invalidSummary()
+  const { patient_id, summary, generated_at, method, model } = value as Record<string, unknown>
+  if (
+    typeof patient_id !== 'string' ||
+    typeof summary !== 'string' ||
+    typeof generated_at !== 'string' ||
+    !SUMMARY_METHODS.includes(method) ||
+    (model != null && typeof model !== 'string')
+  ) {
+    invalidSummary()
+  }
+  return {
+    patient_id,
+    summary,
+    generated_at,
+    method: method as PatientSummary['method'],
+    ...(typeof model === 'string' && model ? { model } : {}),
   }
 }
 

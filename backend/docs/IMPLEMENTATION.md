@@ -71,7 +71,7 @@ Patient filters, count expressions, and sorts run before pagination; count total
 
 Discussion lists use cursor continuation for reliable read acknowledgment. Preserve `(created_at, id)` ordering, the original snapshot boundary, equal-timestamp handling, and monotonic per-user watermarks. Do not revert to offset-only acknowledgment: deleting an earlier row could otherwise skip an unseen comment. GETs remain read-only.
 
-A template summary is generated fresh from current patient fields and active clinical notes. Never include discussion, deleted notes, or fetched external-file content implicitly. Unknown allergies and no known allergies are distinct.
+The deterministic template builds the summary FACTS fresh from current patient fields and active clinical notes. With `SUMMARY_PROVIDER=llm`, the LLM rewrites only those FACTS; its result is stored in `patient_summaries` under `sha256(model + FACTS)` and reused until the facts change, while template fallbacks are never stored. Never include discussion, deleted notes, or fetched external-file content implicitly. Unknown allergies and no known allergies are distinct.
 
 ## Verification and future work
 

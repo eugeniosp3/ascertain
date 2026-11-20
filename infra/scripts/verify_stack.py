@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 import time
 from html.parser import HTMLParser
+from http.client import HTTPConnection
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlsplit
@@ -60,6 +61,22 @@ def response(
         time.sleep(0.5)
 
 
+def gateway_failure(url: str) -> int:
+    """Return nginx's 502 or 504 while the privacy probe has stopped the API."""
+    try:
+        # Outlast nginx's 5s proxy_connect_timeout; a stale API address yields 504.
+        result = urlopen(url, timeout=15)
+    except HTTPError as error:
+        result = error
+    with result:
+        status = result.status
+    require(
+        status in {502, 504},
+        f"Stopped API must return HTTP 502 or 504 through nginx, received {status}.",
+    )
+    return status
+
+
 class EntryAssets(HTMLParser):
     """Read the actual entry bundle URLs emitted by Vite, rather than guessing names."""
 
@@ -101,6 +118,17 @@ def cache_directives(url: str, expected_status: int = 200) -> set[str]:
 
 
 def verify_http(frontend: str, backend: str) -> None:
+    # Do not follow the redirect: its Location must retain the public origin.
+    connection = HTTPConnection(urlsplit(frontend).netloc, timeout=5)
+    try:
+        connection.request("HEAD", "/api")
+        redirect = connection.getresponse()
+        require(
+            redirect.status == 308 and redirect.getheader("Location") == "/api/",
+            "The /api redirect must stay relative to the published frontend address.",
+        )
+    finally:
+        connection.close()
     html, content_type = response(frontend + "/")
     require(
         content_type == "text/html" and b'id="root"' in html,
@@ -261,6 +289,8 @@ def main() -> None:
         "VITE_API_BASE": "/api",
         "MIGRATE_ON_STARTUP": "false" if args.database_only else "true",
         "SEED_ON_STARTUP": "false" if args.database_only else "true",
+        # Keep every automated stack offline from the external summary model.
+        "SUMMARY_PROVIDER": "template",
     }
     with tempfile.TemporaryDirectory(prefix="ascertain-infra-") as temporary:
         empty_env = Path(temporary) / "empty.env"
@@ -324,7 +354,7 @@ def main() -> None:
             # logs. Exercise it only in this random disposable Compose project.
             try:
                 compose("stop", "backend")
-                response(frontend + "/api/patients?q=" + marker, 502)
+                gateway_failure(frontend + "/api/patients?q=" + marker)
             finally:
                 compose("start", "backend")
                 backend = "http://" + compose("port", "backend", "8000")

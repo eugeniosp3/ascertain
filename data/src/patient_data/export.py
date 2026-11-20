@@ -1,7 +1,7 @@
 """Produce the patient package (``patients.jsonl`` + ``manifest.json``) from silver only.
 
-The package is assembled in ``data/.cache/work/``, validated with the same loader the seed
-command uses, and only then renamed into ``data/assets/exports/<dataset-key>/``. An existing
+The package is assembled in ``data/.cache/work/``, validated with the package loader,
+and only then renamed into ``data/assets/exports/<dataset-key>/``. An existing
 package with identical bytes is reused; different bytes under the same identity are an
 error, because a rule or mapping change must advance its version.
 """

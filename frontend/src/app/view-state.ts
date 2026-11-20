@@ -5,7 +5,6 @@ import {
 } from '@/features/patient-list/search-params'
 import { emptyListView, useUIStore, type ListViewState } from './ui-store'
 import type { PatientListGeometry } from '@/features/patient-list/scroll-restoration'
-export type { ListViewState } from './ui-store'
 
 // Return-to-list snapshots: each viewer and list/notification view keeps its own position.
 function viewKey(view: ListView, actorId: string | null): string {

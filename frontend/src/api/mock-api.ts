@@ -47,6 +47,11 @@ function pageOf<T>(items: T[], params: { page: number; page_size: number }): Pag
   }
 }
 
+// Mirrors the API's computed display name, which the list returns and search matches.
+function fullName(item: DemoPatient): string {
+  return [item.first_name, item.middle_initial, item.last_name].filter(Boolean).join(' ')
+}
+
 function ageOf(birthDate: string): number {
   const today = new Date().toISOString().slice(0, 10)
   return (
@@ -115,7 +120,7 @@ export function createMockApi(state = createDemoData()): DashboardApi {
       first_name: item.first_name,
       middle_initial: item.middle_initial,
       last_name: item.last_name,
-      name: [item.first_name, item.middle_initial, item.last_name].filter(Boolean).join(' '),
+      name: fullName(item),
       date_of_birth: item.date_of_birth,
       age: ageOf(item.date_of_birth),
       last_visit: item.last_visit,
@@ -198,7 +203,7 @@ export function createMockApi(state = createDemoData()): DashboardApi {
             item.first_name,
             item.middle_initial,
             item.last_name,
-            [item.first_name, item.middle_initial, item.last_name].filter(Boolean).join(' '),
+            fullName(item),
             `${item.first_name} ${item.last_name}`,
             item.email,
             item.source_patient_id,
@@ -344,7 +349,9 @@ export function createMockApi(state = createDemoData()): DashboardApi {
         patient_id: id,
         summary: `${item.name}, age ${item.age}, is an ${item.status} patient. Blood type: ${item.blood_type ?? 'unknown'}. ${conditions} ${allergies}\n\n${narrative}`,
         generated_at: new Date().toISOString(),
-        method: 'template',
+        // Demo mode shows the AI presentation; the text itself is assembled locally.
+        method: 'llm',
+        model: 'gemma-3-27b',
       }
     },
     async listComments(id, params, ctx) {

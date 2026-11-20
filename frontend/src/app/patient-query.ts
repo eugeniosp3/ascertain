@@ -1,5 +1,5 @@
 import { queryOptions, type QueryClient } from '@tanstack/react-query'
-import { api, dataMode, isApiError } from '@/api'
+import { api, isApiError } from '@/api'
 import { patientKeys } from './query-keys'
 
 /** Cached detail recovery: retain data on transient refresh failures, but clear denied/deleted records. */
@@ -21,6 +21,5 @@ export function patientDetailOptions(client: QueryClient, patientId: string, act
         throw error
       }
     },
-    meta: { dataMode },
   })
 }

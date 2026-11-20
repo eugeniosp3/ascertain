@@ -297,4 +297,19 @@ describe('HTTP API', () => {
     expect(error.message).toBe('Deleted note.')
     expect(error.kind).toBe('gone')
   })
+
+  it('accepts llm and template summaries and rejects an unknown method or a bad model', async () => {
+    const base = { patient_id: 'p', summary: 'Text', generated_at: '2026-11-20T12:00:00Z' }
+    const reply = (body: unknown) =>
+      createHttpApi('/api', vi.fn<typeof fetch>().mockResolvedValue(stubResponse(200, body)))
+    await expect(
+      reply({ ...base, method: 'llm', model: 'gemma-3-27b' }).getSummary('p'),
+    ).resolves.toEqual({ ...base, method: 'llm', model: 'gemma-3-27b' })
+    await expect(
+      reply({ ...base, method: 'template', model: null }).getSummary('p'),
+    ).resolves.toEqual({ ...base, method: 'template' })
+    for (const body of [{ ...base, method: 'magic' }, { ...base, method: 'llm', model: 7 }, null]) {
+      await expect(reply(body).getSummary('p')).rejects.toMatchObject({ code: 'invalid_response' })
+    }
+  })
 })

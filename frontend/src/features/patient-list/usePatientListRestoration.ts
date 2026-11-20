@@ -35,7 +35,7 @@ export function usePatientListRestoration({
   const previousScope = useRef(scope)
   const geometry = initialGeometry?.scope === scope ? initialGeometry : null
   // This project does not use React Compiler; virtualizer methods intentionally read live measurements.
-  // eslint-disable-next-line react-hooks/incompatible-library
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual is used outside the React Compiler.
   const rowVirtualizer = useVirtualizer<HTMLDivElement, HTMLElement>({
     count: items.length,
     getScrollElement: () => scrollRef.current,

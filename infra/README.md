@@ -101,6 +101,8 @@ docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 
 Run `SELECT current_database(), current_user;` and type `\q` to exit. A native backend uses `postgresql+psycopg://sample_user:sample_password@localhost:10052/sample_db`; a container uses host `db` and port `5432`. URL-encode credentials when constructing a URL manually.
 
+PostgreSQL is pinned to major version 17. A major upgrade needs a tested backup/restore or `pg_upgrade` plan and a new compatible volume layout; changing the image tag alone does not upgrade existing database files. The [official image documentation](https://github.com/docker-library/docs/tree/master/postgres#pgdata) describes the changed data-directory layout for version 18 and later.
+
 For database-only work:
 
 ```sh
@@ -139,14 +141,16 @@ The sample configuration sets `MIGRATE_ON_STARTUP=true` and `SEED_ON_STARTUP=tru
 
 If you already have an `.env` from an earlier setup, change only `VITE_DATA_MODE=api`, `MIGRATE_ON_STARTUP=true`, and `SEED_ON_STARTUP=true` to adopt the defaults, then rerun `./setup.sh` (or `./setup.sh --dev`). Keep your database credentials, ports and other settings. Do not replace the file or remove the database volume.
 
+Summary generation defaults to `SUMMARY_PROVIDER=llm`, `LLM_BASE_URL=https://api.llm7.io/v1`, `LLM_MODEL=gemma-3-27b`, and `LLM_TIMEOUT_SECONDS=10`. LLM summaries use a free keyless endpoint; data is fictional; set `SUMMARY_PROVIDER=template` to disable. CI and the isolated stack verifier select `template` so automated checks do not depend on the LLM endpoint.
+
 ### 8. Run checks
 
 Run application checks inside Docker:
 
 ```sh
 docker compose --profile checks build checks frontend-checks
-docker compose --profile checks run --rm checks
-docker compose --profile checks run --rm frontend-checks
+docker compose --profile checks run --rm -e SUMMARY_PROVIDER=template checks
+docker compose --profile checks run --rm -e VITE_DATA_MODE=demo frontend-checks
 docker compose --profile checks rm -sf test-db
 ```
 
@@ -164,15 +168,13 @@ That command builds the compiled frontend, checks assets, cache headers, deep li
 
 - **Application checks and seeded startup:** linting, formatting, typing, unit/PostgreSQL tests, compiled assets, proxy/deep links, migrations, seed markers, and preservation of edits/deletions across restarts.
 - **Demo and intercepted-contract regressions:** desktop/mobile demo journeys and controlled HTTP-response fixtures. These do not prove that the browser works with the real backend.
-- **Real API browser integration:** an isolated compiled API-mode frontend, FastAPI and PostgreSQL, with no HTTP interception. A previous staged functional candidate passed 16 cases; the current assignment, default-user and restoration changes still need the final integration run. The new lane has not yet run on hosted CI.
+- **Real API browser integration:** an isolated compiled API-mode frontend, FastAPI and PostgreSQL, with no HTTP interception.
 
-The published [baseline CI run](https://github.com/eugeniosp3/ascertain/actions/runs/44781809472) passed on commit `611bda5`. Its passing demo/fixture results are separate from the pending real API integration milestone. [checklist.md](docs/checklist.md) records completed and pending work.
-
-An independent isolated Docker check of backend source `34e2150b…` passed 236 backend tests and 160 data tests, plus Ruff and mypy. It verified that fault evidence was absent from the checks image while the 30 approved harness source files remained. That snapshot predates the assigned-workload migration and is historical evidence, not verification of the new assignment implementation.
+[checklist.md](docs/checklist.md) records completed and pending work. [delivery-review.md](docs/delivery-review.md) records the current review and hosted CI result, distinguishing browser-test results from the overall job conclusion.
 
 #### Live browser handoff
 
-The frontend-owned interface is `e2e:live`, `playwright.live.config.ts`, and `e2e-live/`. After the owners confirm a stable candidate, install the browser-test dependencies with the frontend's locked Node/npm versions and Chrome. From the repository root, run:
+The frontend-owned interface is `e2e:live`, `playwright.live.config.ts`, and `e2e-live/`. Install the browser-test dependencies with the frontend's locked Node/npm versions and Chrome. From the repository root, run:
 
 ```sh
 python3 infra/scripts/verify_stack.py --live-browser
@@ -186,7 +188,7 @@ npm run e2e:live -- --workers=1
 
 The frontend configuration must use that existing server and same-origin `/api`, with no Playwright web server or intercepted responses. It runs desktop Chrome and 390px touch-mobile Chrome. Tests discover `/users`, create run-unique disposable patients, and clean up only the IDs they created. They must not edit seed patients or reset existing read state. Browser artifacts and the default JSON report go to the ignored `frontend/e2e-live/results/` directory.
 
-CI retains live browser results for seven days on both success and failure. Demo and intercepted-contract artifacts remain separate. Local evidence under `infra/artifacts/` and raw backend fault artifacts stay ignored.
+CI retains live browser results for seven days on both success and failure. Demo and intercepted-contract artifacts remain separate. Local evidence under `infra/artifacts/` stays ignored.
 
 Browser tests run while all 100 seeded patients are intact. The runner checks patient/seed preservation afterward, then performs its own deliberate edit/deletion and restart checks. It stops browser processes on interruption or timeout and removes only its own Compose project and volumes.
 

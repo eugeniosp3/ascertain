@@ -136,6 +136,7 @@ describe('virtualized patient results', () => {
     const table = await screen.findByRole('table')
     expect(table).toHaveAttribute('aria-rowcount', '101')
     const visibleRows = within(table).getAllByRole('row')
+    expect(visibleRows[0]).toHaveAttribute('aria-rowindex', '1')
     expect(visibleRows.length).toBeGreaterThan(1)
     expect(visibleRows.length).toBeLessThan(25)
     expect(screen.queryByText('Patient 90 Example')).not.toBeInTheDocument()
@@ -258,6 +259,10 @@ describe('virtualized patient results', () => {
     const cards = await screen.findByRole('list', { name: 'Patients' })
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
     expect(within(cards).getAllByRole('listitem').length).toBeLessThan(15)
+    // Virtualized cards still report their position in the whole result set.
+    const firstCard = within(cards).getAllByRole('listitem')[0]
+    expect(firstCard).toHaveAttribute('aria-posinset', '1')
+    expect(firstCard).toHaveAttribute('aria-setsize', '100')
     expect(
       screen.getByRole('link', { name: 'Patient 0 Example, 0 clinical notes, open Notes' }),
     ).toBeInTheDocument()

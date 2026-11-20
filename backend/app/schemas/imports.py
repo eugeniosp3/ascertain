@@ -1,7 +1,7 @@
 """Validated, backend-owned values for the direct DuckDB import.
 
 The data package's JSONL projection is provisional. This schema instead follows
-``MODEL_CONTRACT.md`` and the shared application detail types.
+``docs/MODEL_CONTRACT.md`` and the shared application detail types.
 """
 
 from dataclasses import dataclass

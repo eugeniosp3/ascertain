@@ -28,20 +28,6 @@ export function patientFieldLabel(path: string): string {
   return fieldLabels[path as keyof PatientFormValues] ?? 'Patient information'
 }
 
-export function fieldMessage(errors: readonly unknown[]): string | undefined {
-  for (const error of errors) {
-    if (typeof error === 'string') return error
-    if (
-      error &&
-      typeof error === 'object' &&
-      'message' in error &&
-      typeof error.message === 'string'
-    ) {
-      return error.message
-    }
-  }
-}
-
 export function fieldDescription(id: string, description?: string, error?: string) {
   return (
     [description && `${id}-description`, error && `${id}-error`].filter(Boolean).join(' ') ||

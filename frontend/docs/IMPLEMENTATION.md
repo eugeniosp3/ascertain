@@ -122,7 +122,7 @@ The canonical field inventory is the [data contract](../../reference/chatroom/fr
 - **Query keys:** use the shared `patientKeys` helpers for `['patients','list',actorId,params]`, `['patients','detail',id,actorId]`, `['patients',id,'notes']`, `['patients',id,'notes',noteId]`, `['patients',id,'summary']`, `['patients',id,'comments',actorId,pageParams]`, `['notifications',actorId,'summary']` and `['demo-users']`. Notification queues reuse list keys with the unread filter. Partition all viewer-specific counts/read data, including patient detail, by actor and prevent results from the previous actor flashing during a switch. Pass TanStack's `signal` into `fetch`; cancellation is not a user-facing failure.
 - **Defaults:** `staleTime` around 30 s. Retry network errors and 5xx up to twice; never retry 4xx or mutations. The list uses `placeholderData: keepPreviousData`.
 - **Patient access boundary:** reuse `patientDetailOptions` for workspace and edit reads. Ordinary refresh failures retain cached content and drafts. A 401/403/404/410 clears that exact patient/actor detail cache; later transient failures or remounts cannot reveal it until a successful read restores access.
-- **Response ordering:** write a successful patient mutation response to cache before invalidating/refetching. A later fetch wins. Read receipts update only acknowledged comment IDs and invalidate totals; never overwrite newer absolute unread counts with an older receipt.
+- **Response ordering:** write a successful patient mutation response to cache before invalidating/refetching, so a later fetch wins. A read receipt is a watermark (`through`), not a list of comment IDs or an absolute count: on success it only invalidates this actor's counts, so a comment that arrived later stays unread.
 - **Visit lifetime:** keep the patient workspace parent mounted across its canonical note child route. Linked-note navigation preserves drafts, comment pagination and visit-only New markers, while changing patient or actor starts a separate visit.
 - **Invalidation after each change:**
   - Create patient: lists.
@@ -131,8 +131,8 @@ The canonical field inventory is the [data contract](../../reference/chatroom/fr
   - Add note: notes, summary and lists containing note counts.
   - Delete note: notes, that note, summary, lists and comments (so deleted-note indicators update).
   - Comment changes: comments, patient lists/notification queues and the global unread summary; never the clinical summary solely because discussion changed.
-  - Read acknowledgment: this actor's comments, lists/notification queues and unread summary; keep any newer unread comments intact.
-- **Search input:** local state updates on every keystroke. After about 300 ms the value is written to the URL with `replace: true`, and `page` is reset to 1. `useDeferredValue` is optional on top of this.
+  - Read acknowledgment: this actor's patient lists/notification queues, the patient detail counts and the unread summary. Keep the displayed comment page (refetching page one would issue a new boundary); newer unread comments stay intact.
+- **Search input:** local state updates on every keystroke. After 250 ms the trimmed value is written to the URL with `replace: true`, and `page` is reset to 1. `useDeferredValue` is optional on top of this.
 - Keep the draft search input synchronized with browser back/forward navigation, cancel an obsolete debounce when navigation changes the URL, and distinguish retained old results from a finished empty response. After deleting the last row of a page, return to the nearest valid page.
 - **URL params:** `validateSearch` on the list route uses a Zod schema with defaults, so a hand-edited URL with bad values falls back to the defaults instead of crashing. Use the Zod adapter if the installed router version needs one.
 

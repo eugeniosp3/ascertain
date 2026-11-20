@@ -9,7 +9,7 @@ Commands:
   export         silver -> data/assets/exports/<dataset-key>/{patients.jsonl,manifest.json}
   all            build, validate, export
 
-The seed command is separate: ``python -m patient_data.seed``.
+PostgreSQL seeding belongs to the backend: ``python -m app.seed`` from ``backend/``.
 """
 
 import argparse
@@ -74,7 +74,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m patient_data",
         description="Build, validate, inspect, and export the patient stages.",
-        epilog="The seed command is `python -m patient_data.seed`.",
+        epilog="PostgreSQL seeding: run `python -m app.seed` from backend/.",
     )
     parser.add_argument("command", choices=COMMANDS)
     parser.add_argument("--repo-root", type=Path, help="repository root (default: this checkout)")

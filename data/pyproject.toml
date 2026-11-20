@@ -9,10 +9,8 @@ description = "Patient-only source normalization and import tooling for Ascertai
 requires-python = ">=3.11"
 dependencies = [
   "pydantic>=2.10,<3",
-  "pydantic-settings>=2.7,<3",
   "duckdb>=1.2,<2",
   "sqlalchemy>=2.0,<3",
-  "psycopg[binary]>=3.2,<4",
   "pytz>=2025.2",
 ]
 
@@ -25,8 +23,7 @@ packages = ["src/patient_data"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 cache_dir = ".cache/pytest"
-addopts = "--strict-config --strict-markers"
-markers = ["postgres: integration tests requiring a disposable PostgreSQL database"]
+addopts = "--strict-config --strict-markers --import-mode=importlib"
 
 [tool.ruff]
 target-version = "py311"
@@ -35,7 +32,10 @@ line-length = 100
 src = ["src"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
+select = ["E", "F", "I", "UP", "B", "S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
 
 [tool.mypy]
 python_version = "3.11"

@@ -7,6 +7,7 @@ from typing import Any, cast
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import DataError
 from starlette.exceptions import HTTPException
 
 from app.schemas.common import ErrorDetail, ErrorResponse, FieldError
@@ -109,6 +110,17 @@ async def _handle_validation_error(_request: Request, error: Exception) -> JSONR
     )
 
 
+async def _handle_data_error(_request: Request, _error: Exception) -> JSONResponse:
+    # PostgreSQL rejected a value that passed validation, such as a NUL character in text.
+    return _response(
+        422,
+        ErrorDetail(
+            code="invalid_value",
+            message="A submitted value cannot be stored. Remove unsupported characters.",
+        ),
+    )
+
+
 async def _handle_unexpected_error(_request: Request, _error: Exception) -> JSONResponse:
     # Starlette propagates the original exception to the server after this response.
     # The logging filter keeps stack locations without exception values or SQL parameters.
@@ -123,4 +135,5 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AppError, _handle_app_error)
     app.add_exception_handler(HTTPException, _handle_http_error)
     app.add_exception_handler(RequestValidationError, _handle_validation_error)
+    app.add_exception_handler(DataError, _handle_data_error)
     app.add_exception_handler(Exception, _handle_unexpected_error)

@@ -233,9 +233,9 @@ footer p{margin:6px 0}
   <h1>Holepunch</h1>
   <p class="lede">The assessment and selected additions, reconciled with implementation and test evidence. Checkmarks show verification in the stated scope; final live acceptance remains explicit.</p>
 
-  <p id="progress-snapshot">Updated 2026-11-20 20:25 UTC · <a href="PROGRESS.md">Repository-readable punch card</a> · <a href="../README.md">Project overview</a></p>
+  <p id="progress-snapshot">Updated 2026-11-20 20:58 UTC · <a href="PROGRESS.md">Repository-readable punch card</a> · <a href="../README.md">Project overview</a></p>
 
-<section id="assessment-progress" class="card" aria-label="Core assessment status"><h2>Core assessment</h2><p><strong>51 / 51 verified (100%)</strong> · 0 partial · 0 still open</p><div class="bar"><i style="width:100%"></i></div><p>The 51 checks split the original assessment into individually testable requirements. Stretch goals and extra features are tracked separately in the detailed card.</p><p>Final integrated acceptance is in progress. <a href="PROGRESS.md#core-assessment-checks">Read the requirement-by-requirement mapping</a>.</p><p><strong>Detailed work: 148 / 151 verified in stated scopes.</strong></p><ul><li>Verified build committed and pushed on 20 Nov: every core check and every selected item is verified.</li><li>Next wave (in progress): per-domain anti-pattern and accessibility reviews with fixes, the study guide (architecture, technical decisions, maintainability and performance, data model) and a final README polish.</li></ul></section>
+<section id="assessment-progress" class="card" aria-label="Core assessment status"><h2>Core assessment</h2><p><strong>51 / 51 verified (100%)</strong> · 0 partial · 0 still open</p><div class="bar"><i style="width:100%"></i></div><p>The 51 checks split the original assessment into individually testable requirements. Stretch goals and extra features are tracked separately in the detailed card.</p><p>Final integrated acceptance is in progress. <a href="PROGRESS.md#core-assessment-checks">Read the requirement-by-requirement mapping</a>.</p><p><strong>Detailed work: 148 / 151 verified in stated scopes.</strong></p><ul><li>Final: all checks green on the frozen code (backend 337, data 153, frontend 370 unit + 117 demo + 11 API browser tests, clean-room live run 16/16). Committed and pushed; hosted CI confirms on GitHub.</li><li>Also delivered: LLM patient summary (saved, regenerated only when data changes, AI badge and tooltip), per-user overview, accessibility and anti-pattern fixes, date-order validation, a folder tidy and a rewritten README. Advanced search filters were deliberately not selected.</li></ul></section>
 
   <div class="stats">
     <div class="stat">
@@ -1194,9 +1194,9 @@ const PHASES = [
         "ref": "P3 hint",
         "part": "X",
         "t": "Optional LLM summarizer behind the same interface",
-        "d": "External LLM summarization is not implemented; the allowed template approach is selected.<br><b>Not selected</b> · Scope: optional<br>Evidence: <a href=\"../backend/app/services/summaries.py\">backend/app/services/summaries.py</a>",
-        "done": false,
-        "status": "not_selected"
+        "d": "Done 20 Nov. An open-weight LLM (gemma-3-27b via the keyless LLM7 endpoint) writes the summary from the patient&#x27;s facts. It is saved in patient_summaries (migration 0003) with a fingerprint of those facts, so repeat views reuse it and any profile or note change regenerates it. If the LLM is unreachable or rate-limited, the deterministic template answers and nothing is stored. Verified live (llm/gemma-3-27b, repeat view served from the stored row) and by 337 backend tests. The UI marks AI summaries with a sparkles icon, &#x27;Updated&#x27; time and tooltip (frontend unit tests). Note: the free endpoint has a daily quota per network; when it is used up, the app shows the standard summary and says so.<br><b>Verified in stated scope</b> · Scope: backend tests, live api, frontend tests<br>Evidence: <a href=\"../backend/app/services/summaries.py\">backend/app/services/summaries.py</a> · <a href=\"../backend/alembic/versions/20261120_0003_patient_summaries.py\">backend/alembic/versions/20261120_0003_patient_summaries.py</a> · <a href=\"../frontend/src/features/patient-detail/SummaryPanel.tsx\">frontend/src/features/patient-detail/SummaryPanel.tsx</a>",
+        "done": true,
+        "status": "verified"
       },
       {
         "id": "sm-ui",
@@ -1428,7 +1428,7 @@ const PHASES = [
         "ref": "Submission",
         "part": "SUB",
         "t": "Clean-room test",
-        "d": "Verified 20 Nov: fresh isolated Compose project with no .env; build, API-mode frontend, automatic migrate and seed, HTTP/proxy/restart/persistence checks and live browser journeys pass.<br><b>Verified in stated scope</b> · Scope: clean-room isolated compose project<br>Evidence: <a href=\"../infra/scripts/verify_stack.py\">infra/scripts/verify_stack.py</a> · <a href=\"../frontend/e2e-live/\">frontend/e2e-live/</a> · <a href=\"../reference/chatroom/integration-coordination.md\">reference/chatroom/integration-coordination.md</a>",
+        "d": "Final frozen tree, 20 Nov: a fresh isolated Compose project with no .env builds, migrates, seeds 100 patients, survives restart, backend recreation and full-stack recreation, keeps request values out of logs, and passes all 16 live browser journeys on real PostgreSQL.<br><b>Verified in stated scope</b> · Scope: clean-room isolated compose project<br>Evidence: <a href=\"../infra/scripts/verify_stack.py\">infra/scripts/verify_stack.py</a> · <a href=\"../frontend/e2e-live/\">frontend/e2e-live/</a> · <a href=\"../reference/chatroom/integration-coordination.md\">reference/chatroom/integration-coordination.md</a>",
         "done": true,
         "status": "verified"
       },
@@ -1536,9 +1536,9 @@ const PHASES = [
         "ref": "Stretch · DX",
         "part": "X",
         "t": "CI pipeline config",
-        "d": "GitHub Actions on PR/default-branch changes runs quality checks, real PostgreSQL tests, Docker builds/seeded restart verification and separately labelled demo/HTTP-fixture browser tests. Published-baseline CI passed; the new live-browser lane awaits frontend.<br><b>Verified in stated scope</b> · Scope: compiled stack and hosted ci baseline<br>Evidence: <a href=\"../.github/workflows/ci.yml\">.github/workflows/ci.yml</a> · <a href=\"../infra/scripts/checks.sh\">infra/scripts/checks.sh</a> · <a href=\"../infra/scripts/verify_stack.py\">infra/scripts/verify_stack.py</a>",
-        "done": true,
-        "status": "verified"
+        "d": "Hosted run 44811327552 for 80c9dab: the application checks, the demo and contract browser tests, and all 16 live browser journeys on the real stack PASS. The run is red because one verifier probe deliberately stops the backend and expects nginx to answer 502, but GitHub&#x27;s runners answer 504 (both mean the upstream is unreachable). Infra is fixing the probe without weakening its log-privacy assertion. The next push re-runs CI.<br><b>In progress</b> · Scope: hosted ci run for 80c9dab<br>Evidence: <a href=\"../.github/workflows/ci.yml\">.github/workflows/ci.yml</a> · <a href=\"../infra/scripts/verify_stack.py\">infra/scripts/verify_stack.py</a> · <a href=\"https://github.com/eugeniosp3/ascertain/actions/runs/44811327552\">Hosted CI run</a>",
+        "done": false,
+        "status": "in_progress"
       }
     ]
   },
@@ -1574,7 +1574,7 @@ const PHASES = [
         "ref": "Eval · code quality",
         "part": "EVAL",
         "t": "All tests pass",
-        "d": "20 Nov, final tree. Backend 301 and data 160 tests pass, with Ruff, format and strict mypy clean, in an isolated checks container. Frontend: 351 unit/component tests, 117 demo-browser tests and 11/11 HTTP-adapter browser tests pass, with ESLint, Prettier and strict TypeScript clean. The clean-room live browser journeys pass on real PostgreSQL. QA&#x27;s live API matrix is 317/317, with 32/32 assignment and 16/16 seed-rerun checks.<br><b>Verified in stated scope</b> · Scope: full suite on the final tree<br>Evidence: <a href=\"../reference/chatroom/integration-coordination.md\">reference/chatroom/integration-coordination.md</a>",
+        "d": "Final frozen tree, 20 Nov, all green. Backend: 337 tests plus Ruff, format and strict mypy; data: 153 tests (isolated checks container on real PostgreSQL). Frontend: 370 unit, 117 demo-browser and 11/11 HTTP-adapter browser tests, plus lint, format and strict TypeScript. Clean-room run: a fresh isolated stack passes migrations, the 100-patient seed, restart, recreate and log-privacy checks, and all 16 live browser journeys on desktop and phone.<br><b>Verified in stated scope</b> · Scope: final frozen tree<br>Evidence: <a href=\"../reference/chatroom/integration-coordination.md\">reference/chatroom/integration-coordination.md</a>",
         "done": true,
         "status": "verified"
       },
@@ -2002,7 +2002,7 @@ const PHASES = [
         "ref": "Selected addition",
         "part": "ADD",
         "t": "Run real API-mode browser journeys on an isolated compiled stack",
-        "d": "verify_stack.py --live-browser builds an isolated API-mode stack and runs the live browser journeys (desktop and phone). The live journeys pass. A never-run, redundant core-acceptance spec with stale selectors was removed.<br><b>Verified in stated scope</b> · Scope: clean-room live run<br>Evidence: <a href=\"../infra/scripts/verify_stack.py\">infra/scripts/verify_stack.py</a> · <a href=\"../.github/workflows/ci.yml\">.github/workflows/ci.yml</a> · <a href=\"../reference/chatroom/integration-coordination.md\">reference/chatroom/integration-coordination.md</a>",
+        "d": "Verified locally (clean-room run) and on hosted CI for 80c9dab: all 16 live browser journeys pass on desktop and phone against a freshly built API-mode stack. A never-run, redundant core-acceptance spec with stale selectors was removed.<br><b>Verified in stated scope</b> · Scope: clean-room live run<br>Evidence: <a href=\"../infra/scripts/verify_stack.py\">infra/scripts/verify_stack.py</a> · <a href=\"../.github/workflows/ci.yml\">.github/workflows/ci.yml</a> · <a href=\"../reference/chatroom/integration-coordination.md\">reference/chatroom/integration-coordination.md</a>",
         "done": true,
         "status": "verified"
       },

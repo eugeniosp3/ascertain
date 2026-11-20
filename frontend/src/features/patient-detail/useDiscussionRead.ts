@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, type Comment } from '@/api'
-import { patientKeys } from '@/app/query-keys'
+import { notificationKeys, patientKeys } from '@/app/query-keys'
 import { timestampMicros } from '@/utils/dates'
 
 // Visibility gating: subscribe to the browser so a hidden document cannot acknowledge discussion.
@@ -46,7 +46,7 @@ export function useDiscussionRead(
       await Promise.all([
         client.invalidateQueries({ queryKey: patientKeys.lists(actorId) }),
         client.invalidateQueries({ queryKey: patientKeys.detail(patientId, actorId) }),
-        client.invalidateQueries({ queryKey: ['notifications', actorId] }),
+        client.invalidateQueries({ queryKey: notificationKeys.actor(actorId) }),
       ])
     },
   })
@@ -84,9 +84,9 @@ export function useDiscussionRead(
     // Next must not skip a page that loaded while the panel or document was hidden.
     pageDisplayed: active && visible && displayed.has(boundKey),
     readError: read.error,
-    reading: read.isPending,
+    reading: isPending,
     retryRead: () => {
-      if (active && visible && !read.isPending && read.variables) read.mutate(read.variables)
+      if (active && visible && !isPending && read.variables) mutate(read.variables)
     },
   }
 }

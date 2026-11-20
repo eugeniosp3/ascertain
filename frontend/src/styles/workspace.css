@@ -363,9 +363,22 @@
   font-weight: 400;
 }
 .ac-status-filters [aria-pressed='true'] {
+  position: relative;
   border-color: var(--ac-hairline);
   background: var(--ac-surface);
   font-weight: 550;
+}
+/* Selection edge (AST-005): a 2px ink bar, 18.7:1 Light / 13.3:1 Dark on the selected fill. It is
+   inside the option, so the focus ring stays the only perimeter treatment. */
+.ac-status-filters [aria-pressed='true']::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  bottom: 2px;
+  left: 8px;
+  border-bottom: 2px solid var(--ac-ink);
+  border-radius: 1px;
+  pointer-events: none;
 }
 .ac-results-status {
   display: flex;
@@ -394,6 +407,11 @@
   min-height: 280px;
   overflow: hidden;
 }
+/* WCAG 2.4.11: keyboard focus scrolling keeps rows clear of the 42px sticky table header. */
+.ac-list-scroll:has(.ac-patient-table) {
+  scroll-padding-top: 42px;
+}
+
 .ac-list-scroll {
   position: relative;
   flex: 1;
@@ -1224,8 +1242,6 @@
   }
   .ac-card-meta b {
     white-space: nowrap;
-  }
-  .ac-card-meta b {
     color: var(--ac-ink-soft);
     font-weight: 500;
   }

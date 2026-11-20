@@ -1,13 +1,15 @@
 import { PATIENT_FIELD_LIMITS as limits } from '@/api/constraints'
-import { useId } from 'react'
+import { useId, useRef } from 'react'
 import { FormField } from '@/components/shared/FormField'
 import { Button } from '@/components/ui/button'
-import { fieldDescription, fieldMessage } from './form-errors'
+import { fieldMessage } from '@/utils/form-errors'
+import { fieldDescription } from './form-errors'
 import { PatientInput } from './PatientInput'
 import type { PatientFormBinding } from './use-patient-form'
 
 export function ConditionsEditor({ binding }: { binding: PatientFormBinding }) {
   const id = useId()
+  const addButton = useRef<HTMLButtonElement>(null)
   const { form, serverFields, clearServerField } = binding
   return (
     <form.Field name="conditions" mode="array">
@@ -49,9 +51,14 @@ export function ConditionsEditor({ binding }: { binding: PatientFormBinding }) {
                     // Keep the target in place until click; focus then still runs blur validation.
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={(event) => {
-                      event.currentTarget.focus()
+                      const remove = event.currentTarget
+                      remove.focus()
                       clearServerField('conditions')
                       void field.removeValue(index)
+                      // Removing the final row unmounts this button; keep focus in the editor.
+                      requestAnimationFrame(() => {
+                        if (!remove.isConnected) addButton.current?.focus()
+                      })
                     }}
                   >
                     Remove condition
@@ -59,6 +66,7 @@ export function ConditionsEditor({ binding }: { binding: PatientFormBinding }) {
                 </fieldset>
               ))}
               <Button
+                ref={addButton}
                 id={id}
                 data-patient-field="conditions"
                 aria-label="Add condition"

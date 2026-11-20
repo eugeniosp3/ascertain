@@ -1,11 +1,12 @@
-"""Patient summaries derived only from current clinical data."""
+"""Patient summaries derived only from current clinical data (LLM prose or template)."""
 
-from typing import Annotated
+from typing import Annotated, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
+from app.config import Settings
 from app.db import get_session
 from app.dependencies import get_optional_user
 from app.errors import error_responses
@@ -19,7 +20,9 @@ router = APIRouter(tags=["Summaries"], responses=error_responses(401, 404, 422, 
 @router.get("/patients/{patient_id}/summary", response_model=SummaryResponse)
 def get_summary(
     patient_id: UUID,
+    request: Request,
     session: Annotated[Session, Depends(get_session)],
     _viewer: Annotated[User | None, Depends(get_optional_user)],
 ) -> SummaryResponse:
-    return summaries.get_summary(session, patient_id)
+    settings = cast(Settings, request.app.state.settings)
+    return summaries.summarize(session, patient_id, settings)

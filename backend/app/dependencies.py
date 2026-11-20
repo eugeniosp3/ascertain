@@ -10,6 +10,15 @@ from app.db import get_session
 from app.errors import AppError
 from app.models import User
 
+DEMO_USER_HEADER_HELP = (
+    "Demo identity, not authentication: an active user id from GET /users. "
+    "An unknown or inactive id returns 401 invalid_demo_user. Required "
+    "(401 demo_user_required when missing) for note, attachment and comment writes, "
+    "marking discussion read, the notification summary, unread_only=true, "
+    "assigned_to=me and scope=assigned. Optional elsewhere: it personalizes unread "
+    "counts, and POST /patients assigns the new patient to this user."
+)
+
 
 def require_demo_mode(request: Request) -> None:
     """Fail closed until a configured authentication mechanism is available."""
@@ -25,7 +34,9 @@ def require_demo_mode(request: Request) -> None:
 def get_optional_user(
     request: Request,
     session: Annotated[Session, Depends(get_session)],
-    demo_user_id: Annotated[str | None, Header(alias="X-Demo-User-ID")] = None,
+    demo_user_id: Annotated[
+        str | None, Header(alias="X-Demo-User-ID", description=DEMO_USER_HEADER_HELP)
+    ] = None,
 ) -> User | None:
     """Return an active known actor, or None only when the header is absent."""
     require_demo_mode(request)

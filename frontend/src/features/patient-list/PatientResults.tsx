@@ -234,6 +234,11 @@ export default function PatientResults({
                 ref={rowVirtualizer.measureElement}
                 data-index={virtual.index}
                 data-patient-id={patient.id}
+                // Virtual list: report each card's position in the full result set, like the table.
+                aria-setsize={total}
+                aria-posinset={
+                  (context.search.page - 1) * context.search.page_size + virtual.index + 1
+                }
                 className={`ac-patient-card ac-clickable-patient${saved.lastPatientId === patient.id ? ' ac-last-visited' : ''}`}
                 onClick={openPatientRow}
                 onKeyDown={(event) => onRowKeyDown(event, virtual.index)}
@@ -282,7 +287,7 @@ export default function PatientResults({
           </caption>
           <TableHeader>
             {table.getHeaderGroups().map((group) => (
-              <TableRow key={group.id}>
+              <TableRow key={group.id} aria-rowindex={1}>
                 {group.headers.map((header) => {
                   const sorted = header.column.getIsSorted()
                   return (

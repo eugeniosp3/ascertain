@@ -76,10 +76,22 @@ export function aggregateAges(patients: readonly PatientListItem[]) {
   return omitEmptyUnknown(distribution)
 }
 
+/** Months since year 0 for a `YYYY-MM…` string, so calendar months compare as integers. */
+function monthIndex(value: string) {
+  return Number(value.slice(0, 4)) * 12 + Number(value.slice(5, 7)) - 1
+}
+
+/** UTC midnight on the first day of a `YYYY-MM` key (years below 100 are kept literal). */
+function monthStart(month: string) {
+  const date = new Date(0)
+  date.setUTCFullYear(Number(month.slice(0, 4)), Number(month.slice(5, 7)) - 1, 1)
+  return date
+}
+
 export function aggregateVisits(patients: readonly PatientListItem[], asOfDate: string) {
   const referenceDay = calendarDay(asOfDate)
   if (referenceDay === null) throw new RangeError('A valid reference date is required.')
-  const referenceMonth = Number(asOfDate.slice(0, 4)) * 12 + Number(asOfDate.slice(5, 7)) - 1
+  const referenceMonth = monthIndex(asOfDate)
   const firstMonth = referenceMonth - 11
   const months = Array.from({ length: 12 }, (_, index) => {
     const month = firstMonth + index
@@ -98,7 +110,7 @@ export function aggregateVisits(patients: readonly PatientListItem[], asOfDate: 
     else if (visitDay === null) increment(outside, 'unknown')
     else if (visitDay > referenceDay) increment(outside, 'future')
     else {
-      const month = Number(last_visit.slice(0, 4)) * 12 + Number(last_visit.slice(5, 7)) - 1
+      const month = monthIndex(last_visit)
       if (month < firstMonth) increment(outside, 'earlier')
       else months[month - firstMonth]!.count += 1
     }
@@ -157,12 +169,11 @@ const monthLabels = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
   timeZone: 'UTC',
 })
-export function formatMonth(month: string) {
-  const date = new Date(0)
-  date.setUTCFullYear(Number(month.slice(0, 4)), Number(month.slice(5, 7)) - 1, 1)
-  return monthLabels.format(date)
+function formatMonth(month: string) {
+  return monthLabels.format(monthStart(month))
 }
-export const formatCount = (value: number) => counts.format(value)
+/** A grouped integer ("1,234"); `@/utils/count` adds the noun for count labels. */
+export const formatNumber = (value: number) => counts.format(value)
 export const formatPercentage = (count: number, total: number) =>
   `${percentages.format(percentage(count, total))}%`
 
@@ -196,9 +207,7 @@ export function niceAxisMax(max: number) {
 const shortMonths = new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'UTC' })
 /** Axis tick text for a `YYYY-MM` key; the two-digit year is added only where context needs it. */
 export function formatMonthTick(month: string, withYear: boolean) {
-  const date = new Date(0)
-  date.setUTCFullYear(Number(month.slice(0, 4)), Number(month.slice(5, 7)) - 1, 1)
-  const name = shortMonths.format(date)
+  const name = shortMonths.format(monthStart(month))
   return withYear ? `${name} ’${month.slice(2, 4)}` : name
 }
 

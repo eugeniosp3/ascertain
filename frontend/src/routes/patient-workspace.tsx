@@ -67,7 +67,7 @@ function useWorkspaceNavigation() {
   }
 }
 
-function WorkspaceRoute() {
+export function PatientDetailPage() {
   const { actorId } = useActor()
   const params = useParams({ strict: false })
   const { search, navigate, close, returnToList, state } = useWorkspaceNavigation()
@@ -101,17 +101,16 @@ function WorkspaceRoute() {
       <DecorativeBackdrop />
       {actorId ? (
         <PatientWorkspace
-          key={`${patientId}:${actorId}`}
           patientId={patientId}
           actorId={actorId}
           tab={noteId ? 'notes' : search.tab}
           noteId={noteId}
           onClose={close}
           onTabChange={changeTab}
-          onNoteOpen={(noteId: string) => {
+          onNoteOpen={(openedNoteId: string) => {
             void navigate({
               to: '/patients/$patientId/notes/$noteId',
-              params: { patientId, noteId },
+              params: { patientId, noteId: openedNoteId },
               search: { ...search, tab: 'notes' },
               state: true,
               replace: true,
@@ -134,9 +133,6 @@ function WorkspaceRoute() {
   )
 }
 
-export function PatientDetailPage() {
-  return <WorkspaceRoute />
-}
 function FormRoute({ edit = false }: { edit?: boolean }) {
   const { actorId } = useActor()
   const { patientId } = useParams({ strict: false })

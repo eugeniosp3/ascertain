@@ -11,7 +11,7 @@ This folder prepares the **100 fictional patients** in [patients_100.csv](../ref
 | [assets/bronze/bronze.duckdb](assets/bronze/bronze.duckdb) | Original patient values, source metadata, and a UUID for each row. |
 | [assets/silver/silver.duckdb](assets/silver/silver.duckdb) | Cleaned, typed values beside all 76 original fields. Each row has a silver UUID and retains its bronze UUID. |
 | [src/patient_data/](src/patient_data/) | Python pipeline, Pydantic models, and reusable transformation/checking utilities in `utils/`. |
-| [tests/](tests/) | Checks for data preservation, types, lineage, repeatability, and seed-readiness behavior. |
+| [tests/](tests/) | Checks for data preservation, types, lineage, repeatability, exports, and shared database contracts. |
 | [docs/](docs/) | [Checklist](docs/HOLEPUNCH.md), [data contract](docs/DATA_CONTRACT.md), [implementation guide](docs/IMPLEMENTATION.md), and [data model](docs/schema.dbml). |
 | [assets/exports/](assets/exports/) | Optional generated patient JSONL and manifest snapshots. Runtime seeding uses the DuckDB files directly. |
 | [pyproject.toml](pyproject.toml), [uv.lock](uv.lock) | Package setup, locked dependencies, linting, and type-checking configuration. |
@@ -48,6 +48,6 @@ FROM silver.main.patients;
 
 **Frontend** consumes application records through FastAPI in API mode; its explicit demo mode uses separate in-memory fixtures. **Infra** reproduces the DuckDB snapshots from the committed CSV during the image build, then runs Alembic followed by `python -m app.seed` during configured startup. See the [backend runbook](../backend/README.md) for import commands and verification.
 
-The package-based JSONL seed prototype is retained as reference code, not the application startup path. Running `patient_data all` prepares and validates data; it does not insert patients into PostgreSQL. Some older planning checklist entries describe that prototype; the [project punch card](../reference/PROGRESS.md) tracks the current cross-project handoff.
+Running `patient_data all` prepares and validates data; it does not insert patients into PostgreSQL. There is one runtime seed owner: backend's `app.seed`. The optional JSONL export is an inspection artifact, not a second database-loading path. The [project punch card](../reference/PROGRESS.md) tracks the cross-project handoff.
 
 Keep the two DuckDB files under `assets/` in the project. Temporary builds live under `.cache/work/`; caches, local environments, and database sidecars are excluded from version control. The 2026-11-20 pipeline verification passed all 21 stage checks. Backend import tests and live frontend integration are separate checks.

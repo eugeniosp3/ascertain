@@ -15,6 +15,7 @@ const Toaster = ({ className, style, ...props }: ToasterProps) => {
   const { resolvedTheme } = useTheme()
   return (
     <Sonner
+      containerAriaLabel="Status messages"
       theme={resolvedTheme}
       className={cn('toaster group', className)}
       position="bottom-right"

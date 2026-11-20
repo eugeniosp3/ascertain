@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     database_url: SecretStr | None = None
     db_connect_timeout_seconds: int = Field(default=3, ge=1, le=30)
     cors_origins: tuple[str, ...] = ("http://localhost:5173",)
+    # Summaries: a keyless OpenAI-compatible endpoint, with the deterministic template as fallback.
+    summary_provider: Literal["llm", "template"] = "llm"
+    llm_base_url: str = "https://api.llm7.io/v1"
+    llm_model: str = Field(default="gemma-3-27b", min_length=1)
+    llm_timeout_seconds: int = Field(default=10, ge=1, le=60)
 
     @field_validator("database_url")
     @classmethod
@@ -40,6 +45,19 @@ class Settings(BaseSettings):
         if url.drivername != "postgresql+psycopg" or not url.database:
             raise ValueError("DATABASE_URL must use postgresql+psycopg and name a database.")
         return value
+
+    @field_validator("llm_base_url")
+    @classmethod
+    def require_http_base_url(cls, value: str) -> str:
+        """Call the summary model only over HTTP(S); drop a trailing slash before joining paths."""
+        try:
+            url = urlsplit(value)
+            valid = url.scheme in {"http", "https"} and bool(url.hostname)
+        except ValueError:
+            valid = False
+        if not valid:
+            raise ValueError("LLM_BASE_URL must be an HTTP(S) URL.")
+        return value.rstrip("/")
 
     @field_validator("cors_origins")
     @classmethod

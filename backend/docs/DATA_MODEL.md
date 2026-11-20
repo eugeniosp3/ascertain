@@ -23,6 +23,7 @@ requests, payer workflows, document checklists, or criteria tables.
 | `comment_note_links` | A reference from a comment to a note of the same patient | Composite FKs to both |
 | `discussion_reads` | How far one user has read one patient's discussion | (user, patient) |
 | `seed_runs` | A completed import, committed atomically with its rows | Imported patients point to it |
+| `patient_summaries` | The latest LLM-written summary of one patient, with the hash of the facts it was written from | Belongs to one patient (PK and FK, `ON DELETE CASCADE`) |
 
 ## Design decisions
 

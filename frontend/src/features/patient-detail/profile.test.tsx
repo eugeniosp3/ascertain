@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { api, ApiError, type ProfileDetails } from '@/api'
+import { api, ApiError, type PatientSummary, type ProfileDetails } from '@/api'
+import { patientKeys } from '@/app/query-keys'
 import { ProfilePanel, SourceDetails } from './ProfilePanel'
-import { SummaryPanel } from './SummaryPanel'
+import { AI_SUMMARY_HINT, SummaryPanel } from './SummaryPanel'
 import { patient, actorId, patientId } from './test-data'
 import { renderFeature } from './test-utils'
 
@@ -155,6 +156,36 @@ describe('patient profile and imported context', () => {
     await waitFor(() => expect(deleted).toHaveBeenCalledOnce())
     expect(remove).toHaveBeenCalledWith(patientId, { actorId })
   })
+
+  it('drops only the deleted patient records and refreshes lists and notifications', async () => {
+    vi.spyOn(api, 'deletePatient').mockResolvedValue()
+    const deleted = vi.fn()
+    const { client } = renderFeature(
+      <ProfilePanel patient={patient} actorId={actorId} onEdit={vi.fn()} onDeleted={deleted} />,
+    )
+    const otherNotes = patientKeys.notes('another-patient')
+    client.setQueryData(patientKeys.detail(patientId, actorId), patient)
+    client.setQueryData(patientKeys.notes(patientId), [])
+    client.setQueryData(patientKeys.comments(patientId, actorId), {})
+    client.setQueryData(otherNotes, [])
+    client.setQueryData(patientKeys.lists(actorId), [])
+    client.setQueryData(patientKeys.notificationSummary(actorId), {})
+    await userEvent.click(screen.getByRole('button', { name: 'Delete patient' }))
+    await userEvent.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete patient' }),
+    )
+    await waitFor(() =>
+      expect(client.getQueryState(patientKeys.notificationSummary(actorId))?.isInvalidated).toBe(
+        true,
+      ),
+    )
+    expect(client.getQueryData(patientKeys.detail(patientId, actorId))).toBeUndefined()
+    expect(client.getQueryData(patientKeys.notes(patientId))).toBeUndefined()
+    expect(client.getQueryData(patientKeys.comments(patientId, actorId))).toBeUndefined()
+    expect(client.getQueryData(otherNotes)).toEqual([])
+    expect(client.getQueryState(patientKeys.lists(actorId))?.isInvalidated).toBe(true)
+    expect(deleted).toHaveBeenCalledOnce()
+  })
 })
 
 it('retries the separate summary query and renders returned text literally', async () => {
@@ -172,5 +203,33 @@ it('retries the separate summary query and renders returned text literally', asy
   await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
   expect(await screen.findByText('<b>Plain clinical summary</b>')).toBeVisible()
   expect(getSummary).toHaveBeenCalledTimes(2)
-  expect(screen.getByText(/Template summary/)).toBeVisible()
+  // Template fallback: plain "Summary" heading, no sparkles, and an honest explanation.
+  expect(screen.getByRole('heading', { name: 'Summary' })).toBeVisible()
+  expect(screen.getByText('AI summary unavailable — showing the standard summary.')).toBeVisible()
+  expect(screen.getByText(/^Updated$/)).toBeVisible()
+  expect(screen.queryByRole('button', { name: 'About AI summaries' })).not.toBeInTheDocument()
+})
+
+it('explains the wait, then marks an AI summary with a keyboard-reachable sparkles tooltip', async () => {
+  let resolve!: (value: PatientSummary) => void
+  vi.spyOn(api, 'getSummary').mockReturnValue(new Promise((done) => (resolve = done)))
+  renderFeature(<SummaryPanel patientId={patientId} actorId={actorId} />)
+  expect(screen.getByRole('status', { name: 'Loading summary' })).toHaveTextContent(
+    'Generating the summary. This can take a few seconds.',
+  )
+  resolve({
+    patient_id: patientId,
+    summary: 'Model-written summary',
+    generated_at: patient.created_at,
+    method: 'llm',
+    model: 'gemma-3-27b',
+  })
+  expect(await screen.findByText('Model-written summary')).toBeVisible()
+  expect(screen.getByRole('heading', { name: 'AI summary' })).toBeVisible()
+  expect(screen.getByText(/^Updated$/)).toHaveTextContent(/^Updated \w{3} \d{1,2}, \d{4}/)
+  expect(screen.queryByText(/AI summary unavailable/)).not.toBeInTheDocument()
+  const trigger = screen.getByRole('button', { name: 'About AI summaries' })
+  await userEvent.tab()
+  expect(trigger).toHaveFocus()
+  expect(await screen.findByRole('tooltip')).toHaveTextContent(AI_SUMMARY_HINT)
 })

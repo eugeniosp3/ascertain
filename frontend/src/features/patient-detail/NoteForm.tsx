@@ -2,6 +2,7 @@ import { useId } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api'
+import { NOTE_CONTENT_MAX } from '@/api/constraints'
 import { patientKeys } from '@/app/query-keys'
 import { FormField } from '@/components/shared/FormField'
 import { InlineError } from '@/components/shared/InlineError'
@@ -9,8 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { toDateTimeLocal, toIsoTimestamp } from '@/utils/dates'
-import { getFormErrors } from '@/utils/form-errors'
-import { fieldMessage, noteSchema } from './schema'
+import { fieldMessage, getFormErrors } from '@/utils/form-errors'
+import { noteSchema } from './schema'
 import { invalidateNotes } from './queries'
 
 export function NoteForm({
@@ -102,7 +103,7 @@ export function NoteForm({
                 id={`${id}-content`}
                 name="content"
                 rows={7}
-                maxLength={20_000}
+                maxLength={NOTE_CONTENT_MAX}
                 value={field.state.value}
                 disabled={save.isPending}
                 onBlur={field.handleBlur}

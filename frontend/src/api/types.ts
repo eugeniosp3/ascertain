@@ -259,7 +259,10 @@ export interface PatientSummary {
   patient_id: string
   summary: string
   generated_at: string
-  method: 'template'
+  /** `llm`: written by a language model. `template`: the deterministic fallback. */
+  method: 'llm' | 'template'
+  /** The model behind an `llm` summary, for example "gemma-3-27b". */
+  model?: string
 }
 
 export interface NotificationSummary {

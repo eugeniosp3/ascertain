@@ -1,11 +1,12 @@
 """Bronze/silver builds on isolated fixtures: preservation, lineage, validation, atomicity."""
 
+import subprocess
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import duckdb
 import pytest
-from conftest import MakeRepo, Rows, column
 
 from patient_data.errors import PatientDataError
 from patient_data.patient_rules import FIELD_NAMES
@@ -17,6 +18,8 @@ from patient_data.stages import (
     validate_stages,
 )
 from patient_data.utils.identifiers import bronze_id, sha256_file, silver_id
+
+from .helpers import MakeRepo, Rows, column
 
 
 def _build(settings: StageSettings) -> None:
@@ -263,6 +266,33 @@ def test_read_commands_never_create_missing_files(make_repo: MakeRepo) -> None:
     summary = inspect_stages(settings)
     assert summary["bronze"] == {"path": str(settings.bronze_path), "exists": False}
     assert not settings.bronze_path.exists() and not settings.silver_path.exists()
+
+
+def test_required_query_result_is_checked_with_python_optimization() -> None:
+    code = """
+import duckdb
+from patient_data.errors import PatientDataError
+from patient_data.stages import _fetch_one
+with duckdb.connect(':memory:') as connection:
+    try:
+        _fetch_one(connection, 'SELECT 1 WHERE FALSE')
+    except PatientDataError:
+        print('blocked')
+    else:
+        raise RuntimeError('missing row was accepted')
+"""
+    result = subprocess.run(
+        [sys.executable, "-O", "-c", code], capture_output=True, text=True, check=True
+    )
+    assert result.stdout.strip() == "blocked"
+
+
+def test_bom_source_is_rejected_before_bronze_creation(make_repo: MakeRepo) -> None:
+    settings = make_repo()
+    settings.source_file.write_bytes(b"\xef\xbb\xbf" + settings.source_file.read_bytes())
+    with pytest.raises(PatientDataError, match="byte-order mark"):
+        build_bronze(settings)
+    assert not settings.bronze_path.exists()
 
 
 def test_inspect_reports_structure_without_patient_values(

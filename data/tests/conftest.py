@@ -6,33 +6,22 @@ file is only read.
 """
 
 import csv
-import io
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
 
 from patient_data.settings import StageSettings
 
-REAL_SOURCE = StageSettings().source_file
+from .helpers import MakeRepo, Rows, write_csv
 
-Rows = list[list[str]]
-MakeRepo = Callable[..., StageSettings]
+REAL_SOURCE = StageSettings().source_file
 
 
 def read_real_rows() -> tuple[list[str], Rows]:
     with REAL_SOURCE.open(newline="", encoding="utf-8") as stream:
         records = list(csv.reader(stream))
     return records[0], records[1:]
-
-
-def write_csv(path: Path, header: Sequence[str], rows: Sequence[Sequence[str]]) -> None:
-    buffer = io.StringIO(newline="")
-    writer = csv.writer(buffer, lineterminator="\n")
-    writer.writerow(header)
-    writer.writerows(rows)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(buffer.getvalue().encode("utf-8"))
 
 
 @pytest.fixture(scope="session")
@@ -64,22 +53,3 @@ def make_repo(tmp_path: Path, real_rows: tuple[list[str], Rows]) -> MakeRepo:
         return settings
 
     return factory
-
-
-def column(header: Sequence[str], name: str) -> int:
-    return list(header).index(name)
-
-
-@pytest.fixture(scope="session")
-def exported_package(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """A real 100-patient package built from the source rows in an isolated repository."""
-    from patient_data.export import export_package
-    from patient_data.stages import build_bronze, build_silver
-
-    root = tmp_path_factory.mktemp("package-repo")
-    header, rows = read_real_rows()
-    settings = StageSettings(repo_root=root)
-    write_csv(settings.source_file, header, rows)
-    build_bronze(settings)
-    build_silver(settings)
-    return export_package(settings).path

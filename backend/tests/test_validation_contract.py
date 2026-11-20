@@ -47,6 +47,16 @@ def validation_client(settings: Settings) -> Iterator[TestClient]:
         ({"date_of_birth": "future"}, "date_of_birth", "Date must not be in the future."),
         ({"last_visit": "future"}, "last_visit", "Date must not be in the future."),
         (
+            {"date_of_birth": "1899-12-31"},
+            "date_of_birth",
+            "Date of birth must be on or after January 1, 1900.",
+        ),
+        (
+            {"last_visit": "1979-12-31"},
+            "last_visit",
+            "Last visit cannot be before the date of birth.",
+        ),
+        (
             {"allergy_status": "reported", "allergies": []},
             "allergies",
             "Add at least one allergy when allergy status is reported.",
@@ -86,6 +96,20 @@ def test_patient_validation_has_safe_actionable_field_messages(
     assert set(error["fields"][0]) == {"path", "code", "message"}
     for marker in ("abcdefgh", "a@b.test", "private-sentinel", "private-allergy-sentinel"):
         assert marker not in response.text
+
+
+@pytest.mark.parametrize(
+    ("date_of_birth", "last_visit"), [("1900-01-01", None), ("1980-01-01", "1980-01-01")]
+)
+def test_patient_date_rules_accept_boundaries(date_of_birth: str, last_visit: str | None) -> None:
+    patient = PatientCreate(
+        first_name="Synthetic",
+        last_name="Validation",
+        date_of_birth=date_of_birth,
+        last_visit=last_visit,
+    )
+    dumped = patient.model_dump(mode="json")
+    assert (dumped["date_of_birth"], dumped["last_visit"]) == (date_of_birth, last_visit)
 
 
 def test_future_clinical_timestamp_has_specific_safe_message(validation_client: TestClient) -> None:

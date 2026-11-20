@@ -26,11 +26,14 @@ export function NoteView({
   actorId,
   noteId,
   onBack,
+  onDeleted,
 }: {
   patientId: string
   actorId: string
   noteId: string
   onBack: () => void
+  /** Called before returning to Notes after this note is deleted. */
+  onDeleted?: () => void
 }) {
   const heading = useRef<HTMLHeadingElement>(null)
   const [copyMessage, setCopyMessage] = useState('')
@@ -48,6 +51,7 @@ export function NoteView({
     onSuccess: () => {
       client.removeQueries({ queryKey: patientKeys.note(patientId, noteId), exact: true })
       void invalidateNotes(client, patientId)
+      onDeleted?.()
       onBack()
     },
   })
@@ -64,6 +68,7 @@ export function NoteView({
       </div>
       {note.isPending && (
         <div role="status" aria-label="Loading note">
+          <span className="sr-only">Loading note…</span>
           <Skeleton className="h-40 w-full" />
         </div>
       )}
@@ -90,7 +95,8 @@ export function NoteView({
           }}
         />
       )}
-      {note.data && !note.isError && (
+      {/* A cached note stays readable when a background refetch fails; only 404/410/422 hide it. */}
+      {note.data && !gone && !missing && (
         <>
           <div>
             <h3 ref={heading} tabIndex={-1} className="text-xl font-semibold">

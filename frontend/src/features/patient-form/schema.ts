@@ -34,13 +34,20 @@ const calendarDate = z
   .refine(validDate, 'Enter a valid date.')
   .refine((value) => !validDate(value) || value <= localToday(), 'Date cannot be in the future.')
 
+// Mirrors the backend's earliest accepted birth date; strict YYYY-MM-DD strings compare in order.
+const earliestBirthDate = '1900-01-01'
+const birthDate = calendarDate.refine(
+  (value) => !validDate(value) || value >= earliestBirthDate,
+  'Date of birth must be on or after January 1, 1900.',
+)
+
 /** Form schema: validate input strings here; the write mapper converts blank optional values to null. */
 export const patientFormSchema = z
   .object({
     first_name: requiredText('a first name', limits.name),
     middle_initial: optionalText(limits.middle_initial),
     last_name: requiredText('a last name', limits.name),
-    date_of_birth: calendarDate,
+    date_of_birth: birthDate,
     phone: optionalText(limits.phone).refine(
       (value) => !value || isValidPhone(value),
       'Enter a valid phone number.',
@@ -75,8 +82,20 @@ export const patientFormSchema = z
       error: 'Choose an allergy status.',
     }),
   })
-  // Cross-field validation: the allergy status and allergy list must describe the same situation.
+  // Cross-field validation: dates stay in order and allergy status matches the allergy list.
   .superRefine((value, context) => {
+    if (
+      value.last_visit &&
+      validDate(value.date_of_birth) &&
+      validDate(value.last_visit) &&
+      value.last_visit < value.date_of_birth
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['last_visit'],
+        message: 'Last visit cannot be before the date of birth.',
+      })
+    }
     if (value.allergy_status === 'reported' && value.allergies.length === 0) {
       context.addIssue({
         code: 'custom',

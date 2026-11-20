@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Literal, cast
+from typing import Any, Literal, cast
 from uuid import UUID, uuid4
 
 import duckdb
@@ -159,6 +159,14 @@ def _fetch(
     return con.execute(sql, list(params)).fetchall()
 
 
+def _fetch_one(con: duckdb.DuckDBPyConnection, sql: str) -> tuple[Any, ...]:
+    """Require a driver row; the caller validates its shape and values separately."""
+    row = con.execute(sql).fetchone()
+    if row is None:
+        raise PatientDataError("required stage query returned no row; rebuild the stage")
+    return row
+
+
 def _column_ddl(columns: Sequence[ColumnSpec]) -> str:
     ddl_types = {TIMESTAMPTZ: "TIMESTAMPTZ"}
     return ",\n  ".join(
@@ -178,7 +186,7 @@ def _connect(path: Path, *, read_only: bool) -> Iterator[duckdb.DuckDBPyConnecti
         raise PatientDataError(
             f"cannot open {path.name} ({type(error).__name__}); close other connections "
             "to it and retry"
-        ) from error
+        ) from None
     try:
         con.execute("SET TimeZone = 'UTC'")
         yield con
@@ -326,16 +334,16 @@ def read_source(settings: StageSettings) -> SourceSnapshot:
     except UnicodeDecodeError as error:
         raise PatientDataError(
             f"{settings.source_path} is not valid UTF-8 (byte {error.start})"
-        ) from error
-    if text.startswith("﻿"):
+        ) from None
+    if text.startswith("\ufeff"):
         raise PatientDataError(f"{settings.source_path} starts with a byte-order mark")
     reader = csv.reader(io.StringIO(text, newline=""), strict=True)
     try:
         records = [tuple(record) for record in reader]
-    except csv.Error as error:
+    except csv.Error:
         raise PatientDataError(
             f"{settings.source_path} is not well-formed CSV near line {reader.line_num}"
-        ) from error
+        ) from None
     if not records:
         raise PatientDataError(f"{settings.source_path} is empty")
     issues = RowTransformer(PATIENT_FIELDS).header_issues(records[0])
@@ -501,8 +509,7 @@ def check_bronze(
 
 
 def _database_name(con: duckdb.DuckDBPyConnection) -> str:
-    row = con.execute("SELECT current_database()").fetchone()
-    assert row is not None
+    row = _fetch_one(con, "SELECT current_database()")
     return str(row[0])
 
 
@@ -522,7 +529,7 @@ def build_bronze(settings: StageSettings) -> StageResult:
         try:
             _write_bronze(temp, snapshot, settings)
         except duckdb.Error as error:
-            raise _database_error("bronze", error) from error
+            raise _database_error("bronze", error) from None
         with _connect(temp, read_only=True) as con:
             catalog = _database_name(con)
             report = check_bronze(con, settings, catalog=catalog, source=snapshot)
@@ -570,10 +577,9 @@ def _read_bronze_for_silver(
         report = check_bronze(con, settings, catalog=catalog)
         if not report.passed:
             raise PatientDataError("bronze.duckdb is invalid; rebuild bronze", _failures(report))
-        meta = con.execute(
-            "SELECT source_file_id, source_path, source_sha256 FROM source_files"
-        ).fetchone()
-        assert meta is not None
+        meta = _fetch_one(
+            con, "SELECT source_file_id, source_path, source_sha256 FROM source_files"
+        )
         if current_sha is not None and current_sha != meta[2]:
             raise PatientDataError("the source CSV changed since bronze was built; rebuild bronze")
         fields = ", ".join(_q(name) for name in FIELD_NAMES)
@@ -690,12 +696,12 @@ def check_silver(
         else "metadata does not match bronze or the transformation version; rebuild silver",
     )
 
-    linked = con.execute(
+    linked = _fetch_one(
+        con,
         f"SELECT count(*) FILTER (WHERE bz.bronze_id IS NULL), "
         f"count(*) FILTER (WHERE sv.bronze_id IS NULL), count(*) "
-        f"FROM {s}.main.patients sv FULL JOIN {b}.main.patients bz USING (bronze_id)"
-    ).fetchone()
-    assert linked is not None
+        f"FROM {s}.main.patients sv FULL JOIN {b}.main.patients bz USING (bronze_id)",
+    )
     orphan_silver, unmatched_bronze, _ = linked
     link_ok = orphan_silver == 0 and unmatched_bronze == 0
     report.add(
@@ -709,11 +715,11 @@ def check_silver(
     differences = " OR ".join(
         f"sv.{_q(name + '_raw')} IS DISTINCT FROM bz.{_q(name)}" for name in FIELD_NAMES
     )
-    raw_mismatch = con.execute(
+    raw_mismatch = _fetch_one(
+        con,
         f"SELECT count(*) FROM {s}.main.patients sv JOIN {b}.main.patients bz USING (bronze_id) "
-        f"WHERE {differences}"
-    ).fetchone()
-    assert raw_mismatch is not None
+        f"WHERE {differences}",
+    )
     report.add(
         "silver.patients.raw_matches_bronze",
         "passed" if raw_mismatch[0] == 0 else "failed",
@@ -809,7 +815,7 @@ def build_silver(settings: StageSettings) -> StageResult:
         try:
             _write_silver(temp, settings, meta, bronze_rows, transformed)
         except duckdb.Error as error:
-            raise _database_error("silver", error) from error
+            raise _database_error("silver", error) from None
         with _silver_with_bronze(temp, settings.bronze_path) as (con, catalog):
             report = check_silver(con, settings, catalog=catalog, bronze_catalog="bronze_stage")
             if not report.passed:
@@ -901,10 +907,10 @@ def read_silver(settings: StageSettings) -> tuple[SilverMetadata, list[SilverPat
         report = check_silver(con, settings, catalog=catalog, bronze_catalog="bronze_stage")
         if not report.passed:
             raise PatientDataError("silver.duckdb is invalid; rebuild it", _failures(report))
-        row = con.execute(
+        row = _fetch_one(
+            con,
             "SELECT patient_source_file_id, source_path, source_sha256, dataset_date, "
-            f"transformation_version FROM {_q(catalog)}.main.build_metadata"
-        ).fetchone()
-        assert row is not None
+            f"transformation_version FROM {_q(catalog)}.main.build_metadata",
+        )
         patients = _read_silver_rows(con, catalog)
     return SilverMetadata(*row), patients

@@ -63,6 +63,16 @@ function date(value: unknown, field: string, nullable = false): string | null {
   return value
 }
 
+// Mirrors the backend's earliest accepted birth date; strict YYYY-MM-DD strings compare in order.
+const EARLIEST_BIRTH_DATE = '1900-01-01'
+
+function birthDate(value: unknown): string {
+  const birth = date(value, 'date_of_birth')!
+  if (birth < EARLIEST_BIRTH_DATE)
+    invalid({ date_of_birth: 'Date of birth must be on or after January 1, 1900.' })
+  return birth
+}
+
 function choice<T extends string>(value: unknown, field: string, choices: readonly T[]): T {
   if (typeof value !== 'string' || !choices.includes(value as T)) {
     invalid({ [field]: 'Value is not one of the allowed choices.' })
@@ -96,12 +106,12 @@ export function validatePatient(input: PatientWrite): PatientWrite {
     if (!Object.hasOwn(value, key) || value[key] === undefined)
       invalid({ [key]: 'Field is required.' })
   }
-  const middle_initial = text(value.middle_initial, 'middle_initial', 1, true)
-  const email = text(value.email, 'email', 254, true)
+  const middle_initial = text(value.middle_initial, 'middle_initial', limits.middle_initial, true)
+  const email = text(value.email, 'email', limits.email, true)
   if (email !== null && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     invalid({ email: 'Enter a valid email address.' })
   }
-  const phone = text(value.phone, 'phone', 40, true)
+  const phone = text(value.phone, 'phone', limits.phone, true)
   if (phone !== null && !isValidPhone(phone)) {
     invalid({ phone: 'Enter a valid phone number.' })
   }
@@ -146,16 +156,16 @@ export function validatePatient(input: PatientWrite): PatientWrite {
   const state = text(value.state, 'state', limits.state, true)
   if (state !== null && [...state].length !== 2)
     invalid({ state: 'Use exactly two characters or null.' })
-  return {
+  const patient: PatientWrite = {
     first_name: text(value.first_name, 'first_name', limits.name)!,
     middle_initial,
     last_name: text(value.last_name, 'last_name', limits.name)!,
-    date_of_birth: date(value.date_of_birth, 'date_of_birth')!,
+    date_of_birth: birthDate(value.date_of_birth),
     phone,
     email,
     address_line1: text(value.address_line1, 'address_line1', limits.address, true),
     address_line2: text(value.address_line2, 'address_line2', limits.address, true),
-    city: text(value.city, 'city', 100, true),
+    city: text(value.city, 'city', limits.city, true),
     state,
     postal_code: text(value.postal_code, 'postal_code', limits.postal_code, true),
     blood_type,
@@ -165,6 +175,10 @@ export function validatePatient(input: PatientWrite): PatientWrite {
     allergies,
     allergy_status,
   }
+  // Cross-field rule, checked after every field passes (the backend's model-level validator).
+  if (patient.last_visit !== null && patient.last_visit < patient.date_of_birth)
+    invalid({ last_visit: 'Last visit cannot be before the date of birth.' })
+  return patient
 }
 
 export function validateNote(input: NoteWrite): NoteWrite {
@@ -195,7 +209,7 @@ export function validateDiscussionRead(input: DiscussionReadInput): DiscussionRe
   return { through: validateTimestamp(value.through, 'through') }
 }
 
-export function validateIds(ids: unknown, field: string, max: number): string[] {
+function validateIds(ids: unknown, field: string, max: number): string[] {
   if (!Array.isArray(ids) || ids.length > max)
     invalid({ [field]: `Use an array of at most ${max} IDs.` })
   ids.forEach((id, index) => validateId(id, `${field}[${index}]`))

@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { formatDate, formatDateTime } from '@/utils/dates'
-import { formatCount, formatPercentage, percentage, type OverviewSummary } from './aggregation'
+import { formatNumber, formatPercentage, percentage, type OverviewSummary } from './aggregation'
 import { LatestVisitsChart } from './LatestVisitsChart'
 import type { OverviewCopy } from './copy'
 import { ChartCard, DistributionLegend, MetricValue, ProportionBar } from './ChartPrimitives'
@@ -10,7 +10,10 @@ function StatusChart({ summary }: { summary: OverviewSummary }) {
   const active = summary.status.find((bucket) => bucket.key === 'active')?.count ?? 0
   return (
     <ChartCard title="Patient status" className="ac-chart-status">
-      <MetricValue value={formatCount(active)} label={`active of ${formatCount(summary.total)}`} />
+      <MetricValue
+        value={formatNumber(active)}
+        label={`active of ${formatNumber(summary.total)}`}
+      />
       <ProportionBar buckets={summary.status} palette="status" />
       <DistributionLegend buckets={summary.status} total={summary.total} />
     </ChartCard>
@@ -26,7 +29,7 @@ function NotesChart({ summary }: { summary: OverviewSummary }) {
       meta={
         totalNotes === null
           ? 'Note total unavailable'
-          : `${formatCount(totalNotes)} active ${totalNotes === 1 ? 'note' : 'notes'} in total`
+          : `${formatNumber(totalNotes)} active ${totalNotes === 1 ? 'note' : 'notes'} in total`
       }
     >
       <MetricValue
@@ -52,8 +55,8 @@ function AgeChart({ summary }: { summary: OverviewSummary }) {
               <span style={{ width: `${percentage(bucket.count, largest)}%` }} />
             </span>
             <span className="ac-chart-values">
-              <strong>{formatCount(bucket.count)}</strong>
-              <span className="sr-only"> of {formatCount(summary.total)} patients, </span>
+              <strong>{formatNumber(bucket.count)}</strong>
+              <span className="sr-only"> of {formatNumber(summary.total)} patients, </span>
               <span>{formatPercentage(bucket.count, summary.total)}</span>
             </span>
           </li>

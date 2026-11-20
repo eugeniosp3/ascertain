@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useState, type ReactNode } from 'react'
-import { Link, Outlet, useLocation } from '@tanstack/react-router'
+import { Link, Outlet, useLocation, useRouterState } from '@tanstack/react-router'
 import {
   Bell,
   ChevronLeft,
@@ -73,15 +73,26 @@ export default function AppShell() {
   const expanded = useUIStore((state) => state.sidebarExpanded)
   const setExpanded = useUIStore((state) => state.setSidebarExpanded)
   const [menuOpen, setMenuOpen] = useState(false)
-  const section =
-    path === '/'
+  // The catch-all route belongs to no section: no nav link is current, and the title names the 404.
+  const notFound = useRouterState({
+    select: (state) => state.matches.some((match) => match.routeId === '/$'),
+  })
+  const section = notFound
+    ? null
+    : path === '/'
       ? 'Overview'
       : path.startsWith('/notifications') ||
           ('returnTo' in search && search.returnTo === 'notifications')
         ? 'Notifications'
         : 'Patients'
   const title =
-    path === '/patients/new' ? 'Add patient' : path.endsWith('/edit') ? 'Edit patient' : section
+    section === null
+      ? 'Page not found'
+      : path === '/patients/new'
+        ? 'Add patient'
+        : path.endsWith('/edit')
+          ? 'Edit patient'
+          : section
 
   useLayoutEffect(() => {
     document.documentElement.style.setProperty(
@@ -167,7 +178,10 @@ export default function AppShell() {
                 ) : (
                   <PanelLeftOpen aria-hidden="true" />
                 )}
-                <span className="ac-nav-label">Collapse sidebar</span>
+                {/* Clipped in the rail, so keep it equal to the accessible name in both states. */}
+                <span className="ac-nav-label">
+                  {expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+                </span>
               </Button>
             </RailTooltip>
           </div>

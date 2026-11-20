@@ -38,6 +38,7 @@ Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max
 ShortText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
 AddressLine = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
 Allergy = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+EARLIEST_BIRTH_DATE = date(1900, 1, 1)
 
 
 class Condition(BaseModel):
@@ -77,6 +78,13 @@ class PatientEditable(BaseModel):
             reject("date_in_future")
         return value
 
+    @field_validator("date_of_birth")
+    @classmethod
+    def reject_implausible_birth_date(cls, value: date) -> date:
+        if value < EARLIEST_BIRTH_DATE:
+            reject("date_of_birth_too_early")
+        return value
+
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, value: str | None) -> str | None:
@@ -105,6 +113,12 @@ class PatientEditable(BaseModel):
             reject("allergies_required")
         if self.allergy_status != "reported" and self.allergies:
             reject("allergies_not_reported")
+        return self
+
+    @model_validator(mode="after")
+    def validate_visit_after_birth(self) -> Self:
+        if self.last_visit is not None and self.last_visit < self.date_of_birth:
+            reject("last_visit_before_birth")
         return self
 
 

@@ -856,11 +856,15 @@ describe('comment forms and note references', () => {
     expect(await screen.findByText('Updated care-team comment')).toBeVisible()
     expect(update).toHaveBeenCalledOnce()
     expect(list).toHaveBeenCalledTimes(2)
+    // The closed editor returns focus to its Edit button and the result is announced.
+    expect(screen.getByRole('button', { name: 'Edit comment' })).toHaveFocus()
+    expect(screen.getByText('Comment saved.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Delete comment' }))
     await userEvent.click(
       within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete comment' }),
     )
     expect(await screen.findByRole('heading', { name: 'No comments yet' })).toBeVisible()
+    expect(screen.getByText('Comment deleted.')).toBeInTheDocument()
     expect(remove).toHaveBeenCalledOnce()
     expect(list).toHaveBeenCalledTimes(3)
     expect(screen.getByText('Page 1 · 0 comments')).toBeVisible()

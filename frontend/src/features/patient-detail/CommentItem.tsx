@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { FileText } from 'lucide-react'
 import { api, type Comment } from '@/api'
@@ -22,6 +22,7 @@ export function CommentItem({
   onNoteOpen,
   active = true,
   onEditingChange,
+  onAnnounce,
 }: {
   comment: Comment
   patientId: string
@@ -30,15 +31,25 @@ export function CommentItem({
   onNoteOpen: (id: string) => void
   active?: boolean
   onEditingChange?: (editing: boolean) => void
+  /** Announces a result whose control leaves the page, such as a deleted comment. */
+  onAnnounce?: (message: string) => void
 }) {
   const [editing, setEditing] = useState(false)
+  // Focus return: closing the inline editor puts focus back on this comment's Edit button.
+  const restoreEditFocus = useRef(false)
   const client = useQueryClient()
   const deletion = useMutation({
     mutationFn: () => api.deleteComment(patientId, comment.id, { actorId }),
     onSuccess: () => {
+      onAnnounce?.('Comment deleted.')
       void invalidateActivity(client, patientId)
     },
   })
+  const closeEditor = () => {
+    restoreEditFocus.current = true
+    setEditing(false)
+    onEditingChange?.(false)
+  }
   return (
     <li className="pw-comment">
       <div className="pw-comment-avatar" aria-hidden="true">
@@ -66,10 +77,18 @@ export function CommentItem({
           {comment.author.id === actorId && !editing && (
             <div className="pw-comment-actions">
               <Button
+                ref={(node) => {
+                  if (node && restoreEditFocus.current) {
+                    restoreEditFocus.current = false
+                    node.focus()
+                  }
+                }}
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => {
+                  // A new action clears the last result, so a repeated result is announced again.
+                  onAnnounce?.('')
                   setEditing(true)
                   onEditingChange?.(true)
                 }}
@@ -81,7 +100,10 @@ export function CommentItem({
                 description="This comment and its note references will be removed from the discussion. This action cannot be undone."
                 pending={deletion.isPending}
                 error={deletion.error}
-                onConfirm={() => deletion.mutateAsync()}
+                onConfirm={() => {
+                  onAnnounce?.('')
+                  return deletion.mutateAsync()
+                }}
               >
                 Delete <span className="sr-only">comment</span>
               </ConfirmDelete>
@@ -96,13 +118,10 @@ export function CommentItem({
               comment={comment}
               active={active}
               onSaved={() => {
-                setEditing(false)
-                onEditingChange?.(false)
+                onAnnounce?.('Comment saved.')
+                closeEditor()
               }}
-              onCancel={() => {
-                setEditing(false)
-                onEditingChange?.(false)
-              }}
+              onCancel={closeEditor}
             />
           </div>
         ) : (

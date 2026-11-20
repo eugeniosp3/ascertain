@@ -3,6 +3,7 @@ import {
   notificationSummaryFromDto,
   patientDetailFromDto,
   patientListItemFromDto,
+  patientSummaryFromDto,
   type PatientDetailDto,
   type PatientListItemDto,
 } from './dto'
@@ -64,7 +65,7 @@ export function isApiError(value: unknown): value is ApiError {
   return value instanceof ApiError
 }
 
-function isAbortError(value: unknown): boolean {
+export function isAbortError(value: unknown): boolean {
   // DOMException and fetch can originate in a different window/realm.
   return (
     value !== null && typeof value === 'object' && 'name' in value && value.name === 'AbortError'
@@ -258,7 +259,8 @@ export function createHttpApi(
         content: input.content,
       }),
     deleteNote: (id, noteId, ctx) => request(notePath(id, noteId), 'DELETE', ctx),
-    getSummary: (id, ctx) => request(`${patientPath(id)}/summary`, 'GET', ctx),
+    getSummary: async (id, ctx) =>
+      patientSummaryFromDto(await request(`${patientPath(id)}/summary`, 'GET', ctx)),
     listComments: (id, params, ctx) => {
       const query = new URLSearchParams()
       if (params.cursor !== undefined) query.set('cursor', params.cursor)

@@ -6,6 +6,8 @@ from pydantic_core import PydanticCustomError
 
 ValidationCode = Literal[
     "date_in_future",
+    "date_of_birth_too_early",
+    "last_visit_before_birth",
     "invalid_phone",
     "invalid_email",
     "allergies_required",
@@ -18,6 +20,8 @@ ValidationCode = Literal[
 
 PUBLIC_VALIDATION_MESSAGES = {
     "date_in_future": "Date must not be in the future.",
+    "date_of_birth_too_early": "Date of birth must be on or after January 1, 1900.",
+    "last_visit_before_birth": "Last visit cannot be before the date of birth.",
     "invalid_phone": "Enter a valid phone number.",
     "invalid_email": "Enter a valid email address.",
     "allergies_required": "Add at least one allergy when allergy status is reported.",
@@ -32,6 +36,7 @@ PUBLIC_VALIDATION_MESSAGES = {
 VALIDATION_FIELD_TARGETS = {
     "allergies_required": "allergies",
     "allergies_not_reported": "allergies",
+    "last_visit_before_birth": "last_visit",
 }
 
 

@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react'
-import { formatCount, formatPercentage, type DistributionBucket } from './aggregation'
+import { formatNumber, formatPercentage, type DistributionBucket } from './aggregation'
 
-export type ChartPalette = 'status' | 'notes' | 'visits'
+type ChartPalette = 'status' | 'notes' | 'visits'
 
 /**
  * Compact dashboard card: one header row (title, quiet meta, local controls), then the chart.
@@ -91,8 +91,8 @@ export function DistributionLegend({
             {bucket.label}
           </span>
           <span className="ac-chart-values">
-            <strong>{formatCount(bucket.count)}</strong>
-            <span className="sr-only"> of {formatCount(total)} patients, </span>
+            <strong>{formatNumber(bucket.count)}</strong>
+            <span className="sr-only"> of {formatNumber(total)} patients, </span>
             <span>{formatPercentage(bucket.count, total)}</span>
           </span>
         </li>
