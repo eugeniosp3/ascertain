@@ -381,7 +381,8 @@ def main() -> None:
                 )
                 before = compose("ps", "-q", "backend")
                 compose("restart", "backend")
-                compose("up", "-d", "--wait", "--wait-timeout", "120", "backend")
+                # Wait on the existing container: `up` may reconcile/recreate it.
+                compose("start", "--wait", "--wait-timeout", "120", "backend")
                 require(
                     compose("ps", "-q", "backend") == before,
                     "Expected an ordinary backend restart without container replacement.",
