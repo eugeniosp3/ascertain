@@ -204,7 +204,7 @@ def build():
     readme = readme_path.read_text()
     verified_items = sum(item["status"] == "verified" for item in items)
     root_summary = (
-        "<!-- progress-summary:start -->\n## Status\n\n"
+        "<!-- progress-summary:start -->\n"
         + f"**{core_done}/{len(checks)} assessment requirements verified** · "
         + f"{verified_items}/{len(items)} tracked items · updated {record['updated_at']}. "
         + "Every requirement is mapped to its evidence in the "

@@ -74,15 +74,23 @@ PostgreSQL ◀── Alembic migrations and an idempotent seed on startup
 3. **Validate twice, report clearly.** Zod gives immediate feedback in the form; Pydantic is the authority on the server. Server-side errors carry field paths, so every message appears beside the field it belongs to.
 4. **The schema changes only through migrations.** Alembic recreates the database exactly on any machine, and the seed is idempotent: restarts never duplicate or overwrite data.
 5. **AI summaries are generated once and reused.** An open-weight LLM writes each summary from the patient's verified facts. The result is stored with a fingerprint of those facts and regenerated only when they change; if the LLM is unavailable, a deterministic summary is returned instead.
+6. **One predictable API contract.** Routes follow REST conventions with the expected status codes: 201 on create, 204 on delete, 404 for a missing record, 422 for invalid input. Every error shares one shape, `{"error": {"code", "message", "fields"}}`, and its field paths let the form place each message beside the right input. The interactive OpenAPI docs at `/docs` are generated from the same Pydantic models; the full contract is in [backend/docs/API_CONTRACT.md](backend/docs/API_CONTRACT.md).
 
 ## Assessment coverage
 
 Every core requirement in [the original assessment](reference/project.md) is implemented and verified. The [project punch card](reference/PROGRESS.md#core-assessment-checks) maps each requirement to its evidence, and an [interactive version](reference/holepunch.html) is available.
 
-<!-- progress-summary:start -->
-## Status
+| Evaluation criterion | Where to look |
+| --- | --- |
+| Technical decision-making | [Architecture](#architecture), [key technical decisions](#key-technical-decisions) and the folder READMEs |
+| Code quality and best practices | Thin routes over a service layer, feature-based frontend modules, strict typing and linting on both sides; [testing and quality](#testing-and-quality) |
+| API design and error handling | Decision 6, the [API contract](backend/docs/API_CONTRACT.md) and the OpenAPI docs at `/docs` |
+| Documentation and ease of local setup | The [TLDR](#tldr) (one command) and a README in every folder |
+| Correctness and completeness | The [punch card](reference/PROGRESS.md#core-assessment-checks) maps every requirement to its evidence; CI runs on every push |
+| Understanding and applying requirements | The lists below: stretch goals implemented, additions, and what was deliberately not selected |
 
-**51/51 assessment requirements verified** · 149/151 tracked items · updated 2026-11-20 21:11 UTC. Every requirement is mapped to its evidence in the [punch card](reference/PROGRESS.md#core-assessment-checks) ([interactive version](reference/holepunch.html)).
+<!-- progress-summary:start -->
+**51/51 assessment requirements verified** · 149/151 tracked items · updated 2026-11-20 21:21 UTC. Every requirement is mapped to its evidence in the [punch card](reference/PROGRESS.md#core-assessment-checks) ([interactive version](reference/holepunch.html)).
 <!-- progress-summary:end -->
 
 **Stretch goals implemented:** list virtualization; code splitting with lazy-loaded routes; memoized list rendering; sorting and filtering query parameters; Alembic migrations; dark and light themes; overview charts (patient status, age bands, latest visits, note coverage); API unit tests; component tests; end-to-end tests; CI; and hot reload in Docker.
