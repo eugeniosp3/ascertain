@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { StrictMode } from 'react'
 import userEvent from '@testing-library/user-event'
 import { QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { api, ApiError, type Comment, type ReadReceipt } from '@/api'
-import { MAX_COMMENT_NOTE_IDS } from '@/api/constraints'
+import { COMMENT_BODY_MAX, MAX_COMMENT_NOTE_IDS } from '@/api/constraints'
 import { patientKeys } from '@/app/query-keys'
 import { DiscussionPanel } from './DiscussionPanel'
 import { CommentForm } from './CommentForm'
@@ -803,6 +803,28 @@ describe('displayed discussion acknowledgments', () => {
 })
 
 describe('comment forms and note references', () => {
+  it.each([
+    ['empty', '   ', 'Error: Write a comment before posting.'],
+    ['over-length', 'x'.repeat(COMMENT_BODY_MAX + 1), 'Error: Use at most 10,000 characters.'],
+  ])(
+    'an invalid %s comment moves focus to the comment field, whose error is read once',
+    async (_kind, body, description) => {
+      const create = vi.spyOn(api, 'createComment')
+      renderFeature(<CommentForm patientId={patientId} actorId={actorId} authorName="Sam" />)
+      const field = screen.getByRole('textbox', { name: /^Comment/ })
+      // fireEvent bypasses maxLength, like a paste the browser did not cut.
+      fireEvent.change(field, { target: { value: body } })
+      const user = userEvent.setup()
+      act(() => screen.getByRole('button', { name: 'Post comment' }).focus())
+      await user.keyboard('{Enter}')
+      await waitFor(() => expect(field).toHaveFocus())
+      expect(field).toHaveAttribute('aria-invalid', 'true')
+      expect(field).toHaveAccessibleDescription(description)
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+      expect(create).not.toHaveBeenCalled()
+    },
+  )
+
   it('shows a posted comment beyond page one immediately without jumping over or acknowledging unseen pages', async () => {
     const initial = Array.from({ length: 10 }, (_, index) =>
       makeComment(`earlier-${index}`, { is_unread: false }),

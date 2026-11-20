@@ -7,7 +7,7 @@ The complete original source_record is deliberately absent from every API schema
 """
 
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Annotated, Any, Literal, Self
 from uuid import UUID
 
@@ -74,7 +74,8 @@ class PatientEditable(BaseModel):
     @field_validator("date_of_birth", "last_visit")
     @classmethod
     def reject_future_date(cls, value: date | None) -> date | None:
-        if value is not None and value > dates.utc_today():
+        # The client's time zone is unknown. No local date is later than UTC + 1 day (UTC+14).
+        if value is not None and value > dates.utc_today() + timedelta(days=1):
             reject("date_in_future")
         return value
 

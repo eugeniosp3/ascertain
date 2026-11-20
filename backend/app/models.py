@@ -268,7 +268,7 @@ class Patient(Base):
     def age_on(self, on: date) -> int:
         """Whole years from ``date_of_birth`` to ``on``; age is never stored."""
         birth = self.date_of_birth
-        return on.year - birth.year - ((on.month, on.day) < (birth.month, birth.day))
+        return max(0, on.year - birth.year - ((on.month, on.day) < (birth.month, birth.day)))
 
 
 class Note(Base):

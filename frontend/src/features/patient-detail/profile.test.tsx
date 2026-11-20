@@ -210,7 +210,7 @@ it('retries the separate summary query and renders returned text literally', asy
   expect(screen.queryByRole('button', { name: 'About AI summaries' })).not.toBeInTheDocument()
 })
 
-it('explains the wait, then marks an AI summary with a keyboard-reachable sparkles tooltip', async () => {
+it('explains the wait, then marks an AI summary with a sparkles button that toggles its hint', async () => {
   let resolve!: (value: PatientSummary) => void
   vi.spyOn(api, 'getSummary').mockReturnValue(new Promise((done) => (resolve = done)))
   renderFeature(<SummaryPanel patientId={patientId} actorId={actorId} />)
@@ -228,8 +228,24 @@ it('explains the wait, then marks an AI summary with a keyboard-reachable sparkl
   expect(screen.getByRole('heading', { name: 'AI summary' })).toBeVisible()
   expect(screen.getByText(/^Updated$/)).toHaveTextContent(/^Updated \w{3} \d{1,2}, \d{4}/)
   expect(screen.queryByText(/AI summary unavailable/)).not.toBeInTheDocument()
+  const user = userEvent.setup()
   const trigger = screen.getByRole('button', { name: 'About AI summaries' })
-  await userEvent.tab()
+  expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  // Click (or tap) opens it; a tooltip would never open on touch.
+  await user.click(trigger)
+  expect(trigger).toHaveAttribute('aria-expanded', 'true')
+  expect(await screen.findByRole('dialog', { name: 'About AI summaries' })).toHaveTextContent(
+    AI_SUMMARY_HINT,
+  )
+  // Escape closes it and returns focus to the button.
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog', { name: 'About AI summaries' })).not.toBeInTheDocument()
+  expect(trigger).toHaveAttribute('aria-expanded', 'false')
   expect(trigger).toHaveFocus()
-  expect(await screen.findByRole('tooltip')).toHaveTextContent(AI_SUMMARY_HINT)
+  // Keyboard: Enter on the focused button opens it; an outside click closes it.
+  await user.keyboard('{Enter}')
+  expect(await screen.findByRole('dialog', { name: 'About AI summaries' })).toBeVisible()
+  await user.click(screen.getByRole('heading', { name: 'AI summary' }))
+  expect(screen.queryByRole('dialog', { name: 'About AI summaries' })).not.toBeInTheDocument()
+  expect(trigger).toHaveAttribute('aria-expanded', 'false')
 })

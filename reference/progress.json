@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-20 21:44 UTC",
+  "updated_at": "2026-11-20 22:22 UTC",
   "baseline_revision": "611bda5400332550708b3c39f049d3ee7690b01f",
   "verification_records": [
     {
@@ -1981,7 +1981,7 @@
           "part": "EVAL",
           "reference": "Eval · requirements",
           "title": "Walk <code>project.md</code> line by line against the running app",
-          "detail": "Final QA wave, 20 Nov, compiled app at 1440px and 390px in light and dark. 96 browser checks (search including trailing spaces, filters, sort, paging, create/edit/delete with client and server validation, 404 and malformed IDs), 24 workspace checks (per-user overview, notes, AI summary badge, tooltip and fallback, discussion and unread) and 28 keyboard and contrast checks (lowest contrast 4.66:1 light, 6.04:1 dark). One minor defect, an AI-summary tooltip clipped on phone widths, is being fixed.",
+          "detail": "Two independent QA waves, 20 Nov, compiled app at 1440px and 390px in light and dark; four test agents each time, with Opus adjudication. Pass 2 on e9ce6d5: 160/160 prior UI checks, plus 8/8 list-refresh-failure, 16/16 patient-form announcement, date-bound (Los Angeles evening and Tokyo morning) and 48/48 numeric deep-link checks. Three minor defects (note and comment validation not announced, Tokyo-morning 'today' rejected by the server, and the AI hint not opening on tap) are being fixed and rechecked.",
           "status": "verified",
           "scope": "api-mode app, clean-room run, live api matrix",
           "evidence": [
@@ -2021,7 +2021,7 @@
           "part": "EVAL",
           "reference": "Eval · code quality",
           "title": "All tests pass",
-          "detail": "Final tree, 20 Nov, all green. Backend: 338 tests plus Ruff, format and strict mypy; data: 153 tests (isolated checks container on real PostgreSQL). Frontend: 387 unit, 126 demo-browser and 11/11 HTTP-adapter browser tests, plus lint, format and strict TypeScript. Clean-room run: a fresh isolated stack passes migrations, the 100-patient seed, restart, recreate and log-privacy checks, and all 16 live browser journeys on desktop and phone. QA's final wave: 317 + 32 + 16 + 64 API checks and 148 browser checks pass.",
+          "detail": "Final tree, 20 Nov, all green. Backend: 342 tests plus Ruff, format and strict mypy; data: 153 tests (isolated checks container on real PostgreSQL). Frontend: 390 unit, 126 demo-browser and 11/11 HTTP-adapter browser tests, plus lint, format and strict TypeScript. Clean-room run: a fresh isolated stack passes migrations, the 100-patient seed, restart, recreate and log-privacy checks, and all 16 live browser journeys on desktop and phone. Two independent QA waves pass all API and browser checks; the three minor defects from pass 2 are fixed.",
           "status": "verified",
           "scope": "final frozen tree",
           "evidence": [
@@ -3881,6 +3881,6 @@
   },
   "current_updates": [
     "Submitted. Hosted CI is green, and every core requirement and implemented stretch goal is verified.",
-    "Final cleanup shipped: the patient list keeps its rows when a background refresh fails; calmer screen-reader announcements; one local 'today' for date fields; the AI-summary tooltip stays on screen on phones; and numeric searches (e.g. an MRN) now survive a reload or deep link."
+    "QA pass-2 fixes shipped: note and comment validation errors are now announced to screen readers; 'today' is accepted for users ahead of UTC; and the AI-summary hint opens on tap. All of it passes the clean-room gate."
   ]
 }

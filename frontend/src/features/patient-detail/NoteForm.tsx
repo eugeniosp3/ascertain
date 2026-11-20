@@ -9,6 +9,7 @@ import { InlineError } from '@/components/shared/InlineError'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { useInvalidSubmitFocus } from '@/hooks/use-invalid-submit-focus'
 import { toDateTimeLocal, toIsoTimestamp } from '@/utils/dates'
 import { fieldMessage, getFormErrors } from '@/utils/form-errors'
 import { noteSchema } from './schema'
@@ -35,9 +36,11 @@ export function NoteForm({
       void invalidateNotes(client, patientId)
     },
   })
+  const { formRef, onSubmitInvalid } = useInvalidSubmitFocus()
   const form = useForm({
     defaultValues: { timestamp: toDateTimeLocal(), content: '' },
     validators: { onSubmit: noteSchema },
+    onSubmitInvalid,
     onSubmit: async ({ value }) => {
       try {
         const note = await save.mutateAsync({
@@ -54,6 +57,7 @@ export function NoteForm({
   const server = save.error ? getFormErrors(save.error) : undefined
   return (
     <form
+      ref={formRef}
       className="pw-section grid gap-4"
       noValidate
       aria-label="Add clinical note"

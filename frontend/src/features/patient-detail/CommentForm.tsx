@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { FormField } from '@/components/shared/FormField'
 import { InlineError } from '@/components/shared/InlineError'
+import { useInvalidSubmitFocus } from '@/hooks/use-invalid-submit-focus'
 import { fieldMessage, getFormErrors } from '@/utils/form-errors'
 import { commentSchema } from './schema'
 import { invalidateActivity } from './queries'
@@ -45,12 +46,14 @@ export function CommentForm({
       void invalidateActivity(client, patientId)
     },
   })
+  const { formRef, onSubmitInvalid } = useInvalidSubmitFocus()
   const form = useForm({
     defaultValues: {
       body: comment?.body ?? '',
       note_ids: comment?.note_links.map((link) => link.id) ?? ([] as string[]),
     },
     validators: { onSubmit: commentSchema },
+    onSubmitInvalid,
     onSubmit: async ({ value }) => {
       // A new attempt clears the last result, so a repeated result is announced again.
       if (!comment) onAnnounce?.('')
@@ -69,6 +72,7 @@ export function CommentForm({
   const server = save.error ? getFormErrors(save.error) : undefined
   return (
     <form
+      ref={formRef}
       className="pw-section grid gap-4"
       aria-label={comment ? 'Edit comment' : 'Add a comment'}
       noValidate

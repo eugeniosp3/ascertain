@@ -8,13 +8,14 @@ from uuid import uuid4
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.db import get_session
 from app.dependencies import get_current_user, get_optional_user
 from app.main import create_app
-from app.models import User
+from app.models import Patient, User
 from app.schemas.patients import PatientCreate
 from app.utils import dates
 
@@ -81,7 +82,7 @@ def test_patient_validation_has_safe_actionable_field_messages(
     ).model_dump(mode="json")
     payload.update(
         {
-            key: (dates.utc_today() + timedelta(days=1)).isoformat() if value == "future" else value
+            key: (dates.utc_today() + timedelta(days=2)).isoformat() if value == "future" else value
             for key, value in changes.items()
         }
     )
@@ -110,6 +111,23 @@ def test_patient_date_rules_accept_boundaries(date_of_birth: str, last_visit: st
     )
     dumped = patient.model_dump(mode="json")
     assert (dumped["date_of_birth"], dumped["last_visit"]) == (date_of_birth, last_visit)
+
+
+@pytest.mark.parametrize("field", ["date_of_birth", "last_visit"])
+@pytest.mark.parametrize(("days_ahead", "accepted"), [(1, True), (2, False)])
+def test_dates_allow_a_local_today_east_of_utc(field: str, days_ahead: int, accepted: bool) -> None:
+    value = dates.utc_today() + timedelta(days=days_ahead)
+    fields = {"date_of_birth": "1980-01-01", field: value.isoformat()}
+    if not accepted:
+        with pytest.raises(ValidationError) as caught:
+            PatientCreate(first_name="Synthetic", last_name="Validation", **fields)
+        assert [error["type"] for error in caught.value.errors()] == ["date_in_future"]
+        return
+    patient = PatientCreate(first_name="Synthetic", last_name="Validation", **fields)
+    assert getattr(patient, field) == value
+    if field == "date_of_birth":
+        assert dates.calculate_age(value) == 0  # Never a negative age.
+        assert Patient(date_of_birth=value).age_on(dates.utc_today()) == 0
 
 
 def test_future_clinical_timestamp_has_specific_safe_message(validation_client: TestClient) -> None:

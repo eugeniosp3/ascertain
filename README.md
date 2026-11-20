@@ -90,7 +90,7 @@ Every core requirement in [the original assessment](reference/project.md) is imp
 | Understanding and applying requirements | The lists below: stretch goals implemented, additions, and what was deliberately not selected |
 
 <!-- progress-summary:start -->
-**51/51 assessment requirements verified** · 149/151 tracked items · updated 2026-11-20 21:44 UTC. Every requirement is mapped to its evidence in the [punch card](reference/PROGRESS.md#core-assessment-checks) ([interactive version](reference/holepunch.html)).
+**51/51 assessment requirements verified** · 149/151 tracked items · updated 2026-11-20 22:22 UTC. Every requirement is mapped to its evidence in the [punch card](reference/PROGRESS.md#core-assessment-checks) ([interactive version](reference/holepunch.html)).
 <!-- progress-summary:end -->
 
 **Stretch goals implemented:** list virtualization; code splitting with lazy-loaded routes; memoized list rendering; sorting and filtering query parameters; Alembic migrations; dark and light themes; overview charts (patient status, age bands, latest visits, note coverage); API unit tests; component tests; end-to-end tests; CI; and hot reload in Docker.
@@ -103,8 +103,8 @@ Every core requirement in [the original assessment](reference/project.md) is imp
 
 | Suite | Command | What it verifies |
 | --- | --- | --- |
-| Backend and data | `docker compose --profile checks run --rm checks` | 338 API, migration and seed tests and 153 data-pipeline tests against real PostgreSQL, plus Ruff and strict mypy |
-| Frontend | `cd frontend && npm ci && npm run lint && npm run typecheck && npm test` | 370 unit and component tests, ESLint, Prettier and strict TypeScript |
+| Backend and data | `docker compose --profile checks run --rm checks` | 342 API, migration and seed tests and 153 data-pipeline tests against real PostgreSQL, plus Ruff and strict mypy |
+| Frontend | `cd frontend && npm ci && npm run lint && npm run typecheck && npm test` | 390 unit and component tests, ESLint, Prettier and strict TypeScript |
 | Browser journeys | `cd frontend && npm run e2e && npm run e2e:api` | End-to-end journeys on desktop and phone, plus the HTTP client against recorded API responses |
 | Clean-room stack | `python3 infra/scripts/verify_stack.py --live-browser` | Builds a fresh, isolated stack; checks migrations, seeding, restarts and log privacy; drives the live app in a browser |
 

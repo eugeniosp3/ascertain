@@ -63,6 +63,33 @@ describe('clinical note forms', () => {
     )
   })
 
+  it('moves focus to the first invalid field on an invalid submit, so its error is read once', async () => {
+    const create = vi.spyOn(api, 'createNote')
+    renderFeature(
+      <NoteForm patientId={patientId} actorId={actorId} onSaved={vi.fn()} onCancel={vi.fn()} />,
+    )
+    const user = userEvent.setup()
+    // Keyboard path from the report: Enter on "Save note" with an empty note.
+    act(() => screen.getByRole('button', { name: 'Save note' }).focus())
+    await user.keyboard('{Enter}')
+    const content = screen.getByRole('textbox', { name: /^Note/ })
+    await waitFor(() => expect(content).toHaveFocus())
+    expect(content).toHaveAttribute('aria-invalid', 'true')
+    expect(content).toHaveAccessibleDescription('Error: Write the note before saving.')
+    // The inline error is plain text, so the focus move is the only announcement.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(create).not.toHaveBeenCalled()
+    // An invalid clinical time comes first in the form, so it takes focus before the note.
+    fireEvent.change(screen.getByLabelText('Clinical date and time', { exact: false }), {
+      target: { value: '' },
+    })
+    act(() => screen.getByRole('button', { name: 'Save note' }).focus())
+    await user.keyboard('{Enter}')
+    await waitFor(() =>
+      expect(screen.getByLabelText('Clinical date and time', { exact: false })).toHaveFocus(),
+    )
+  })
+
   it('prevents a second write while a note is saving', async () => {
     const user = userEvent.setup()
     let finish!: (note: ReturnType<typeof makeNote>) => void

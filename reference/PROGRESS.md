@@ -2,7 +2,7 @@
 
 [Project overview](../README.md) · [Interactive view](holepunch.html) · [Assessment](project.md)
 
-Updated 2026-11-20 21:44 UTC. This covers the original assessment and selected additions. A checked box means verified in the scope shown; it does not turn a demo or fixture test into live-application acceptance.
+Updated 2026-11-20 22:22 UTC. This covers the original assessment and selected additions. A checked box means verified in the scope shown; it does not turn a demo or fixture test into live-application acceptance.
 
 **Core assessment: 51/51 checks verified in reviewed scopes (100%).** 0 partially verified; 0 still open.
 
@@ -22,7 +22,7 @@ The detailed card also tracks recommendations and selected additions; those are 
 **Detailed work: 149/151 items verified in stated scopes.**
 
 - Submitted. Hosted CI is green, and every core requirement and implemented stretch goal is verified.
-- Final cleanup shipped: the patient list keeps its rows when a background refresh fails; calmer screen-reader announcements; one local 'today' for date fields; the AI-summary tooltip stays on screen on phones; and numeric searches (e.g. an MRN) now survive a reload or deep link.
+- QA pass-2 fixes shipped: note and comment validation errors are now announced to screen readers; 'today' is accepted for users ahead of UTC; and the AI-summary hint opens on tap. All of it passes the clean-room gate.
 
 151 tracked items: 149 verified in stated scope, 0 partially verified; excluded scope open, 0 implemented; acceptance pending, 0 in progress, 0 planned, 2 not selected.
 
@@ -591,7 +591,7 @@ The brief suggests one or two; this project selected more. Optional items that w
 Historical scoped passes do not close current integration and detailed QA checks.
 
 - [x] **q-spec — Walk `project.md` line by line against the running app** · Verified in stated scope.
-  Final QA wave, 20 Nov, compiled app at 1440px and 390px in light and dark. 96 browser checks (search including trailing spaces, filters, sort, paging, create/edit/delete with client and server validation, 404 and malformed IDs), 24 workspace checks (per-user overview, notes, AI summary badge, tooltip and fallback, discussion and unread) and 28 keyboard and contrast checks (lowest contrast 4.66:1 light, 6.04:1 dark). One minor defect, an AI-summary tooltip clipped on phone widths, is being fixed.
+  Two independent QA waves, 20 Nov, compiled app at 1440px and 390px in light and dark; four test agents each time, with Opus adjudication. Pass 2 on e9ce6d5: 160/160 prior UI checks, plus 8/8 list-refresh-failure, 16/16 patient-form announcement, date-bound (Los Angeles evening and Tokyo morning) and 48/48 numeric deep-link checks. Three minor defects (note and comment validation not announced, Tokyo-morning 'today' rejected by the server, and the AI hint not opening on tap) are being fixed and rechecked.
   Scope: api-mode app, clean-room run, live api matrix. Requirement: Eval · requirements. Evidence: [reference/project.md](../reference/project.md) · [reference/chatroom/integration-coordination.md](../reference/chatroom/integration-coordination.md).
 
 - [x] **q-lint — Lint, format and typecheck pass on both sides** · Verified in stated scope.
@@ -599,7 +599,7 @@ Historical scoped passes do not close current integration and detailed QA checks
   Scope: isolated checks image and frontend tree. Requirement: Eval · code quality. Evidence: [.github/workflows/ci.yml](../.github/workflows/ci.yml) · [frontend/package.json](../frontend/package.json) · [backend/pyproject.toml](../backend/pyproject.toml).
 
 - [x] **q-tests — All tests pass** · Verified in stated scope.
-  Final tree, 20 Nov, all green. Backend: 338 tests plus Ruff, format and strict mypy; data: 153 tests (isolated checks container on real PostgreSQL). Frontend: 387 unit, 126 demo-browser and 11/11 HTTP-adapter browser tests, plus lint, format and strict TypeScript. Clean-room run: a fresh isolated stack passes migrations, the 100-patient seed, restart, recreate and log-privacy checks, and all 16 live browser journeys on desktop and phone. QA's final wave: 317 + 32 + 16 + 64 API checks and 148 browser checks pass.
+  Final tree, 20 Nov, all green. Backend: 342 tests plus Ruff, format and strict mypy; data: 153 tests (isolated checks container on real PostgreSQL). Frontend: 390 unit, 126 demo-browser and 11/11 HTTP-adapter browser tests, plus lint, format and strict TypeScript. Clean-room run: a fresh isolated stack passes migrations, the 100-patient seed, restart, recreate and log-privacy checks, and all 16 live browser journeys on desktop and phone. Two independent QA waves pass all API and browser checks; the three minor defects from pass 2 are fixed.
   Scope: final frozen tree. Requirement: Eval · code quality. Evidence: [reference/chatroom/integration-coordination.md](../reference/chatroom/integration-coordination.md).
 
 - [x] **q-clean — Remove dead code, stray `console.log`/`print` calls and TODOs** · Verified in stated scope.

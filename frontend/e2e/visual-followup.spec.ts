@@ -81,20 +81,27 @@ test.describe('phones', () => {
     await expect(tablist.getByRole('tab', { name: /^Discussion/ })).toBeInViewport({ ratio: 1 })
   })
 
-  test('390: the AI-summary hint wraps and stays on screen when opened from the keyboard', async ({
+  test('390: a tap opens the AI-summary hint, which wraps on screen; a second tap closes it', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await open(page, `${anaPath}?tab=summary`)
-    await page.getByRole('button', { name: 'About AI summaries' }).focus()
-    await expect(page.getByRole('tooltip')).toHaveText(
+    const trigger = page.getByRole('button', { name: 'About AI summaries' })
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    await trigger.tap()
+    const hint = page.getByRole('dialog', { name: 'About AI summaries' })
+    await expect(hint).toHaveText(
       "AI-generated summary. It refreshes automatically when this patient's data changes.",
     )
-    // The visible bubble (not Radix's hidden copy) must fit inside the 390px viewport.
-    const box = await page.locator('[data-slot="tooltip-content"]').boundingBox()
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+    // The bubble must fit inside the 390px viewport.
+    const box = await hint.boundingBox()
     expect(box).not.toBeNull()
     expect(box!.x).toBeGreaterThanOrEqual(0)
     expect(box!.x + box!.width).toBeLessThanOrEqual(390)
+    await trigger.tap()
+    await expect(hint).toHaveCount(0)
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
   })
 
   test('the menu sheet offers the labelled demo-user selector, with unique ids', async ({

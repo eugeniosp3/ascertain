@@ -5,34 +5,32 @@ import { patientKeys } from '@/app/query-keys'
 import { InlineError } from '@/components/shared/InlineError'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { formatDateTime } from '@/utils/dates'
 import { getFormErrors } from '@/utils/form-errors'
 
 export const AI_SUMMARY_HINT =
   "AI-generated summary. It refreshes automatically when this patient's data changes."
 
-// AI provenance: the icon is a real button, so keyboard users can open the same explanation.
-// The heading text says "AI summary", so the icon never carries the meaning alone. A local
-// provider keeps the panel self-contained (Radix allows nested providers).
+// AI provenance: the icon is a real button that toggles a popover on click, tap or Enter (a
+// tooltip never opens on touch). The heading text says "AI summary", so the icon never carries
+// the meaning alone. Escape or an outside click closes it and focus returns to the button.
 function AiSummaryHint() {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="About AI summaries"
-            className="text-lilac-ink"
-          >
-            <Sparkles aria-hidden="true" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{AI_SUMMARY_HINT}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="About AI summaries"
+          className="text-lilac-ink"
+        >
+          <Sparkles aria-hidden="true" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent aria-label="About AI summaries">{AI_SUMMARY_HINT}</PopoverContent>
+    </Popover>
   )
 }
 

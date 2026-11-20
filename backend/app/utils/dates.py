@@ -14,10 +14,15 @@ def utc_today() -> date:
 
 
 def calculate_age(date_of_birth: date, on_date: date | None = None) -> int:
-    """Calculate completed years; a leap-day birthday advances on March 1 otherwise."""
+    """Calculate completed years; a leap-day birthday advances on March 1 otherwise.
+
+    Never negative: a birth date up to one day after the UTC date (a local "today" east of
+    UTC) counts as age 0.
+    """
     today = on_date if on_date is not None else utc_today()
-    return (
+    return max(
+        0,
         today.year
         - date_of_birth.year
-        - ((today.month, today.day) < (date_of_birth.month, date_of_birth.day))
+        - ((today.month, today.day) < (date_of_birth.month, date_of_birth.day)),
     )
