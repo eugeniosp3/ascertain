@@ -2,7 +2,7 @@
 
 [Project overview](../README.md) · [Interactive view](holepunch.html) · [Assessment](project.md)
 
-Updated 2026-11-20 22:22 UTC. This covers the original assessment and selected additions. A checked box means verified in the scope shown; it does not turn a demo or fixture test into live-application acceptance.
+Updated 2026-11-20 22:35 UTC. This covers the original assessment and selected additions. A checked box means verified in the scope shown; it does not turn a demo or fixture test into live-application acceptance.
 
 **Core assessment: 51/51 checks verified in reviewed scopes (100%).** 0 partially verified; 0 still open.
 
@@ -21,8 +21,8 @@ The detailed card also tracks recommendations and selected additions; those are 
 
 **Detailed work: 149/151 items verified in stated scopes.**
 
-- Submitted. Hosted CI is green, and every core requirement and implemented stretch goal is verified.
-- QA pass-2 fixes shipped: note and comment validation errors are now announced to screen readers; 'today' is accepted for users ahead of UTC; and the AI-summary hint opens on tap. All of it passes the clean-room gate.
+- Submitted. Final state 07de112: hosted CI green, every core requirement and implemented stretch goal verified, and QA's independent recheck found no defects.
+- Delivered beyond the brief: an LLM patient summary (saved and regenerated only when data changes), per-user workloads, discussion with unread tracking, accessibility fixes measured in both themes, and a one-command setup with step-by-step status.
 
 151 tracked items: 149 verified in stated scope, 0 partially verified; excluded scope open, 0 implemented; acceptance pending, 0 in progress, 0 planned, 2 not selected.
 
@@ -591,7 +591,7 @@ The brief suggests one or two; this project selected more. Optional items that w
 Historical scoped passes do not close current integration and detailed QA checks.
 
 - [x] **q-spec — Walk `project.md` line by line against the running app** · Verified in stated scope.
-  Two independent QA waves, 20 Nov, compiled app at 1440px and 390px in light and dark; four test agents each time, with Opus adjudication. Pass 2 on e9ce6d5: 160/160 prior UI checks, plus 8/8 list-refresh-failure, 16/16 patient-form announcement, date-bound (Los Angeles evening and Tokyo morning) and 48/48 numeric deep-link checks. Three minor defects (note and comment validation not announced, Tokyo-morning 'today' rejected by the server, and the AI hint not opening on tap) are being fixed and rechecked.
+  Three independent QA waves, 20 Nov, compiled app at 1440px and 390px in light and dark, each run by four test agents with Opus adjudication. Pass 2 on e9ce6d5: 160/160 UI checks plus 8/8 list-refresh-failure, 16/16 patient-form announcement and 48/48 numeric deep-link checks, and three minor defects found. Targeted recheck on 07de112: all three fixed (note and comment errors announced once, 72 attempts; Tokyo-morning 'today' saves, 24/24; AI hint opens on tap), and a 160/160 regression smoke: no defects.
   Scope: api-mode app, clean-room run, live api matrix. Requirement: Eval · requirements. Evidence: [reference/project.md](../reference/project.md) · [reference/chatroom/integration-coordination.md](../reference/chatroom/integration-coordination.md).
 
 - [x] **q-lint — Lint, format and typecheck pass on both sides** · Verified in stated scope.

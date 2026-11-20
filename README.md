@@ -90,7 +90,7 @@ Every core requirement in [the original assessment](reference/project.md) is imp
 | Understanding and applying requirements | The lists below: stretch goals implemented, additions, and what was deliberately not selected |
 
 <!-- progress-summary:start -->
-**51/51 assessment requirements verified** · 149/151 tracked items · updated 2026-11-20 22:22 UTC. Every requirement is mapped to its evidence in the [punch card](reference/PROGRESS.md#core-assessment-checks) ([interactive version](reference/holepunch.html)).
+**51/51 assessment requirements verified** · 149/151 tracked items · updated 2026-11-20 22:35 UTC. Every requirement is mapped to its evidence in the [punch card](reference/PROGRESS.md#core-assessment-checks) ([interactive version](reference/holepunch.html)).
 <!-- progress-summary:end -->
 
 **Stretch goals implemented:** list virtualization; code splitting with lazy-loaded routes; memoized list rendering; sorting and filtering query parameters; Alembic migrations; dark and light themes; overview charts (patient status, age bands, latest visits, note coverage); API unit tests; component tests; end-to-end tests; CI; and hot reload in Docker.
