@@ -20,5 +20,7 @@ Use `patient_data.settings.StageSettings` for the current stage paths (defaults:
 
 The migration environment imports all application tables, requires `DATABASE_URL`, and
 compares both column types and server defaults when checking for drift. The exact model
-names and integration rules are in [MODEL_CONTRACT.md](../../MODEL_CONTRACT.md); the
-complete source mapping is in [DATA_MODEL.md](../../DATA_MODEL.md).
+names and integration rules are in [MODEL_CONTRACT.md](../../docs/MODEL_CONTRACT.md); the
+complete source mapping is in [DATA_MODEL.md](../../docs/DATA_MODEL.md).
+
+`20261120_0002_patient_assignments.py` adds only the nullable `patients.assigned_user_id` FK and its index. Existing rows stay unassigned until the versioned seed extension runs. Downgrade removes assignment metadata while preserving patient profiles. The existing 0001 revision is unchanged. Apply migrations before starting the new API; shared bind-mounted reload services require an infra-coordinated cutover, not file-by-file live edits.

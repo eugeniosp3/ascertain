@@ -1,22 +1,71 @@
 import { useState } from 'react'
-import { useForm } from '@tanstack/react-form'
+import { useForm, type DeepKeys, type ValidationLogicFn } from '@tanstack/react-form'
 import type { PatientWrite } from '@/api/types'
 import { getFormErrors } from '@/utils/form-errors'
 import { isPatientField } from './form-errors'
 import { toPatientWrite } from './mapping'
 import { patientFormSchema, type PatientFormValues } from './schema'
 
+// One validation slot refreshes on edits and blur, so cross-field errors cannot become stale.
+const patientValidationLogic: ValidationLogicFn = ({ form, validators, event, runValidation }) =>
+  runValidation({
+    form,
+    validators:
+      event.type === 'mount'
+        ? []
+        : [
+            {
+              fn: event.async ? validators?.onDynamicAsync : validators?.onDynamic,
+              cause: 'dynamic',
+            },
+          ],
+  })
+
 export function usePatientForm(
   initialValues: PatientFormValues,
   onSave: (values: PatientWrite) => Promise<void>,
 ) {
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<{ message: string; source: 'validation' | 'server' }>()
+  const [recoveryAttempt, setRecoveryAttempt] = useState(0)
   const [serverFields, setServerFields] = useState<Record<string, string>>({})
-  // Form validation: TanStack Form owns the draft; Zod checks it on blur and before submission.
+  // Form validation: reveal only blurred fields until submission, then validate the whole draft.
   const form = useForm({
     defaultValues: initialValues,
-    validators: { onBlur: patientFormSchema, onSubmit: patientFormSchema },
-    onSubmitInvalid: () => setError('Check the highlighted fields before saving.'),
+    // A prior blur error must not short-circuit the full validation of a submit attempt.
+    canSubmitWhenInvalid: true,
+    validationLogic: patientValidationLogic,
+    validators: {
+      onDynamic: ({ value, formApi }) => {
+        const result = patientFormSchema.safeParse(value)
+        if (result.success) return undefined
+        const fields: Record<string, string> = {}
+        for (const issue of result.error.issues) {
+          const path = issue.path.reduce<string>(
+            (name, part) =>
+              typeof part === 'number'
+                ? `${name}[${part}]`
+                : name
+                  ? `${name}.${String(part)}`
+                  : String(part),
+            '',
+          )
+          if (
+            formApi.state.submissionAttempts > 0 ||
+            formApi.getFieldMeta(path as DeepKeys<PatientFormValues>)?.isBlurred ||
+            (path === 'allergies' &&
+              (formApi.getFieldMeta('allergy_status')?.isBlurred ||
+                formApi.getFieldMeta('allergies')?.isTouched))
+          ) {
+            fields[path] ??= issue.message
+          }
+        }
+        return Object.keys(fields).length ? { fields } : undefined
+      },
+    },
+    onSubmitInvalid: () => {
+      setError({ message: 'Check these fields before saving.', source: 'validation' })
+      setRecoveryAttempt((attempt) => attempt + 1)
+    },
     onSubmit: async ({ value }) => {
       setError(undefined)
       setServerFields({})
@@ -34,7 +83,8 @@ export function usePatientForm(
           else messages.push(message)
         }
         setServerFields(fields)
-        setError([...new Set(messages)].join(' '))
+        setError({ message: [...new Set(messages)].join(' '), source: 'server' })
+        setRecoveryAttempt((attempt) => attempt + 1)
       }
     },
   })
@@ -58,7 +108,7 @@ export function usePatientForm(
     })
   }
 
-  return { form, error, serverFields, clearServerField }
+  return { form, error, recoveryAttempt, serverFields, clearServerField }
 }
 
 export type PatientFormBinding = ReturnType<typeof usePatientForm>

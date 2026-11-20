@@ -22,7 +22,9 @@
     "vitest.config.ts",
     "playwright.config.ts",
     "playwright.api.config.ts",
+    "playwright.live.config.ts",
     "e2e/**/*.ts",
-    "e2e-api/**/*.ts"
+    "e2e-api/**/*.ts",
+    "e2e-live/**/*.ts"
   ]
 }

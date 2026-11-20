@@ -5,7 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { api, ApiError } from '@/api'
 import { patientKeys } from '@/app/query-keys'
 import PatientWorkspace, { type PatientWorkspaceProps } from './PatientWorkspace'
-import { actorId, patientId, patient, makeNote, makeComment } from './test-data'
+import { actorId, patientId, patient, makeNote, makeComment, makeCommentPage } from './test-data'
 import { renderFeature } from './test-utils'
 
 function props(overrides: Partial<PatientWorkspaceProps> = {}): PatientWorkspaceProps {
@@ -26,11 +26,10 @@ beforeEach(() => {
   vi.spyOn(api, 'getPatient').mockResolvedValue(patient)
   vi.spyOn(api, 'listNotes').mockResolvedValue([makeNote()])
   vi.spyOn(api, 'listUsers').mockResolvedValue([{ id: actorId, display_name: 'Sam Rivera' }])
-  vi.spyOn(api, 'listComments').mockResolvedValue({
-    items: [makeComment()],
-    total: 1,
-    page: 1,
-    page_size: 10,
+  vi.spyOn(api, 'listComments').mockResolvedValue(makeCommentPage([makeComment()]))
+  vi.spyOn(api, 'markCommentsRead').mockResolvedValue({
+    patient_id: patientId,
+    last_read_at: '2026-11-01T14:30:01.123456+00:00',
   })
 })
 
@@ -87,7 +86,7 @@ describe('patient workspace routes and visit state', () => {
     const { rerender, client } = renderFeature(<PatientWorkspace {...callbacks} />)
     const dialog = screen.getByRole('dialog')
     expect(await within(dialog).findByRole('heading', { name: 'Ada J Rivera' })).toHaveFocus()
-    expect(within(dialog).getByRole('tab', { name: /Discussion.*1 unread comments/ })).toBeVisible()
+    expect(within(dialog).getByRole('tab', { name: /Discussion.*1 unread comment$/ })).toBeVisible()
     expect(mark).not.toHaveBeenCalled()
     expect(api.listComments).not.toHaveBeenCalled()
     await userEvent.click(screen.getByRole('tab', { name: /Notes/ }))
@@ -158,5 +157,18 @@ describe('patient workspace routes and visit state', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Close patient workspace' }))
     expect(callbacks.onClose).toHaveBeenCalledOnce()
     await waitFor(() => expect(api.getPatient).toHaveBeenCalledOnce())
+  })
+
+  it('treats a malformed patient ID (422) as not found, with a way back and no retry', async () => {
+    vi.mocked(api.getPatient).mockRejectedValue(
+      new ApiError(422, 'validation', 'Request validation failed.'),
+    )
+    const callbacks = props()
+    renderFeature(<PatientWorkspace {...callbacks} />)
+    expect(await screen.findByRole('heading', { name: 'Patient not found' })).toBeVisible()
+    expect(screen.queryByText('Request validation failed.')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /retry/i })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Back to list' }))
+    expect(callbacks.onClose).toHaveBeenCalledOnce()
   })
 })

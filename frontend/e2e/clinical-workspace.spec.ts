@@ -43,7 +43,7 @@ test('zero notes → timestamped plain-text note → linked discussion → confi
     noteURL = page.url()
     await closeWorkspace(page)
     await expect(
-      page.getByRole('link', { name: 'Olivia Silva, 1 clinical notes, open Notes', exact: true }),
+      page.getByRole('link', { name: 'Olivia Silva, 1 clinical note, open Notes', exact: true }),
     ).toBeFocused()
   })
 
@@ -76,6 +76,7 @@ test('zero notes → timestamped plain-text note → linked discussion → confi
   await test.step('Confirm deletion, update counts, and retain a non-clickable deleted-note reference', async () => {
     await page.getByRole('button', { name: 'Delete note', exact: true }).click()
     await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel', exact: true }).click()
+    await expect(page.getByRole('alertdialog')).toHaveCount(0)
     await expect(
       page.getByRole('heading', { name: 'E2E clinical observation', exact: true }),
     ).toBeVisible()
@@ -178,7 +179,7 @@ test('discussion create, edit and delete preserve authors, times and viewer perm
     await expect(revised).toContainText('Edited')
     await expect(revised.locator('time')).toHaveCount(2)
     await expect(revised.getByRole('list', { name: 'Linked clinical notes' })).toBeVisible()
-    await expect(page.getByText('Page 1 of 1 · 4 comments', { exact: true })).toBeVisible()
+    await expect(page.getByText('Page 1 · 4 comments', { exact: true })).toBeVisible()
   })
 
   await test.step('Switch demo users through the app and enforce the new ownership view', async () => {
@@ -188,7 +189,7 @@ test('discussion create, edit and delete preserve authors, times and viewer perm
       page.getByRole('link', { name: 'Notifications, 10 unread comments', exact: true }),
     ).toBeVisible()
     await page
-      .getByRole('link', { name: /Ana J Silva, 4 comments, 1 unread comments, open Discussion/ })
+      .getByRole('link', { name: /Ana J Silva, 4 comments, 1 unread comment, open Discussion/ })
       .click()
     const revised = comments
       .getByRole('listitem')
@@ -210,6 +211,6 @@ test('discussion create, edit and delete preserve authors, times and viewer perm
     await revised.getByRole('button', { name: 'Delete comment', exact: true }).click()
     await confirmDeletion(page, 'Delete comment')
     await expect(revised).toHaveCount(0)
-    await expect(page.getByText('Page 1 of 1 · 3 comments', { exact: true })).toBeVisible()
+    await expect(page.getByText('Page 1 · 3 comments', { exact: true })).toBeVisible()
   })
 })

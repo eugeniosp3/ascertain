@@ -7,6 +7,9 @@
 **/node_modules
 **/test-results
 **/playwright-report
+frontend/e2e-api/results
+frontend/e2e-live/results
+infra/artifacts
 **/coverage
 **/__pycache__
 **/*.py[cod]
@@ -25,5 +28,5 @@ data/work
 data/tmp
 study_mats
 qa
-chatroom
+reference/chatroom
 **/*.log

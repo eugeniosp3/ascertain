@@ -19,7 +19,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-10052}:5432"
 
   backend:
     build:
@@ -34,10 +34,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sample_password}
       POSTGRES_DB: ${POSTGRES_DB:-sample_db}
       CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:5173","http://127.0.0.1:5173"]}
-      MIGRATE_ON_STARTUP: ${MIGRATE_ON_STARTUP:-false}
-      SEED_ON_STARTUP: ${SEED_ON_STARTUP:-false}
+      MIGRATE_ON_STARTUP: ${MIGRATE_ON_STARTUP:-true}
+      SEED_ON_STARTUP: ${SEED_ON_STARTUP:-true}
     ports:
-      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+      - "127.0.0.1:${BACKEND_PORT:-10051}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -54,10 +54,10 @@ services:
       dockerfile: infra/docker/frontend.Dockerfile
       target: runtime
       args:
-        VITE_DATA_MODE: ${VITE_DATA_MODE:-demo}
+        VITE_DATA_MODE: ${VITE_DATA_MODE:-api}
         VITE_API_BASE: ${VITE_API_BASE:-/api}
     ports:
-      - "127.0.0.1:${FRONTEND_PORT:-8080}:8080"
+      - "127.0.0.1:${FRONTEND_PORT:-10050}:8080"
     depends_on:
       backend:
         condition: service_healthy

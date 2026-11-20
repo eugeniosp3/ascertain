@@ -2,7 +2,7 @@
 
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import cast
+from typing import Any, cast
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException
 
 from app.schemas.common import ErrorDetail, ErrorResponse, FieldError
+from app.validation import PUBLIC_VALIDATION_MESSAGES, VALIDATION_FIELD_TARGETS
 
 _VALIDATION_MESSAGES = {
     "missing": "Field is required.",
@@ -26,7 +27,19 @@ _VALIDATION_MESSAGES = {
     "less_than_equal": "Value exceeds the allowed maximum.",
     "literal_error": "Value is not one of the allowed choices.",
     "json_invalid": "Request body is not valid JSON.",
+    "date_from_datetime_parsing": "Enter a valid date.",
+    "datetime_from_date_parsing": "Enter a valid date and time.",
+    "timezone_aware": "Include a timezone offset in the date and time.",
+    **PUBLIC_VALIDATION_MESSAGES,
 }
+
+
+def error_responses(*statuses: int) -> dict[int | str, dict[str, Any]]:
+    """Describe the actual shared wire envelope for an operation's failure statuses."""
+    return {
+        status: {"model": ErrorResponse, "description": HTTPStatus(status).phrase}
+        for status in statuses
+    }
 
 
 class AppError(Exception):
@@ -75,7 +88,12 @@ async def _handle_validation_error(_request: Request, error: Exception) -> JSONR
     exc = cast(RequestValidationError, error)
     fields = tuple(
         FieldError(
-            path=tuple(item["loc"]),
+            path=tuple(item["loc"])
+            + (
+                (VALIDATION_FIELD_TARGETS[item["type"]],)
+                if item["type"] in VALIDATION_FIELD_TARGETS
+                else ()
+            ),
             code=item["type"],
             message=_VALIDATION_MESSAGES.get(item["type"], "Invalid value."),
         )

@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { formatDate, formatDateTime, toDateTimeLocal, toIsoTimestamp } from './dates'
+import {
+  formatDate,
+  formatDateTime,
+  toDateTimeLocal,
+  toIsoTimestamp,
+  timestampMicros,
+  timestampFromMicros,
+} from './dates'
 
 afterEach(() => vi.useRealTimers())
 
@@ -64,6 +71,15 @@ describe('dates', () => {
     expect(formatDateTime('2026-11-20T18:35:12.123456Z')).toBe(
       formatDateTime('2026-11-20T18:35:12.123Z'),
     )
+  })
+
+  it('preserves microsecond comparisons and round trips UTC, offset, and minimum watermarks', () => {
+    const exact = '2026-11-20T18:35:12.123456Z'
+    expect(timestampFromMicros(timestampMicros(exact))).toBe(exact)
+    expect(timestampMicros(exact) - timestampMicros('2026-11-20T18:35:12.123455Z')).toBe(1n)
+    expect(timestampMicros(exact)).toBe(timestampMicros('2026-11-20T13:35:12.123456-05:00'))
+    const minimum = '0001-01-01T00:00:00.000000Z'
+    expect(timestampFromMicros(timestampMicros(minimum))).toBe(minimum)
   })
 
   it('rejects nonexistent local DST times when the test timezone has a spring gap', () => {

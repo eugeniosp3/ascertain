@@ -52,7 +52,8 @@ export function NoteView({
     },
   })
   const gone = isApiError(note.error) && note.error.status === 410
-  const missing = isApiError(note.error) && note.error.status === 404
+  // A malformed note ID is rejected with 422 before lookup; treat it as not found, without retry.
+  const missing = isApiError(note.error) && [404, 422].includes(note.error.status)
   return (
     <article className="pw-panel">
       <div>

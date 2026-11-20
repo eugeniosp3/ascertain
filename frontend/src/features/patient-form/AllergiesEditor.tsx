@@ -1,3 +1,4 @@
+import { PATIENT_FIELD_LIMITS as limits } from '@/api/constraints'
 import { useId } from 'react'
 import { FormField } from '@/components/shared/FormField'
 import { InlineError } from '@/components/shared/InlineError'
@@ -29,8 +30,7 @@ export function AllergiesEditor({ binding }: { binding: PatientFormBinding }) {
             >
               <legend>Allergy status</legend>
               <p id={`${id}-description`} className="patient-form-hint">
-                Unknown means allergies have not been confirmed. Choosing Unknown or No known
-                allergies clears the reported list.
+                Unknown or No known allergies clears the reported list.
               </p>
               <div className="patient-form-choice-options">
                 {statuses.map(({ value, label }) => (
@@ -84,14 +84,17 @@ export function AllergiesEditor({ binding }: { binding: PatientFormBinding }) {
                             binding={binding}
                             name={`allergies[${index}]`}
                             label={`Allergy ${index + 1}`}
-                            maxLength={200}
+                            maxLength={limits.allergy}
                             required
                           />
                           <Button
                             type="button"
                             variant="ghost"
                             aria-label={`Remove allergy ${index + 1}`}
-                            onClick={() => {
+                            // Blurring before click can change validation height and move the target.
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={(event) => {
+                              event.currentTarget.focus()
                               clearServerField('allergies')
                               void field.removeValue(index)
                             }}
@@ -102,15 +105,18 @@ export function AllergiesEditor({ binding }: { binding: PatientFormBinding }) {
                       ))}
                       <Button
                         id={`${id}-add`}
+                        data-patient-field="allergies"
                         aria-label="Add allergy"
                         type="button"
                         variant="outline"
                         disabled={field.state.value.length >= 100}
                         aria-invalid={!!error}
                         aria-describedby={fieldDescription(`${id}-add`, undefined, error)}
-                        onClick={() => {
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={(event) => {
                           clearServerField('allergies')
                           field.pushValue('')
+                          event.currentTarget.focus()
                         }}
                       >
                         Add allergy

@@ -32,43 +32,22 @@ export function PatientIdentity({ patient, compact, headingRef, onClose }: Props
           </DialogTitle>
           {patient && <StatusPill status={patient.status} className="pw-status" />}
         </div>
+        {/* Identity lives here once; contact, address and record history stay in Overview. */}
         {patient && (
-          <>
-            <dl className="pw-facts">
-              <div>
-                <dt>DOB</dt>
-                <dd>{formatDate(patient.date_of_birth)}</dd>
-              </div>
-              <div>
-                <dt>Age</dt>
-                <dd>{patient.age}</dd>
-              </div>
-              <div>
-                <dt>{compact ? 'Record' : 'MRN'}</dt>
-                <dd>{compact ? formatRecordNumber(patient) : patient.mrn || 'Not recorded'}</dd>
-              </div>
-              {!compact && (
-                <div>
-                  <dt>Source ID</dt>
-                  <dd>{patient.source_patient_id || 'Not recorded'}</dd>
-                </div>
-              )}
-            </dl>
-            <dl className="pw-contact">
-              <div>
-                <dt>Phone</dt>
-                <dd>{patient.phone || 'Not recorded'}</dd>
-              </div>
-              <div>
-                <dt>Email</dt>
-                <dd>{patient.email || 'Not recorded'}</dd>
-              </div>
-              <div>
-                <dt>Last visit</dt>
-                <dd>{patient.last_visit ? formatDate(patient.last_visit) : 'No visit recorded'}</dd>
-              </div>
-            </dl>
-          </>
+          <dl className="pw-facts">
+            <div>
+              <dt>DOB</dt>
+              <dd>{formatDate(patient.date_of_birth)}</dd>
+            </div>
+            <div>
+              <dt>Age</dt>
+              <dd>{patient.age}</dd>
+            </div>
+            <div>
+              <dt>{compact ? 'Record' : 'MRN'}</dt>
+              <dd>{compact ? formatRecordNumber(patient) : patient.mrn || 'Not recorded'}</dd>
+            </div>
+          </dl>
         )}
       </div>
       <Button

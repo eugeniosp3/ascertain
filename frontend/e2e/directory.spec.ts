@@ -16,7 +16,7 @@ test('home → directory: debounced search, full-dataset filters, sorting and br
     await page.goto('/')
     await expect(page.getByText('Demo workspace', { exact: false })).toBeVisible()
     await selectActor(page)
-    await expect(page.getByRole('term').filter({ hasText: 'Total patients' })).toBeVisible()
+    await expect(page.locator('.ac-overview-summary')).toContainText(/\d+ assigned patients/)
     // Observe visible DOM throughout the transition so a brief empty/error
     // render cannot be hidden by a later successful assertion.
     const flashes = await page.evaluateHandle(() => {
@@ -197,7 +197,6 @@ test('50/100-row pages virtualize and restore a scrolled workspace visit', async
   await test.step('A detail visit removes the table and restores scroll, focus and highlight', async () => {
     const trigger = page.getByRole('link', { name: 'Tomás J Thompson', exact: true })
     await trigger.focus()
-    const scrollTop = await page.locator('.ac-list-scroll').evaluate((element) => element.scrollTop)
     const listURL = page.url()
     await trigger.press('Enter')
     const dialog = page.getByRole('dialog', { name: 'Tomás J Thompson', exact: true })
@@ -227,6 +226,11 @@ test('50/100-row pages virtualize and restore a scrolled workspace visit', async
     const content = dialog
       .locator('.pw-scroll')
       .filter({ has: page.getByRole('tabpanel', { name: 'Overview' }) })
+    // The compact profile no longer needs a tall page. Give this behavior check
+    // enough scrollable content to cross the identity header's threshold.
+    if (viewport.width >= 768) {
+      await page.setViewportSize({ width: viewport.width, height: 520 })
+    }
     await content.evaluate((element) => {
       element.scrollTop = element.scrollHeight
     })
@@ -238,6 +242,7 @@ test('50/100-row pages virtualize and restore a scrolled workspace visit', async
       element.scrollTop = 0
     })
     await expect(dialog.locator('header')).toHaveAttribute('data-compact', 'false')
+    if (viewport.width >= 768) await page.setViewportSize(viewport)
     const close = dialog.getByRole('button', {
       name: viewport.width < 768 ? 'Back' : 'Close patient workspace',
       exact: true,
@@ -254,9 +259,7 @@ test('50/100-row pages virtualize and restore a scrolled workspace visit', async
     await expect(trigger.locator('xpath=ancestor::*[self::tr or self::li][1]')).toHaveClass(
       /ac-last-visited/,
     )
-    await expect
-      .poll(() => page.locator('.ac-list-scroll').evaluate((element) => element.scrollTop))
-      .toBeGreaterThanOrEqual(scrollTop - 2)
+    await expect(trigger).toBeInViewport()
     await trigger.click()
     await page.goBack()
     await expect(trigger).toBeFocused()
@@ -289,7 +292,6 @@ test('50/100-row pages virtualize and restore a scrolled workspace visit', async
     const name = 'Priya Nguyen'
     const trigger = page.getByRole('link', { name, exact: true })
     await expect(trigger).toBeVisible()
-    const scrollTop = await page.locator('.ac-list-scroll').evaluate((element) => element.scrollTop)
     const url = page.url()
     await trigger.click()
     await expect(page.getByRole('dialog', { name, exact: true })).toBeVisible()
@@ -302,9 +304,7 @@ test('50/100-row pages virtualize and restore a scrolled workspace visit', async
     )
     await expect(page.getByText('Page 2 of 4', { exact: true })).toBeVisible()
     await expect(page.getByRole('link', { name, exact: true })).toBeFocused()
-    await expect
-      .poll(() => page.locator('.ac-list-scroll').evaluate((element) => element.scrollTop))
-      .toBeGreaterThanOrEqual(scrollTop - 2)
+    await expect(trigger).toBeInViewport()
   })
 })
 

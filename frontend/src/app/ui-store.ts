@@ -1,10 +1,17 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
+import type { PatientListGeometry } from '@/features/patient-list/scroll-restoration'
 import {
   defaultListSearch,
   type ListSearch,
   type PatientTab,
 } from '@/features/patient-list/search-params'
+
+export type Theme = 'light' | 'dark' | 'system'
+
+export function isTheme(value: unknown): value is Theme {
+  return value === 'light' || value === 'dark' || value === 'system'
+}
 
 export interface ListViewState {
   search: ListSearch
@@ -13,6 +20,7 @@ export interface ListViewState {
   lastRowIndex: number
   triggerTab: PatientTab
   restoreFocus: boolean
+  geometry: PatientListGeometry | null
 }
 
 export function emptyListView(): ListViewState {
@@ -23,6 +31,7 @@ export function emptyListView(): ListViewState {
     lastRowIndex: 0,
     triggerTab: 'overview',
     restoreFocus: false,
+    geometry: null,
   }
 }
 
@@ -30,9 +39,11 @@ export function emptyListView(): ListViewState {
 interface UIState {
   sidebarExpanded: boolean
   selectedActorId: string | null
+  theme: Theme
   returnSnapshots: Record<string, ListViewState>
   setSidebarExpanded: (expanded: boolean) => void
   setSelectedActorId: (id: string | null) => void
+  setTheme: (theme: Theme) => void
   updateListView: (key: string, patch: Partial<ListViewState>) => void
 }
 
@@ -67,9 +78,11 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       sidebarExpanded: false,
       selectedActorId: null,
+      theme: 'dark',
       returnSnapshots: {},
       setSidebarExpanded: (sidebarExpanded) => set({ sidebarExpanded }),
       setSelectedActorId: (selectedActorId) => set({ selectedActorId }),
+      setTheme: (theme) => set({ theme }),
       updateListView: (key, patch) =>
         set((state) => ({
           returnSnapshots: {
@@ -82,8 +95,12 @@ export const useUIStore = create<UIState>()(
       name: 'ascertain:ui-preferences',
       version: 1,
       storage: createJSONStorage(() => safeStorage),
-      // Preference persistence: save only sidebar and actor selection; return snapshots stay in memory.
-      partialize: ({ sidebarExpanded, selectedActorId }) => ({ sidebarExpanded, selectedActorId }),
+      // Preference persistence: save only sidebar, actor selection and theme; return snapshots stay in memory.
+      partialize: ({ sidebarExpanded, selectedActorId, theme }) => ({
+        sidebarExpanded,
+        selectedActorId,
+        theme,
+      }),
       merge: (persisted, current) => {
         const saved =
           persisted && typeof persisted === 'object' ? (persisted as Record<string, unknown>) : {}
@@ -94,6 +111,7 @@ export const useUIStore = create<UIState>()(
               ? saved.sidebarExpanded
               : current.sidebarExpanded,
           selectedActorId: typeof saved.selectedActorId === 'string' ? saved.selectedActorId : null,
+          theme: isTheme(saved.theme) ? saved.theme : 'dark',
         }
       },
     },

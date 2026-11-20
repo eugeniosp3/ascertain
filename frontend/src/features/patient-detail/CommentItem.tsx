@@ -9,18 +9,27 @@ import { CommentForm } from './CommentForm'
 import { ConfirmDelete } from './ConfirmDelete'
 import { invalidateActivity } from './queries'
 
+/** Demo authors read "Demo User 1 · Sam Rivera"; initials come from the person, not the role. */
+function authorInitials(displayName: string) {
+  return getInitials(displayName.split(' · ').at(-1) ?? displayName)
+}
+
 export function CommentItem({
   comment,
   patientId,
   actorId,
   isNew,
   onNoteOpen,
+  active = true,
+  onEditingChange,
 }: {
   comment: Comment
   patientId: string
   actorId: string
   isNew: boolean
   onNoteOpen: (id: string) => void
+  active?: boolean
+  onEditingChange?: (editing: boolean) => void
 }) {
   const [editing, setEditing] = useState(false)
   const client = useQueryClient()
@@ -33,40 +42,72 @@ export function CommentItem({
   return (
     <li className="pw-comment">
       <div className="pw-comment-avatar" aria-hidden="true">
-        {getInitials(comment.author.display_name)}
+        {authorInitials(comment.author.display_name)}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="pw-comment-head">
           <h4 className="font-semibold">{comment.author.display_name}</h4>
           {isNew && (
             <span className="pw-new">
               New<span className="sr-only"> comment during this visit</span>
             </span>
           )}
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          <time dateTime={comment.created_at}>{formatDateTime(comment.created_at)}</time>
-          {comment.updated_at !== comment.created_at && (
-            <>
-              {' '}
-              · Edited{' '}
-              <time dateTime={comment.updated_at}>{formatDateTime(comment.updated_at)}</time>
-            </>
+          <p className="pw-comment-time text-sm text-muted-foreground">
+            <time dateTime={comment.created_at}>{formatDateTime(comment.created_at)}</time>
+            {comment.updated_at !== comment.created_at && (
+              <>
+                {' '}
+                · Edited{' '}
+                <time dateTime={comment.updated_at}>{formatDateTime(comment.updated_at)}</time>
+              </>
+            )}
+          </p>
+          {/* Maintenance actions stay small and neutral; red appears only in the confirm dialog. */}
+          {comment.author.id === actorId && !editing && (
+            <div className="pw-comment-actions">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEditing(true)
+                  onEditingChange?.(true)
+                }}
+              >
+                Edit <span className="sr-only">comment</span>
+              </Button>
+              <ConfirmDelete
+                label="Delete comment"
+                description="This comment and its note references will be removed from the discussion. This action cannot be undone."
+                pending={deletion.isPending}
+                error={deletion.error}
+                onConfirm={() => deletion.mutateAsync()}
+              >
+                Delete <span className="sr-only">comment</span>
+              </ConfirmDelete>
+            </div>
           )}
-        </p>
+        </div>
         {editing ? (
           <div className="mt-3">
             <CommentForm
               patientId={patientId}
               actorId={actorId}
               comment={comment}
-              onSaved={() => setEditing(false)}
-              onCancel={() => setEditing(false)}
+              active={active}
+              onSaved={() => {
+                setEditing(false)
+                onEditingChange?.(false)
+              }}
+              onCancel={() => {
+                setEditing(false)
+                onEditingChange?.(false)
+              }}
             />
           </div>
         ) : (
           <>
-            <p className="pw-prose mt-3">{comment.body}</p>
+            <p className="pw-prose mt-2">{comment.body}</p>
             {comment.note_links.length > 0 && (
               <ul className="mt-3 flex flex-wrap gap-2" aria-label="Linked clinical notes">
                 {comment.note_links.map((link) => (
@@ -89,20 +130,6 @@ export function CommentItem({
                   </li>
                 ))}
               </ul>
-            )}
-            {comment.author.id === actorId && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button type="button" variant="ghost" onClick={() => setEditing(true)}>
-                  Edit comment
-                </Button>
-                <ConfirmDelete
-                  label="Delete comment"
-                  description="This comment and its note references will be removed from the discussion. This action cannot be undone."
-                  pending={deletion.isPending}
-                  error={deletion.error}
-                  onConfirm={() => deletion.mutateAsync()}
-                />
-              </div>
             )}
           </>
         )}

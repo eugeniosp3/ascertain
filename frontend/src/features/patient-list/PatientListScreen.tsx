@@ -6,6 +6,7 @@ import { ActorRequired } from '@/app/ActorSelector'
 import { BackToPatients } from '@/app/AppShell'
 import { getListView, updateListView } from '@/app/view-state'
 import { Button } from '@/components/ui/button'
+import { formatCount } from '@/utils/count'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useNotificationSummary } from '@/features/notifications/queries'
 import { usePatientList } from './queries'
@@ -79,13 +80,14 @@ export default function PatientListScreen({ view }: { view: ListView }) {
           <h1 id="patient-list-title" ref={heading} tabIndex={-1}>
             {notifications ? 'Notifications' : 'Patients'}
           </h1>
-          <p>
-            {notifications
-              ? summary.data
-                ? `${summary.data.unread_comments_count} unread ${summary.data.unread_comments_count === 1 ? 'comment' : 'comments'} across ${summary.data.patients_with_unread_comments} ${summary.data.patients_with_unread_comments === 1 ? 'patient' : 'patients'}`
-                : 'Unread conversations for your selected demo user'
-              : 'Your patient directory, in one place.'}
-          </p>
+          {/* Patients needs no subtitle: the results status below already states the count. */}
+          {notifications && (
+            <p>
+              {summary.data
+                ? `${formatCount(summary.data.unread_comments_count, 'unread comment')} across ${formatCount(summary.data.patients_with_unread_comments, 'patient')}`
+                : 'Unread conversations for your selected demo user'}
+            </p>
+          )}
         </div>
         {notifications ? (
           <BackToPatients />
@@ -106,8 +108,7 @@ export default function PatientListScreen({ view }: { view: ListView }) {
         <div className="ac-notification-notice">
           <Bell aria-hidden="true" />
           <p>
-            <strong>Unread conversations</strong> · Open Discussion to read new comments. Patient
-            overviews and clinical notes keep them unread.
+            <strong>Unread conversations</strong> · Only opening Discussion marks comments read.
           </p>
         </div>
       )}

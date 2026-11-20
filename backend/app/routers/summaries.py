@@ -8,11 +8,12 @@ from sqlalchemy.orm import Session
 
 from app.db import get_session
 from app.dependencies import get_optional_user
+from app.errors import error_responses
 from app.models import User
 from app.schemas.summaries import SummaryResponse
 from app.services import summaries
 
-router = APIRouter(tags=["Summaries"])
+router = APIRouter(tags=["Summaries"], responses=error_responses(401, 404, 422, 500, 503))
 
 
 @router.get("/patients/{patient_id}/summary", response_model=SummaryResponse)

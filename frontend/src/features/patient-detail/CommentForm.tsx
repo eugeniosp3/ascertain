@@ -2,6 +2,7 @@ import { useId } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, type Comment, type CommentWrite } from '@/api'
+import { COMMENT_BODY_MAX } from '@/api/constraints'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { FormField } from '@/components/shared/FormField'
@@ -17,7 +18,7 @@ interface Props {
   authorName?: string
   comment?: Comment
   active?: boolean
-  onSaved?: () => void
+  onSaved?: (comment: Comment) => void
   onCancel?: () => void
 }
 
@@ -49,9 +50,9 @@ export function CommentForm({
     validators: { onSubmit: commentSchema },
     onSubmit: async ({ value }) => {
       try {
-        await save.mutateAsync({ body: value.body.trim(), note_ids: value.note_ids })
+        const saved = await save.mutateAsync({ body: value.body.trim(), note_ids: value.note_ids })
         if (!comment) form.reset({ body: '', note_ids: [] })
-        onSaved?.()
+        onSaved?.(saved)
       } catch {
         /* Keep both the text and selected references on failure. */
       }
@@ -75,6 +76,7 @@ export function CommentForm({
         </p>
       </div>
       {server && <InlineError message={server.message} />}
+      {!comment && save.isSuccess && <p role="status">Comment posted.</p>}
       <form.Field name="body">
         {(field) => {
           const error = fieldMessage(field.state.meta.errors) ?? server?.fields.body
@@ -84,7 +86,7 @@ export function CommentForm({
                 id={`${id}-body`}
                 name="body"
                 rows={4}
-                maxLength={10_000}
+                maxLength={COMMENT_BODY_MAX}
                 value={field.state.value}
                 disabled={save.isPending}
                 onChange={(event) => {

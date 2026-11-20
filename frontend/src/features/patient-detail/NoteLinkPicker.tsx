@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import type { Comment } from '@/api'
+import { MAX_COMMENT_NOTE_IDS } from '@/api/constraints'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { InlineError } from '@/components/shared/InlineError'
@@ -99,7 +100,10 @@ export function NoteLinkPicker({
               <Checkbox
                 id={`${id}-${index}`}
                 checked={selected.includes(option.id)}
-                disabled={disabled || (!selected.includes(option.id) && selected.length >= 20)}
+                disabled={
+                  disabled ||
+                  (!selected.includes(option.id) && selected.length >= MAX_COMMENT_NOTE_IDS)
+                }
                 onCheckedChange={(checked) =>
                   onChange(
                     checked === true

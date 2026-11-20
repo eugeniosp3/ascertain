@@ -13,26 +13,25 @@ import {
 } from './contract-fixture'
 import type { PatientWrite } from '../src/api/types'
 
-test('explicit API actor gates domain HTTP; list queries and global counts remain independent', async ({
+test('default API actor opens the directory; list queries and global counts remain independent', async ({
   page,
   contract,
 }) => {
   contract.handler = (call) =>
     call.method === 'GET' && call.path === '/patients' && call.query.q === 'HTTP-0001'
-      ? { json: { items: [contract.patient], total: 51, page: 2, page_size: 50 } }
+      ? { json: { items: [contract.patientListItem()], total: 51, page: 2, page_size: 50 } }
       : undefined
   await page.goto(
     '/patients?q=HTTP-0001&status=active&sort_by=comments_count&order=desc&page=2&page_size=50',
   )
-  await expect(page.getByRole('heading', { name: 'Choose a demo user' })).toBeVisible()
-  expect(contract.requests.length).toBeGreaterThan(0)
-  // React development StrictMode may cancel and repeat the initial discovery.
-  expect(
-    contract.requests.every((call) => call.path === '/users' && call.actorId === undefined),
-  ).toBe(true)
-  await expect(page.getByText('Demo workspace', { exact: false })).toHaveCount(0)
   await selectActor(page, contract)
+  await expect(page.getByRole('heading', { name: 'Choose a demo user' })).toHaveCount(0)
+  expect(contract.requests[0]).toMatchObject({ path: '/users', actorId: undefined })
+  await expect(page.getByText('Demo workspace', { exact: false })).toHaveCount(0)
   await expect(page.getByRole('status')).toHaveText('51 patients matching your filters')
+  // Auto-selection can mount during StrictMode's initial query cancellation/replay.
+  const initialSummaryRequests = contract.matching('GET', '/notifications/summary').length
+  expect(initialSummaryRequests).toBeGreaterThan(0)
   await expect(page.getByText('Page 2 of 2', { exact: true })).toBeVisible()
   expect(contract.matching('GET', '/patients')[0]?.query).toEqual({
     q: 'HTTP-0001',
@@ -58,15 +57,14 @@ test('explicit API actor gates domain HTTP; list queries and global counts remai
       order: 'asc',
       page: '1',
       page_size: '20',
-      has_unread_comments: 'true',
+      unread_only: 'true',
     })
-  // This binding frontend spelling intentionally exposes the backend unread_only gap.
   await page.getByRole('searchbox', { name: 'Search patients' }).fill('no HTTP match')
   await expect(page.getByRole('heading', { name: 'No matching patients' })).toBeVisible()
   await expect(
     page.getByText('37 unread comments across 8 patients', { exact: true }),
   ).toBeVisible()
-  expect(contract.matching('GET', '/notifications/summary')).toHaveLength(1)
+  expect(contract.matching('GET', '/notifications/summary')).toHaveLength(initialSummaryRequests)
 
   await page.goto(notePath)
   await expect(page.getByRole('dialog', { name: 'HTTP Patient', exact: true })).toBeVisible()
@@ -175,7 +173,7 @@ test('patient POST preserves a nested 422 draft and network failure; PUT is comp
   expect(contract.matching('PUT', patientPath)).toHaveLength(1)
 })
 
-test('note ISO writes, observed comment IDs, linked notes and empty 204 tombstone responses', async ({
+test('note ISO writes, exact discussion watermarks, linked notes and empty 204 tombstone responses', async ({
   page,
   contract,
 }) => {
@@ -191,17 +189,19 @@ test('note ISO writes, observed comment IDs, linked notes and empty 204 tombston
     { timestamp: '2026-11-18T15:15:00.000Z', content: 'HTTP created clinical note' },
   ])
   await page.getByRole('tab', { name: /^Discussion/ }).click()
-  const displayedUnread = contract.comments
-    .slice(0, 10)
-    .filter((c) => c.author.id !== actor.id)
-    .map((c) => c.id)
+  const displayedThrough = '2026-11-13T15:00:00.123456Z'
   await expect
     .poll(() => contract.matching('POST', `${patientPath}/comments/read`).map((call) => call.body))
-    .toEqual([{ comment_ids: displayedUnread }])
+    .toEqual([{ through: displayedThrough }])
   await expect(
     page.getByRole('list', { name: 'Comments', exact: true }).getByRole('listitem'),
   ).toHaveCount(10)
   expect(contract.comments.slice(10).every((comment) => comment.is_unread)).toBe(true)
+  await page.getByRole('combobox', { name: 'Comments per page', exact: true }).click()
+  await page.getByRole('option', { name: '20', exact: true }).click()
+  await expect(
+    page.getByRole('list', { name: 'Comments', exact: true }).getByRole('listitem'),
+  ).toHaveCount(12)
   const commentForm = page.getByRole('form', { name: 'Add a comment', exact: true })
   await commentForm.getByLabel('Comment', { exact: false }).fill('HTTP linked discussion')
   await commentForm.getByRole('checkbox', { name: /^HTTP created clinical note/ }).check()
@@ -247,15 +247,17 @@ test('404, 503 and network list failures show recovery without fixture fallback 
   await selectActor(page, contract)
   const alert = page.getByRole('alert')
   await expect(alert).toContainText('HTTP collection not found.')
-  expect(contract.matching('GET', '/patients')).toHaveLength(1)
+  // Preserve exact retry deltas independently of StrictMode's initial replay.
+  const initialListRequests = contract.matching('GET', '/patients').length
+  expect([1, 2]).toContain(initialListRequests)
   mode = 'unavailable'
   await alert.getByRole('button', { name: 'Retry', exact: true }).click()
   await expect(alert).toContainText('The service is unavailable. Try again.')
-  expect(contract.matching('GET', '/patients')).toHaveLength(4)
+  expect(contract.matching('GET', '/patients')).toHaveLength(initialListRequests + 3)
   mode = 'network'
   await alert.getByRole('button', { name: 'Retry', exact: true }).click()
   await expect(alert).toContainText('Unable to reach the service. Check your connection.')
-  expect(contract.matching('GET', '/patients')).toHaveLength(7)
+  expect(contract.matching('GET', '/patients')).toHaveLength(initialListRequests + 6)
   await expect(page.getByText('100 patients', { exact: true })).toHaveCount(0)
   await expect(page.getByText('Demo workspace', { exact: false })).toHaveCount(0)
   await expect(page.getByText('Private backend diagnostic must not render')).toHaveCount(0)

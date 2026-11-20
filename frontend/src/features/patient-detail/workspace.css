@@ -35,7 +35,7 @@
   padding: 16px 16px 16px 20px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: white;
+  background: var(--ac-surface);
 }
 .pw-avatar,
 .pw-comment-avatar {
@@ -53,36 +53,27 @@
   font-size: 20px;
   overflow-wrap: anywhere;
 }
-.pw-facts,
-.pw-contact {
+.pw-facts {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 22px;
   margin-top: 6px;
 }
-.pw-facts > div,
-.pw-contact > div {
+.pw-facts > div {
   display: flex;
   align-items: baseline;
   gap: 6px;
   min-width: 0;
 }
-.pw-facts dt,
-.pw-contact dt {
+.pw-facts dt {
   font-size: 12px;
   color: var(--muted-foreground);
   white-space: nowrap;
 }
-.pw-facts dd,
-.pw-contact dd {
+.pw-facts dd {
   font-size: 13px;
   overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
-}
-.pw-contact {
-  padding-top: 8px;
-  margin-top: 8px;
-  border-top: 1px solid var(--border);
 }
 .pw-identity[data-compact='true'] {
   padding-top: 10px;
@@ -97,7 +88,6 @@
 .pw-identity[data-compact='true'] .pw-name {
   font-size: 17px;
 }
-.pw-identity[data-compact='true'] .pw-contact,
 .pw-identity[data-compact='true'] .pw-status {
   display: none;
 }
@@ -117,7 +107,7 @@
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: white;
+  background: var(--ac-surface);
 }
 .pw-tabs {
   flex: 1;
@@ -157,9 +147,9 @@
   overflow-anchor: none;
   padding: 22px 24px 40px;
 }
+/* Panels use the full workspace width; prose keeps its own measure (.pw-prose). */
 .pw-panel {
   display: flex;
-  max-width: 1120px;
   min-width: 0;
   flex-direction: column;
   gap: 16px;
@@ -176,12 +166,59 @@
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 12px;
 }
+/* Source sections differ in length; balanced columns avoid empty grid cells at any width. */
+.pw-source-grid {
+  columns: 300px;
+  column-gap: 12px;
+}
+.pw-source-grid > .pw-section {
+  break-inside: avoid;
+  margin-bottom: 12px;
+}
+.pw-record-meta {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.pw-record-meta dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+}
+.pw-record-meta dl > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.pw-record-meta dd {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.pw-record-meta code {
+  font-family: var(--ac-font-mono);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.pw-copy {
+  width: 28px;
+  height: 28px;
+}
+.pw-copy svg {
+  width: 14px;
+  height: 14px;
+}
 .pw-section {
   min-width: 0;
   padding: 16px 18px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: white;
+  background: var(--ac-surface);
 }
 .pw-values {
   display: grid;
@@ -221,7 +258,56 @@
 .pw-comment {
   display: flex;
   gap: 12px;
-  padding: 18px 0;
+  padding: 14px 0;
+}
+/* One row on wide panels: author, New, time, then actions; wraps in that order on phones. */
+.pw-comment-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  min-height: 28px;
+}
+.pw-comment-time {
+  margin: 0;
+}
+/* Author-only maintenance actions: small, neutral ghost text. Red is reserved for the confirm. */
+.pw-comment-actions {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+.pw-comment-actions [data-slot] {
+  height: 28px;
+  padding: 0 8px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+.pw-comment-actions [data-slot]:hover {
+  background: var(--ac-hover);
+  color: var(--foreground);
+}
+.pw-discussion .pw-panel-head {
+  align-items: center;
+}
+.pw-quiet-action {
+  color: var(--muted-foreground);
+}
+.pw-quiet-action:hover {
+  color: var(--foreground);
+}
+/* The live region stays mounted for announcements but takes no space while empty. */
+.pw-discussion-status:empty {
+  margin-top: -16px;
+}
+.pw-comment-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
 }
 .pw-comment:first-child {
   padding-top: 0;
@@ -258,7 +344,7 @@
   max-width: 100%;
   min-height: 32px;
   padding: 4px 10px;
-  border: 1px solid #cdbcf6;
+  border: 1px solid var(--ac-lilac-border);
   border-radius: 8px;
   background: var(--ac-lilac);
   color: var(--ac-lilac-ink);
@@ -269,10 +355,16 @@
 .pw-note-link:hover {
   border-color: var(--ac-lilac-ink);
 }
+/* Touch: 44px note-link targets on coarse pointers at every width (AST-007). */
+@media (pointer: coarse) {
+  .pw-note-link {
+    min-height: 44px;
+  }
+}
 .pw-note-link.pw-deleted {
   border-style: dashed;
   border-color: var(--input);
-  background: white;
+  background: var(--ac-surface);
   color: var(--muted-foreground);
 }
 @media (width < 48rem) {
@@ -281,7 +373,7 @@
     width: 100%;
     height: 100dvh;
     gap: 0;
-    background: white;
+    background: var(--ac-surface);
     font-size: 16px;
   }
   .pw-decor {
@@ -298,10 +390,11 @@
     border-radius: 0;
   }
   .pw-identity > .min-w-0 {
-    padding-top: 9px;
+    padding-top: 10px;
   }
   .pw-identity .pw-name {
-    font-size: 19px;
+    font-size: 18px;
+    line-height: 1.3;
   }
   .pw-avatar,
   .pw-close {
@@ -312,7 +405,8 @@
     padding: 0 8px;
   }
   .pw-facts {
-    gap: 2px 14px;
+    gap: 0 12px;
+    margin-top: 2px;
   }
   .pw-facts dt {
     font-size: 13px;
@@ -324,13 +418,29 @@
     border: 0;
     border-radius: 0;
   }
+  /* All four tabs and their counts fit at 320-390px; no hidden horizontal strip. */
   .pw-tab-list {
-    padding: 0 6px;
+    gap: 0;
+    padding: 0 4px;
   }
   .pw-tab-list [role='tab'] {
+    flex: 1 1 auto;
+    gap: 4px;
+    min-width: 0;
     height: 48px;
-    padding: 0 10px;
-    font-size: 15px;
+    padding: 0 6px;
+    font-size: 14px;
+  }
+  /* The tab's unread cue becomes a dot; the exact count stays in its accessible name. */
+  .pw-tab-list .pw-new {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--ac-violet-marker);
+    color: transparent;
+    font-size: 0;
   }
   .pw-scroll {
     padding: 16px calc(16px + env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom))
@@ -348,6 +458,11 @@
   }
   .pw-note-link {
     min-height: 44px;
+    font-size: 14px;
+  }
+  /* Identity metadata stays >= 14px on phones (AST-006): technical IDs included. */
+  .pw-record-meta,
+  .pw-record-meta code {
     font-size: 14px;
   }
 }

@@ -22,3 +22,6 @@
 data/*.duckdb*
 data/work/
 infra/artifacts/
+/frontend/e2e-live/results/
+# Raw QA run evidence stays local (about 1 GB); the README summarizes the process.
+/qa/

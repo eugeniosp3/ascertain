@@ -42,7 +42,7 @@
   gap: 20px;
   padding-block: 24px;
   border-radius: 12px;
-  background: white;
+  background: var(--ac-surface);
 }
 
 .patient-form-section > [data-slot='card-header'],
@@ -85,6 +85,34 @@
   color: var(--ac-text-secondary, #5e5a56);
   line-height: 1.5;
   overflow-wrap: anywhere;
+}
+
+.patient-form-error-summary {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--destructive) 40%, transparent);
+  border-radius: 10px;
+  background: var(--ac-danger-bg);
+  color: var(--destructive);
+  scroll-margin-block: 24px;
+}
+
+.patient-form-error-summary > p {
+  font-weight: 600;
+}
+
+.patient-form-error-summary ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.patient-form-error-summary button {
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .patient-form-medical {

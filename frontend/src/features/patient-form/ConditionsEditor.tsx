@@ -1,3 +1,4 @@
+import { PATIENT_FIELD_LIMITS as limits } from '@/api/constraints'
 import { useId } from 'react'
 import { FormField } from '@/components/shared/FormField'
 import { Button } from '@/components/ui/button'
@@ -17,7 +18,7 @@ export function ConditionsEditor({ binding }: { binding: PatientFormBinding }) {
             label="Conditions"
             htmlFor={id}
             error={error}
-            description="Add each condition separately. Keep an existing code when editing its label; codes are optional."
+            description="Add each condition separately. Codes are optional."
           >
             <div className="patient-form-repeat">
               {field.state.value.length === 0 && (
@@ -31,21 +32,24 @@ export function ConditionsEditor({ binding }: { binding: PatientFormBinding }) {
                       binding={binding}
                       name={`conditions[${index}].label`}
                       label={`Condition ${index + 1} label`}
-                      maxLength={200}
+                      maxLength={limits.condition_label}
                       required
                     />
                     <PatientInput
                       binding={binding}
                       name={`conditions[${index}].code`}
                       label={`Condition ${index + 1} code`}
-                      maxLength={40}
+                      maxLength={limits.condition_code}
                     />
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
                     aria-label={`Remove condition ${index + 1}`}
-                    onClick={() => {
+                    // Keep the target in place until click; focus then still runs blur validation.
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={(event) => {
+                      event.currentTarget.focus()
                       clearServerField('conditions')
                       void field.removeValue(index)
                     }}
@@ -56,15 +60,18 @@ export function ConditionsEditor({ binding }: { binding: PatientFormBinding }) {
               ))}
               <Button
                 id={id}
+                data-patient-field="conditions"
                 aria-label="Add condition"
                 type="button"
                 variant="outline"
                 disabled={field.state.value.length >= 100}
                 aria-invalid={!!error}
                 aria-describedby={fieldDescription(id, 'description', error)}
-                onClick={() => {
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={(event) => {
                   clearServerField('conditions')
                   field.pushValue({ code: '', label: '' })
+                  event.currentTarget.focus()
                 }}
               >
                 Add condition

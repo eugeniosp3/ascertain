@@ -1,5 +1,7 @@
 import { createDemoData, demoId } from '../fixtures/demo-data'
 import type { DemoComment, DemoNote, DemoPatient } from '../fixtures/demo-data'
+import { timestampFromMicros, timestampMicros } from '../utils/dates'
+import { decodeDiscussionCursor, encodeDiscussionCursor } from './mock-discussion-cursor'
 import { ApiError } from './client'
 import type {
   Comment,
@@ -15,7 +17,7 @@ import {
   invalid,
   validateComment,
   validateId,
-  validateIds,
+  validateDiscussionRead,
   validateList,
   validateNote,
   validatePage,
@@ -55,8 +57,14 @@ function ageOf(birthDate: string): number {
 }
 
 /** An isolated, memory-only adapter. Select an actor from listUsers before domain calls. */
-export function createMockApi(): DashboardApi {
-  const state = createDemoData()
+export function createMockApi(state = createDemoData()): DashboardApi {
+  let lastClock = 0n
+  // Model a database microsecond clock even when operations share a JS millisecond.
+  function clock(): bigint {
+    const wall = BigInt(Date.now()) * 1000n
+    lastClock = wall > lastClock ? wall : lastClock + 1n
+    return lastClock
+  }
   let sequence = 10_000
   const newId = (kind: 'patient' | 'note' | 'comment') => demoId(kind, ++sequence)
 
@@ -90,13 +98,18 @@ export function createMockApi(): DashboardApi {
   }
 
   function unread(item: DemoComment, viewer: User): boolean {
-    return item.author.id !== viewer.id && !state.readByActor.get(viewer.id)!.has(item.id)
+    const through = state.lastReadByActor.get(viewer.id)!.get(item.patient_id)
+    return (
+      item.author.id !== viewer.id &&
+      (through === undefined || timestampMicros(item.created_at) > timestampMicros(through))
+    )
   }
 
   function listItem(item: DemoPatient, viewer: User): PatientListItem {
     const discussion = state.comments.filter((entry) => entry.patient_id === item.id)
     return {
       id: item.id,
+      assigned_user_id: item.assigned_user_id,
       source_patient_id: item.source_patient_id,
       mrn: item.mrn,
       first_name: item.first_name,
@@ -194,15 +207,12 @@ export function createMockApi(): DashboardApi {
           ]
           return (
             haystack.some((value) => value?.toLocaleLowerCase('en-US').includes(query)) &&
-            (valid.status === undefined || item.status === valid.status)
+            (valid.status === undefined || item.status === valid.status) &&
+            (valid.assigned_to === undefined || item.assigned_user_id === viewer.id)
           )
         })
         .map((item) => listItem(item, viewer))
-        .filter(
-          (item) =>
-            valid.has_unread_comments === undefined ||
-            item.unread_comments_count > 0 === valid.has_unread_comments,
-        )
+        .filter((item) => valid.has_unread_comments !== true || item.unread_comments_count > 0)
       const direction = valid.order === 'asc' ? 1 : -1
       matching.sort((a, b) => {
         let comparison = 0
@@ -248,6 +258,8 @@ export function createMockApi(): DashboardApi {
       const item: DemoPatient = {
         ...value,
         id: newId('patient'),
+        // Server-owned workload: the creating actor is the assignee; writes never carry it.
+        assigned_user_id: viewer.id,
         source_patient_id: null,
         mrn: null,
         created_at: now,
@@ -266,14 +278,10 @@ export function createMockApi(): DashboardApi {
     async deletePatient(id, ctx) {
       actor(ctx)
       const item = patient(id)
-      const removedIds = state.comments
-        .filter((entry) => entry.patient_id === id)
-        .map((entry) => entry.id)
       state.patients = state.patients.filter((entry) => entry !== item)
       state.notes = state.notes.filter((entry) => entry.patient_id !== id)
       state.comments = state.comments.filter((entry) => entry.patient_id !== id)
-      for (const readIds of state.readByActor.values())
-        removedIds.forEach((commentId) => readIds.delete(commentId))
+      for (const watermarks of state.lastReadByActor.values()) watermarks.delete(id)
     },
     async listNotes(id, ctx) {
       actor(ctx)
@@ -343,18 +351,57 @@ export function createMockApi(): DashboardApi {
       const viewer = actor(ctx)
       patient(id)
       const paging = validatePage(params)
-      const items = state.comments
-        .filter((entry) => entry.patient_id === id)
-        .sort((a, b) => b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id))
-        .map((entry) => commentDto(entry, viewer))
-      return pageOf(items, paging)
+      const now = clock()
+      const cursor =
+        params.cursor === undefined ? undefined : decodeDiscussionCursor(params.cursor, id, now)
+      const cutoff = cursor ? timestampMicros(cursor.snapshot_at) : now
+      const snapshot = state.comments
+        .filter((entry) => entry.patient_id === id && timestampMicros(entry.created_at) <= cutoff)
+        .sort((a, b) => {
+          const difference = timestampMicros(a.created_at) - timestampMicros(b.created_at)
+          return difference < 0n ? -1 : difference > 0n ? 1 : a.id.localeCompare(b.id)
+        })
+      const page = cursor?.page ?? paging.page
+      const remaining = cursor
+        ? snapshot.filter((entry) => {
+            const time = timestampMicros(entry.created_at)
+            const after = timestampMicros(cursor.after_created_at)
+            return time > after || (time === after && entry.id > cursor.after_id)
+          })
+        : snapshot.slice((page - 1) * paging.page_size)
+      const items = remaining.slice(0, paging.page_size)
+      const more = remaining.length > items.length
+      const reliable = cursor !== undefined || page === 1
+      let readThrough = reliable ? timestampFromMicros(cutoff) : '0001-01-01T00:00:00.000000Z'
+      let nextCursor: string | null = null
+      if (reliable && more) {
+        const last = items[items.length - 1]!
+        const boundary = timestampMicros(last.created_at)
+        const equalGroup = timestampMicros(remaining[items.length]!.created_at) === boundary
+        readThrough = timestampFromMicros(equalGroup ? boundary - 1n : boundary)
+        nextCursor = encodeDiscussionCursor({
+          patient_id: id,
+          snapshot_at: timestampFromMicros(cutoff),
+          after_created_at: last.created_at,
+          after_id: last.id,
+          page: page + 1,
+        })
+      }
+      return {
+        items: items.map((entry) => commentDto(entry, viewer)),
+        total: snapshot.length,
+        page,
+        page_size: paging.page_size,
+        read_through: readThrough,
+        next_cursor: nextCursor,
+      }
     },
     async createComment(id, input, ctx) {
       const author = actor(ctx)
       patient(id)
       const value = validateComment(input)
       checkLinks(id, value.note_ids)
-      const now = new Date().toISOString()
+      const now = timestampFromMicros(clock())
       const item: DemoComment = {
         ...value,
         id: newId('comment'),
@@ -372,7 +419,7 @@ export function createMockApi(): DashboardApi {
       owned(item.author, viewer)
       const value = validateComment(input)
       checkLinks(id, value.note_ids, item.note_ids)
-      Object.assign(item, value, { updated_at: new Date().toISOString() })
+      Object.assign(item, value, { updated_at: timestampFromMicros(clock()) })
       return commentDto(item, viewer)
     },
     async deleteComment(id, commentId, ctx) {
@@ -380,30 +427,22 @@ export function createMockApi(): DashboardApi {
       const item = comment(id, commentId)
       owned(item.author, viewer)
       state.comments = state.comments.filter((entry) => entry !== item)
-      for (const ids of state.readByActor.values()) ids.delete(commentId)
     },
-    async markCommentsRead(id, commentIds, ctx) {
+    async markCommentsRead(id, input, ctx) {
       const viewer = actor(ctx)
       patient(id)
-      const ids = validateIds(commentIds, 'comment_ids', 100)
-      // Validate the entire observed set before changing any read state.
-      for (const commentId of ids) {
-        if (state.comments.some((entry) => entry.id === commentId && entry.patient_id !== id))
-          notFound()
-      }
-      // Concurrently deleted/missing IDs are harmless; never broaden the observed set.
-      const read_comment_ids = ids.filter((commentId) =>
-        state.comments.some((entry) => entry.id === commentId && entry.patient_id === id),
-      )
-      const readIds = state.readByActor.get(viewer.id)!
-      read_comment_ids.forEach((commentId) => readIds.add(commentId))
-      return {
-        patient_id: id,
-        read_comment_ids,
-        unread_comments_count: state.comments.filter(
-          (entry) => entry.patient_id === id && unread(entry, viewer),
-        ).length,
-      }
+      const { through } = validateDiscussionRead(input)
+      const now = clock()
+      const requested = timestampMicros(through)
+      const bounded = requested > now ? timestampFromMicros(now) : through
+      const watermarks = state.lastReadByActor.get(viewer.id)!
+      const previous = watermarks.get(id)
+      const last_read_at =
+        previous !== undefined && timestampMicros(previous) >= timestampMicros(bounded)
+          ? previous
+          : bounded
+      watermarks.set(id, last_read_at)
+      return { patient_id: id, last_read_at }
     },
     async getNotificationSummary(ctx) {
       const viewer = actor(ctx)

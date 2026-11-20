@@ -8,11 +8,16 @@ from sqlalchemy.orm import Session
 
 from app.db import get_session
 from app.dependencies import get_current_user, get_optional_user
+from app.errors import error_responses
 from app.models import User
 from app.schemas.notes import AttachmentCreate, AttachmentResponse, NoteResponse, NoteWrite
 from app.services import notes
 
-router = APIRouter(prefix="/patients/{patient_id}/notes", tags=["Notes"])
+router = APIRouter(
+    prefix="/patients/{patient_id}/notes",
+    tags=["Notes"],
+    responses=error_responses(401, 404, 422, 500, 503),
+)
 
 
 @router.get("", response_model=list[NoteResponse])
@@ -37,7 +42,7 @@ def create_note(
     return result
 
 
-@router.get("/{note_id}", response_model=NoteResponse)
+@router.get("/{note_id}", response_model=NoteResponse, responses=error_responses(410))
 def get_note(
     patient_id: UUID,
     note_id: UUID,
@@ -47,7 +52,7 @@ def get_note(
     return notes.get_note(session, patient_id, note_id)
 
 
-@router.put("/{note_id}", response_model=NoteResponse)
+@router.put("/{note_id}", response_model=NoteResponse, responses=error_responses(403, 410))
 def update_note(
     patient_id: UUID,
     note_id: UUID,
@@ -58,7 +63,7 @@ def update_note(
     return notes.update_note(session, patient_id, note_id, actor, values)
 
 
-@router.delete("/{note_id}", status_code=204)
+@router.delete("/{note_id}", status_code=204, responses=error_responses(403))
 def delete_note(
     patient_id: UUID,
     note_id: UUID,
@@ -69,7 +74,12 @@ def delete_note(
     return Response(status_code=204)
 
 
-@router.post("/{note_id}/attachments", response_model=AttachmentResponse, status_code=201)
+@router.post(
+    "/{note_id}/attachments",
+    response_model=AttachmentResponse,
+    status_code=201,
+    responses=error_responses(403, 410),
+)
 def create_attachment(
     patient_id: UUID,
     note_id: UUID,
@@ -83,7 +93,11 @@ def create_attachment(
     return result
 
 
-@router.delete("/{note_id}/attachments/{attachment_id}", status_code=204)
+@router.delete(
+    "/{note_id}/attachments/{attachment_id}",
+    status_code=204,
+    responses=error_responses(403, 410),
+)
 def delete_attachment(
     patient_id: UUID,
     note_id: UUID,

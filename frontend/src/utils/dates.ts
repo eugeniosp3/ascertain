@@ -22,10 +22,29 @@ function instant(value: string): Date {
   }
   dateParts(value.slice(0, 10))
   const date = new Date(value)
-  if (Number.isNaN(date.getTime()) || Number(value.slice(11, 13)) > 23) {
+  if (
+    Number.isNaN(date.getTime()) ||
+    Number(value.slice(11, 13)) > 23 ||
+    Number(value.slice(14, 16)) > 59 ||
+    Number(value.slice(17, 19) || 0) > 59
+  ) {
     throw new RangeError('Invalid timestamp.')
   }
   return date
+}
+
+// Preserve database microseconds when comparing discussion watermarks and snapshot positions.
+export function timestampMicros(value: string): bigint {
+  const date = instant(value)
+  const fraction = /\.(\d+)/.exec(value)?.[1] ?? ''
+  return BigInt(date.getTime()) * 1000n + BigInt(fraction.padEnd(6, '0').slice(3, 6))
+}
+
+export function timestampFromMicros(value: bigint): string {
+  const remainder = ((value % 1000n) + 1000n) % 1000n
+  return new Date(Number((value - remainder) / 1000n))
+    .toISOString()
+    .replace('Z', `${String(remainder).padStart(3, '0')}Z`)
 }
 
 export function formatDate(value: string | null): string {

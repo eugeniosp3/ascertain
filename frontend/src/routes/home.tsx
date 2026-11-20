@@ -1,51 +1,54 @@
 import { Link } from '@tanstack/react-router'
-import { useQueries } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { ArrowRight, Bell, Plus, Users } from 'lucide-react'
-import { api } from '@/api'
-import type { PatientListParams } from '@/api/types'
 import { useActor } from '@/app/actor-context'
 import { ActorRequired } from '@/app/ActorSelector'
-import { patientKeys } from '@/app/query-keys'
 import { resetListView, useSavedListSearch } from '@/app/view-state'
 import { Button } from '@/components/ui/button'
+import { CountPill } from '@/components/ui/count-pill'
 import { useNotificationSummary } from '@/features/notifications/queries'
+import { aggregateOverview, recentVisits } from '@/features/overview/aggregation'
+import { overviewCopy } from '@/features/overview/copy'
+import { OverviewCharts } from '@/features/overview/OverviewCharts'
+import { useOverviewProjection } from '@/features/overview/queries'
 import { PatientAvatar } from '@/features/patient-list/PatientIdentity'
 import { defaultListSearch } from '@/features/patient-list/search-params'
 import { formatDate } from '@/utils/dates'
 import { getPatientName } from '@/utils/patient'
 
-const overviewParams: PatientListParams[] = [
-  { page: 1, page_size: 5, sort_by: 'last_visit', order: 'desc' },
-  { page: 1, page_size: 1, status: 'active' },
-  { page: 1, page_size: 1, status: 'inactive' },
-]
-
 export default function HomePage() {
-  const { actorId } = useActor()
-  const queries = useQueries({
-    queries: overviewParams.map((params) => ({
-      queryKey: patientKeys.list(actorId, params),
-      queryFn: ({ signal }: { signal: AbortSignal }) =>
-        api.listPatients(params, { actorId: actorId ?? undefined, signal }),
-      enabled: actorId !== null,
-    })),
-  })
-  const [recent, active, inactive] = queries
+  const { actorId, users } = useActor()
+  const projection = useOverviewProjection(actorId)
+  const summary = useMemo(
+    () => projection.data && aggregateOverview(projection.data.patients, projection.data.asOfDate),
+    [projection.data],
+  )
+  const recent = useMemo(
+    () => (projection.data ? recentVisits(projection.data.patients, projection.data.asOfDate) : []),
+    [projection.data],
+  )
   const notifications = useNotificationSummary(actorId)
   const saved = useSavedListSearch('patients', actorId)
   if (!actorId) return <ActorRequired />
-  const stats = [
-    ['Total patients', recent?.data?.total],
-    ['Active', active?.data?.total],
-    ['Inactive', inactive?.data?.total],
-    ['Unread comments', notifications.data?.unread_comments_count],
-  ] as const
+  const unread = notifications.data?.unread_comments_count
+  const actor = users.find((user) => user.id === actorId)
+  // Charts and recent visits share one projection: the selected user's assigned cohort. While it
+  // loads, the wording names the cohort being requested; once loaded, the cohort it declares.
+  const copy = overviewCopy(projection.data?.scope ?? 'assigned', actor?.display_name)
+  // One summary line of counts not already charted below (status lives in the Status card).
+  // Unread comments stay per viewer across all patients, whatever the chart cohort is.
+  const summaryLine = [
+    summary && copy.patients(summary.total),
+    unread !== undefined && copy.unread(unread),
+  ].filter(Boolean)
   return (
     <section className="ac-overview" aria-labelledby="overview-title">
       <div className="ac-page-heading">
         <div>
           <h1 id="overview-title">Overview</h1>
-          <p>A clear view of your patient workspace.</p>
+          <p className="ac-overview-summary">
+            {summaryLine.length > 0 ? summaryLine.join(' · ') : 'Your patient workspace'}
+          </p>
         </div>
         <Button asChild>
           <Link to="/patients/new" search={{ ...saved, tab: 'overview', returnTo: 'patients' }}>
@@ -54,28 +57,14 @@ export default function HomePage() {
           </Link>
         </Button>
       </div>
-      <dl className="ac-stats">
-        {stats.map(([label, count]) => (
-          <div key={label}>
-            <dt>{label}</dt>
-            <dd>{count ?? '—'}</dd>
-          </div>
-        ))}
-      </dl>
-      {queries.some((query) => query.isError) && (
-        <div className="ac-notification-notice" role="alert">
-          <p>Some patient totals couldn’t be loaded.</p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              for (const query of queries) if (query.isError) void query.refetch()
-            }}
-          >
-            Retry
-          </Button>
-        </div>
-      )}
+      <OverviewCharts
+        copy={copy}
+        summary={summary}
+        isFetching={projection.isFetching}
+        isError={projection.isError}
+        updatedAt={projection.dataUpdatedAt}
+        onRetry={() => void projection.refetch()}
+      />
       <div className="ac-overview-columns">
         <section className="ac-surface ac-recent-visits">
           <div className="ac-card-header">
@@ -87,33 +76,31 @@ export default function HomePage() {
               </Link>
             </Button>
           </div>
-          {recent?.isPending ? (
+          {projection.isPending ? (
             <p className="ac-overview-note" role="status">
               Loading recent visits…
             </p>
-          ) : recent?.isError ? (
+          ) : projection.isError && !projection.data ? (
             <p className="ac-overview-note">Recent visits are unavailable.</p>
-          ) : recent?.data?.items.some((patient) => patient.last_visit) ? (
+          ) : recent.length > 0 ? (
             <ul>
-              {recent.data.items
-                .filter((patient) => patient.last_visit)
-                .map((patient) => (
-                  <li key={patient.id}>
-                    <Link
-                      to="/patients/$patientId"
-                      params={{ patientId: patient.id }}
-                      search={{ ...saved, tab: 'overview', returnTo: 'patients' }}
-                      className="ac-recent-link"
-                    >
-                      <PatientAvatar name={getPatientName(patient)} />
-                      <span>{getPatientName(patient)}</span>
-                    </Link>
-                    <time>{formatDate(patient.last_visit)}</time>
-                  </li>
-                ))}
+              {recent.map((patient) => (
+                <li key={patient.id}>
+                  <Link
+                    to="/patients/$patientId"
+                    params={{ patientId: patient.id }}
+                    search={{ ...saved, tab: 'overview', returnTo: 'patients' }}
+                    className="ac-recent-link"
+                  >
+                    <PatientAvatar name={getPatientName(patient)} />
+                    <span>{getPatientName(patient)}</span>
+                  </Link>
+                  <time dateTime={patient.last_visit!}>{formatDate(patient.last_visit)}</time>
+                </li>
+              ))}
             </ul>
           ) : (
-            <p className="ac-overview-note">No patient visits recorded yet.</p>
+            <p className="ac-overview-note">No recorded visits among your assigned patients.</p>
           )}
         </section>
         <section className="ac-surface ac-shortcuts">
@@ -124,7 +111,7 @@ export default function HomePage() {
             <Users aria-hidden="true" />
             <span>
               <strong>Patient directory</strong>
-              <small>Find records, notes, and clinical summaries</small>
+              <small>Every patient: records, notes and summaries</small>
             </span>
             <ArrowRight aria-hidden="true" />
           </Link>
@@ -135,8 +122,14 @@ export default function HomePage() {
           >
             <Bell aria-hidden="true" />
             <span>
-              <strong>Unread conversations</strong>
-              <small>See new comments from your team</small>
+              {/* The unread count belongs to the title, not floating mid-card. */}
+              <strong>
+                Unread conversations
+                {unread !== undefined && unread > 0 && (
+                  <CountPill count={unread} variant="unread" singularLabel="unread comment" />
+                )}
+              </strong>
+              <small>New comments for you, across all patients</small>
             </span>
             <ArrowRight aria-hidden="true" />
           </Link>

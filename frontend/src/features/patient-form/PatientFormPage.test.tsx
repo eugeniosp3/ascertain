@@ -10,6 +10,13 @@ import { emptyPatientValues, toPatientWrite } from './mapping'
 import { PatientForm } from './PatientForm'
 import PatientFormPage, { type PatientFormPageProps } from './PatientFormPage'
 
+// This suite chooses its own isolated adapter, independent of the application's HTTP default.
+vi.mock('@/api', async () => {
+  const { createMockApi } = await import('@/api/mock-api')
+  const { ApiError, isApiError } = await import('@/api/client')
+  return { api: createMockApi(), dataMode: 'demo', ApiError, isApiError }
+})
+
 const actorId = '40000000-0000-4000-8000-000000000001'
 const write = toPatientWrite({
   ...emptyPatientValues(),
@@ -32,6 +39,7 @@ const write = toPatientWrite({
 const patient: PatientDetail = {
   ...write,
   id: '10000000-0000-4000-8000-000000000001',
+  assigned_user_id: null,
   mrn: '01000001',
   source_patient_id: 'PT-0001',
   name: 'Ada J Example',
@@ -120,6 +128,26 @@ describe('composable patient form', () => {
       unread_comments_count: 2,
     })
   })
+  it('uses backend field limits in native input attributes', () => {
+    render(<PatientForm patient={patient} onSave={vi.fn()} onCancel={vi.fn()} />)
+    for (const [label, max] of [
+      [/^First name/, 100],
+      [/^Last name/, 100],
+      ['Middle initial', 1],
+      ['Phone', 40],
+      ['Email', 254],
+      ['Address line 1', 255],
+      ['Address line 2', 255],
+      ['City', 100],
+      ['State / region', 2],
+      ['Postal code', 10],
+      [/^Condition 1 label/, 500],
+      ['Condition 1 code', 16],
+      [/^Allergy 1/, 500],
+    ] as const)
+      expect(screen.getByLabelText(label)).toHaveAttribute('maxlength', String(max))
+  })
+
   it('starts empty and validates on blur and submit with associated plain-language errors', async () => {
     const onSave = vi.fn()
     render(<PatientForm onSave={onSave} onCancel={vi.fn()} />)
@@ -134,9 +162,20 @@ describe('composable patient form', () => {
     expect(await screen.findByText('Enter a first name.')).toBeVisible()
     expect(first).toHaveAttribute('aria-invalid', 'true')
     expect(first).toHaveAccessibleDescription('Enter a first name.')
+    expect(screen.queryByText('Enter a last name.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Enter a valid date.')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Add patient' }))
     expect(await screen.findByText('Enter a last name.')).toBeVisible()
     expect(screen.getByText('Enter a valid date.')).toBeVisible()
+    const summary = screen.getByRole('alert', { name: 'Check these fields before saving.' })
+    expect(summary).toHaveFocus()
+    expect(summary).toHaveTextContent('First name: Enter a first name.')
+    expect(summary).toHaveTextContent('Last name: Enter a last name.')
+    expect(summary).toHaveTextContent('Date of birth: Enter a valid date.')
+    await user.click(screen.getByRole('button', { name: 'Last name: Enter a last name.' }))
+    expect(screen.getByLabelText(/^Last name/)).toHaveFocus()
+    await user.click(screen.getByRole('button', { name: 'Add patient' }))
+    expect(screen.getByRole('alert', { name: 'Check these fields before saving.' })).toHaveFocus()
     expect(onSave).not.toHaveBeenCalled()
   })
 
@@ -150,7 +189,12 @@ describe('composable patient form', () => {
     expect(await screen.findByText('Add at least one reported allergy.')).toBeVisible()
     screen.getByRole('button', { name: 'Add allergy' }).focus()
     await user.keyboard('{Enter}')
+    expect(screen.queryByText('Add at least one reported allergy.')).not.toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.getByLabelText(/^Allergy 1/)).toHaveAccessibleDescription('Enter an allergy.'),
+    )
     await user.type(screen.getByLabelText(/^Allergy 1/), 'Example, with punctuation')
+    expect(screen.queryByText('Enter an allergy.')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Add condition' }))
     await user.type(screen.getByLabelText(/^Condition 1 label/), 'Example condition')
     await user.type(screen.getByLabelText('Condition 1 code'), 'X01')
@@ -168,6 +212,30 @@ describe('composable patient form', () => {
     )
     await user.click(screen.getByRole('button', { name: 'Remove allergy 1' }))
     expect(screen.queryByLabelText(/^Allergy 1/)).not.toBeInTheDocument()
+  })
+
+  it('keeps the input focused during a list-button press and validates on activation', async () => {
+    const onSave = vi.fn()
+    render(<PatientForm onSave={onSave} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('radio', { name: 'Reported allergies' }))
+    const add = screen.getByRole('button', { name: 'Add allergy' })
+    await user.click(add)
+    const first = screen.getByRole('textbox', { name: 'Allergy 1' })
+    await user.type(first, 'Penicillin')
+    expect(screen.queryByText('Add at least one reported allergy.')).not.toBeInTheDocument()
+
+    // A held press must neither blur/shift the target nor add a row before release.
+    await user.pointer({ target: add, keys: '[MouseLeft>]' })
+    expect(first).toHaveFocus()
+    expect(screen.queryByRole('textbox', { name: 'Allergy 2' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Add at least one reported allergy.')).not.toBeInTheDocument()
+    await user.pointer({ target: add, keys: '[/MouseLeft]' })
+    expect(add).toHaveFocus()
+    expect(screen.getByRole('textbox', { name: 'Allergy 2' })).toHaveValue('')
+    expect(first).toHaveValue('Penicillin')
+    expect(screen.queryByText('Add at least one reported allergy.')).not.toBeInTheDocument()
+    expect(onSave).not.toHaveBeenCalled()
   })
 
   it('clears the reported list explicitly when choosing a known absence', async () => {
@@ -362,6 +430,7 @@ describe('patient form page integration', () => {
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: 'Save changes' }))
     expect(await screen.findByText(error.message)).toBeVisible()
+    expect(screen.getByRole('alert', { name: error.message })).toHaveFocus()
     expect(screen.getByLabelText(/^First name/)).toHaveValue('Unsaved name')
     expect(screen.getByLabelText('Address line 2')).toHaveValue('Unit 009')
     expect(screen.getByLabelText(/^Condition 1 label/)).toHaveValue('Unsaved condition')
@@ -378,6 +447,7 @@ describe('patient form page integration', () => {
         'conditions[0].label': 'This condition label is unavailable.',
         'allergies[0]': 'Confirm this allergen.',
         email: 'Use an approved email address.',
+        blood_type: 'Confirm the blood type.',
         'path.id': 'The record identifier needs attention.',
       }),
     )
@@ -398,10 +468,28 @@ describe('patient form page integration', () => {
     expect(
       screen.getByText(/Request validation failed\. The record identifier needs attention\./),
     ).toBeVisible()
+    expect(
+      screen.getByRole('alert', {
+        name: 'Request validation failed. The record identifier needs attention.',
+      }),
+    ).toHaveFocus()
+    await user.click(screen.getByRole('button', { name: 'Blood type: Confirm the blood type.' }))
+    expect(screen.getByRole('combobox', { name: 'Blood type' })).toHaveFocus()
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Condition 1 label: This condition label is unavailable.',
+      }),
+    )
+    expect(condition).toHaveFocus()
     expect(props.onSaved).not.toHaveBeenCalled()
     expect(condition).toHaveValue('Example condition')
     fireEvent.change(condition, { target: { value: 'Corrected label' } })
     expect(screen.queryByText('This condition label is unavailable.')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', {
+        name: 'Condition 1 label: This condition label is unavailable.',
+      }),
+    ).not.toBeInTheDocument()
   })
 
   it('retains a dirty draft across background refetch and scopes its query to the actor', async () => {
@@ -418,16 +506,26 @@ describe('patient form page integration', () => {
     )
   })
 
-  it('shows an array-level server error even when the reported allergy editor is closed', async () => {
+  it.each([
+    'Add at least one allergy when allergy status is reported.',
+    'Clear the allergy list or choose the reported allergy status.',
+  ])('keeps a backend allergy error actionable with the editor closed: %s', async (message) => {
     vi.mocked(api.createPatient).mockRejectedValue(
       new ApiError(422, 'validation_error', 'Request validation failed.', {
-        allergies: 'Reconfirm the allergy information.',
+        allergies: message,
       }),
     )
     renderPage()
     fillRequired()
     await userEvent.setup().click(screen.getByRole('button', { name: 'Add patient' }))
-    expect(await screen.findByText('Reconfirm the allergy information.')).toBeVisible()
+    expect(await screen.findByText(message)).toBeVisible()
+    expect(screen.getByRole('alert', { name: 'Request validation failed.' })).toHaveFocus()
+    await userEvent.setup().click(
+      screen.getByRole('button', {
+        name: `Reported allergy list: ${message}`,
+      }),
+    )
+    expect(screen.getByRole('radio', { name: 'Unknown' })).toHaveFocus()
     expect(screen.getByRole('radio', { name: 'Unknown' })).toBeChecked()
     expect(screen.getByLabelText(/^First name/)).toHaveValue('Ada')
   })

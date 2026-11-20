@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { dataMode } from '@/api'
 import { Button } from '@/components/ui/button'
+import { ThemeControl } from '@/components/shared/ThemeControl'
 import {
   Sheet,
   SheetContent,
@@ -27,7 +28,7 @@ import { notificationLabel } from '@/features/notifications/notification-label'
 import { useNotificationSummary } from '@/features/notifications/queries'
 import { defaultListSearch } from '@/features/patient-list/search-params'
 import { useActor } from './actor-context'
-import { ActorSelector } from './ActorSelector'
+import { ActorSelector, actorSelectorId } from './ActorSelector'
 import { resetListView, useSavedListSearch } from './view-state'
 import { useUIStore } from './ui-store'
 
@@ -152,6 +153,7 @@ export default function AppShell() {
           </Link>
           {navigation(false)}
           <div className="ac-sidebar-foot">
+            <ThemeControl collapsed={!expanded} />
             <RailTooltip enabled={!expanded} label="Expand sidebar">
               <Button
                 variant="ghost"
@@ -184,25 +186,24 @@ export default function AppShell() {
                 <SheetContent side="left" className="ac-mobile-menu">
                   <SheetHeader>
                     <SheetTitle>Ascertain</SheetTitle>
-                    <SheetDescription>Patient workspace</SheetDescription>
+                    <SheetDescription>
+                      {dataMode === 'demo'
+                        ? 'Demo workspace · Changes reset on reload.'
+                        : 'Patient workspace'}
+                    </SheetDescription>
                   </SheetHeader>
                   {navigation(true)}
+                  <div className="ac-mobile-menu-foot">
+                    {/* Full, labelled selector; the header chip stays for one-tap switching. */}
+                    <ActorSelector />
+                    <ThemeControl />
+                  </div>
                 </SheetContent>
               </Sheet>
               <span className="ac-mobile-brand">
                 <Brand />
                 Ascertain
               </span>
-              <Link
-                to="/notifications"
-                search={defaultListSearch}
-                className="ac-mobile-bell"
-                aria-label={notificationLabel(count)}
-                onClick={() => resetListView('notifications', actorId)}
-              >
-                <Bell aria-hidden="true" />
-                <NotificationBadge count={count} />
-              </Link>
             </>
           ) : (
             <nav className="ac-breadcrumbs" aria-label="Breadcrumb">
@@ -215,14 +216,32 @@ export default function AppShell() {
               </ol>
             </nav>
           )}
+          {/* Phones keep one header bar: the compact demo-user chip sits before the bell,
+              in DOM order, so focus order matches the visual order. */}
           <div className="ac-header-actions">
-            <ActorSelector />
+            <ActorSelector id={actorSelectorId} />
           </div>
+          {isMobile && (
+            <Link
+              to="/notifications"
+              search={defaultListSearch}
+              className="ac-mobile-bell"
+              aria-label={notificationLabel(count)}
+              onClick={() => resetListView('notifications', actorId)}
+            >
+              <Bell aria-hidden="true" />
+              <NotificationBadge count={count} />
+            </Link>
+          )}
         </header>
         {dataMode === 'demo' && (
           <div className="ac-demo-banner">
             <span className="ac-demo-dot" aria-hidden="true" />
-            Demo workspace <span>· Synthetic patient records. Changes reset on reload.</span>
+            Demo workspace{' '}
+            <span>
+              · Synthetic patient records.
+              <span className="ac-demo-reset"> Changes reset on reload.</span>
+            </span>
           </div>
         )}
         <main id="main-content" tabIndex={-1} className="ac-main">

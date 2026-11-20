@@ -17,7 +17,7 @@ writer. This module never creates or repairs schema. **No backend writer exists 
 the default run reports ``backend.persistence`` as blocked and writes nothing.
 
 The PostgreSQL column/constraint expectations below are provisional: they follow the
-unapproved backend draft (``backend/schema.dbml``) only where the importer itself needs
+unapproved backend draft (``backend/docs/schema.dbml``) only where the importer itself needs
 them (marker table, source key, lineage, seed-run foreign key). The backend writer adds
 its own columns and supported revisions through ``target_contract()``.
 """

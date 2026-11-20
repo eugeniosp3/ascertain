@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_session
 from app.dependencies import get_current_user, get_optional_user
+from app.errors import error_responses
 from app.models import User
 from app.schemas.comments import (
     CommentCursorToken,
@@ -19,14 +20,18 @@ from app.schemas.comments import (
 )
 from app.services import comments
 
-router = APIRouter(prefix="/patients/{patient_id}/comments", tags=["Comments"])
+router = APIRouter(
+    prefix="/patients/{patient_id}/comments",
+    tags=["Comments"],
+    responses=error_responses(401, 404, 422, 500, 503),
+)
 
 
 @router.get("", response_model=CommentPage)
 def list_comments(
     patient_id: UUID,
     session: Annotated[Session, Depends(get_session)],
-    _viewer: Annotated[User | None, Depends(get_optional_user)],
+    viewer: Annotated[User | None, Depends(get_optional_user)],
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
     cursor: Annotated[CommentCursorToken | None, Query()] = None,
@@ -40,7 +45,7 @@ def list_comments(
     and no next_cursor. They cannot prove that a contiguous prefix was displayed.
     """
     return comments.list_comments(
-        session, patient_id, page=page, page_size=page_size, cursor=cursor
+        session, patient_id, page=page, page_size=page_size, cursor=cursor, viewer=viewer
     )
 
 
@@ -67,7 +72,7 @@ def mark_discussion_read(
     return comments.mark_discussion_read(session, patient_id, actor, values.through)
 
 
-@router.put("/{comment_id}", response_model=CommentResponse)
+@router.put("/{comment_id}", response_model=CommentResponse, responses=error_responses(403))
 def update_comment(
     patient_id: UUID,
     comment_id: UUID,
@@ -78,7 +83,7 @@ def update_comment(
     return comments.update_comment(session, patient_id, comment_id, actor, values)
 
 
-@router.delete("/{comment_id}", status_code=204)
+@router.delete("/{comment_id}", status_code=204, responses=error_responses(403))
 def delete_comment(
     patient_id: UUID,
     comment_id: UUID,

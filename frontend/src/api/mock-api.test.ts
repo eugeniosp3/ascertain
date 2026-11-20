@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { createDemoData } from '../fixtures/demo-data'
+import { timestampMicros } from '../utils/dates'
 import { createMockApi } from './mock-api'
 import type { DashboardApi, PatientDetail, PatientWrite } from './types'
 
@@ -198,14 +200,11 @@ describe('demo patient API', () => {
 })
 
 describe('demo conversation and notes API', () => {
-  it('pages newest comments and notes consistently, with empty discussions available', async () => {
+  it('pages chronological comments and newest notes consistently, with empty discussions available', async () => {
     const { api, first, all, patient } = await setup()
     const complete = await api.listComments(patient.id, { page_size: 100 }, first)
     expect(complete.items.map((item) => item.created_at)).toEqual(
-      complete.items
-        .map((item) => item.created_at)
-        .sort()
-        .reverse(),
+      complete.items.map((item) => item.created_at).sort(),
     )
     const secondPage = await api.listComments(patient.id, { page: 2, page_size: 1 }, first)
     expect(secondPage.items).toEqual(complete.items.slice(1, 2))
@@ -220,7 +219,7 @@ describe('demo conversation and notes API', () => {
     )
     const empty = all.items.find((item) => item.comments_count === 0)!
     expect(empty).toBeDefined()
-    expect(await api.listComments(empty.id, {}, first)).toEqual({
+    expect(await api.listComments(empty.id, {}, first)).toMatchObject({
       items: [],
       total: 0,
       page: 1,
@@ -243,7 +242,7 @@ describe('demo conversation and notes API', () => {
     expect(queue.items.every((item) => item.unread_comments_count > 0)).toBe(true)
     expect(
       (await api.listPatients({ has_unread_comments: false, page_size: 100 }, first)).total,
-    ).toBe(88)
+    ).toBe(100)
     expect(await api.getNotificationSummary(second)).toEqual({
       unread_comments_count: 9,
       patients_with_unread_comments: 9,
@@ -252,11 +251,10 @@ describe('demo conversation and notes API', () => {
     expect((await api.getNotificationSummary(first)).unread_comments_count).toBe(12)
   })
 
-  it('reads only observed comments idempotently; later arrivals and other viewers remain independent', async () => {
+  it('acknowledges displayed chronological prefixes; later arrivals and viewers stay independent', async () => {
     const { api, first, second, patient } = await setup()
-    const snapshot = await api.listComments(patient.id, { page_size: 1 }, first)
+    const snapshot = await api.listComments(patient.id, { page_size: 2 }, first)
     expect(snapshot.total).toBe(3)
-    expect(snapshot.items[0]!.is_unread).toBe(true)
     const incoming = await api.createComment(
       patient.id,
       { body: 'Arrived after snapshot', note_ids: [] },
@@ -265,21 +263,26 @@ describe('demo conversation and notes API', () => {
     const own = await api.createComment(patient.id, { body: 'My own reply', note_ids: [] }, first)
     expect(own.is_unread).toBe(false)
     expect(incoming.is_unread).toBe(false)
-    const ids = snapshot.items.map((item) => item.id)
-    const receipt = await api.markCommentsRead(patient.id, [...ids, ...ids], first)
-    expect(receipt).toMatchObject({ read_comment_ids: ids, unread_comments_count: 1 })
-    expect(await api.markCommentsRead(patient.id, ids, first)).toEqual(receipt)
+    const continuation = await api.listComments(
+      patient.id,
+      { cursor: snapshot.next_cursor!, page_size: 2 },
+      first,
+    )
+    expect(continuation.items.map((item) => item.id)).not.toContain(incoming.id)
+    expect(continuation).toMatchObject({ total: 3, page: 2, next_cursor: null })
+    const input = { through: continuation.read_through }
+    const receipt = await api.markCommentsRead(patient.id, input, first)
+    expect(receipt).toEqual({ patient_id: patient.id, last_read_at: input.through })
+    expect(await api.markCommentsRead(patient.id, input, first)).toEqual(receipt)
+    expect(
+      await api.markCommentsRead(patient.id, { through: snapshot.read_through }, first),
+    ).toEqual(receipt)
     const after = await api.listComments(patient.id, {}, first)
     expect(after.items.find((item) => item.id === incoming.id)?.is_unread).toBe(true)
     expect(after.items.find((item) => item.id === own.id)?.is_unread).toBe(false)
-    expect(after.items.find((item) => item.id === ids[0])?.is_unread).toBe(false)
     const forSecond = await api.listComments(patient.id, {}, second)
     expect(forSecond.items.find((item) => item.id === own.id)?.is_unread).toBe(true)
-    await api.markCommentsRead(
-      patient.id,
-      forSecond.items.map((item) => item.id),
-      second,
-    )
+    await api.markCommentsRead(patient.id, { through: forSecond.read_through }, second)
     expect((await api.getPatient(patient.id, first)).unread_comments_count).toBe(1)
   })
 
@@ -291,7 +294,7 @@ describe('demo conversation and notes API', () => {
     expect((await api.getPatient(patient.id, first)).unread_comments_count).toBe(1)
     const messages = await api.listComments(patient.id, {}, first)
     const old = messages.items.find((item) => item.author.id === second.actorId)!
-    await api.markCommentsRead(patient.id, [old.id], first)
+    await api.markCommentsRead(patient.id, { through: messages.read_through }, first)
     const edited = await api.updateComment(
       patient.id,
       old.id,
@@ -387,7 +390,7 @@ describe('demo conversation and notes API', () => {
     })
     const comment = await api.createComment(
       patient.id,
-      { body: 'Discussion', note_ids: [note.id, note.id] },
+      { body: 'Discussion', note_ids: [note.id] },
       first,
     )
     expect(comment.note_links).toHaveLength(1)
@@ -404,6 +407,7 @@ describe('demo conversation and notes API', () => {
     for (const input of [
       { timestamp: '2026-10-31T09:00', content: 'Text' },
       { timestamp: '2026-02-30T09:00:00Z', content: 'Text' },
+      { timestamp: '2999-01-01T09:00:00Z', content: 'Text' },
       { timestamp: note.timestamp, content: ' ' },
       { timestamp: note.timestamp, content: 'x'.repeat(20_001) },
     ]) {
@@ -414,6 +418,7 @@ describe('demo conversation and notes API', () => {
       { body: 'x'.repeat(10_001), note_ids: [] },
       { body: 'Text', note_ids: null },
       { body: 'Text', note_ids: ['not-a-uuid'] },
+      { body: 'Text', note_ids: [note.id, note.id] },
     ]) {
       await expect(
         api.createComment(
@@ -429,25 +434,106 @@ describe('demo conversation and notes API', () => {
     ).toBe(false)
   })
 
-  it('scopes read acknowledgments atomically and tolerates a concurrent deletion', async () => {
-    const { api, first, second, patient, other } = await setup()
-    const one = (await api.listComments(patient.id, {}, first)).items[0]!
-    const foreign = (await api.listComments(other.id, {}, first)).items[0]!
-    await expect(
-      api.markCommentsRead(patient.id, [one.id, foreign.id], first),
-    ).rejects.toMatchObject({ status: 404 })
+  it('keeps cursor positions stable across deletion and rejects wrong-patient or invalid cursors', async () => {
+    const { api, first, patient, other } = await setup()
+    const page = await api.listComments(patient.id, { page_size: 1 }, first)
+    const cursor = page.next_cursor!
+    const original = await api.listComments(patient.id, { page_size: 100 }, first)
+    await api.deleteComment(patient.id, page.items[0]!.id, first)
+    const next = await api.listComments(patient.id, { cursor, page: 99, page_size: 1 }, first)
+    expect(next.page).toBe(2)
+    expect(next.total).toBe(2)
+    expect(next.items[0]!.id).toBe(original.items[1]!.id)
+    await expect(api.listComments(other.id, { cursor }, first)).rejects.toMatchObject({
+      status: 422,
+      code: 'invalid_discussion_cursor',
+    })
+    await expect(api.listComments(patient.id, { cursor: 'garbage' }, first)).rejects.toMatchObject({
+      status: 422,
+    })
+    const legacy = await api.listComments(patient.id, { page: 2, page_size: 1 }, first)
+    expect(legacy).toMatchObject({ read_through: '0001-01-01T00:00:00.000000Z', next_cursor: null })
+    await api.markCommentsRead(patient.id, { through: legacy.read_through }, first)
     expect((await api.getPatient(patient.id, first)).unread_comments_count).toBe(1)
+    expect(
+      await api.listComments(patient.id, { page: Number.MAX_SAFE_INTEGER }, first),
+    ).toMatchObject({ items: [], next_cursor: null })
+  })
+
+  it('does not acknowledge an equal-timestamp group until the entire group was fetched', async () => {
+    const data = createDemoData()
+    const patientId = data.patients[0]!.id
+    const actor = { actorId: data.users[0]!.id }
+    data.lastReadByActor.get(actor.actorId)!.delete(patientId)
+    data.comments
+      .filter((item) => item.patient_id === patientId)
+      .forEach((item) => {
+        item.author = data.users[1]!
+        item.created_at = '2026-11-03T16:00:00.123456Z'
+      })
+    const api = createMockApi(data)
+    const first = await api.listComments(patientId, { page_size: 1 }, actor)
+    expect(first.read_through).toBe('2026-11-03T16:00:00.123455Z')
+    await api.markCommentsRead(patientId, { through: first.read_through }, actor)
+    expect((await api.getPatient(patientId, actor)).unread_comments_count).toBe(3)
+    const second = await api.listComments(
+      patientId,
+      { cursor: first.next_cursor!, page_size: 1 },
+      actor,
+    )
+    await api.markCommentsRead(patientId, { through: second.read_through }, actor)
+    expect((await api.getPatient(patientId, actor)).unread_comments_count).toBe(3)
+    const third = await api.listComments(
+      patientId,
+      { cursor: second.next_cursor!, page_size: 1 },
+      actor,
+    )
+    await api.markCommentsRead(patientId, { through: third.read_through }, actor)
+    expect((await api.getPatient(patientId, actor)).unread_comments_count).toBe(0)
+  })
+
+  it('keeps unseen comments in sequence when earlier or unseen snapshot entries are deleted', async () => {
+    const { api, first, second, patient } = await setup()
+    const firstPage = await api.listComments(patient.id, { page_size: 1 }, first)
+    const original = await api.listComments(patient.id, {}, first)
+    // Remove the next unread position rather than shifting an offset past the final comment.
+    await api.deleteComment(patient.id, original.items[1]!.id, first)
+    const final = await api.listComments(
+      patient.id,
+      { cursor: firstPage.next_cursor!, page_size: 1 },
+      first,
+    )
+    expect(final.items.map((item) => item.id)).toEqual([original.items[2]!.id])
+    expect(final.next_cursor).toBeNull()
     const incoming = await api.createComment(
       patient.id,
-      { body: 'Removed while reading', note_ids: [] },
+      { body: 'After snapshot', note_ids: [] },
       second,
     )
-    await api.deleteComment(patient.id, incoming.id, second)
-    expect(await api.markCommentsRead(patient.id, [incoming.id, one.id], first)).toMatchObject({
-      read_comment_ids: [one.id],
-      unread_comments_count: 0,
-    })
-    expect((await api.getNotificationSummary(first)).unread_comments_count).toBe(11)
+    await api.deleteComment(patient.id, final.items[0]!.id, second)
+    await api.markCommentsRead(patient.id, { through: final.read_through }, first)
+    const refreshed = await api.listComments(patient.id, {}, first)
+    expect(refreshed.items.find((item) => item.id === incoming.id)?.is_unread).toBe(true)
+  })
+
+  it('validates watermarks and clamps future acknowledgments to a monotonic database clock', async () => {
+    const { api, first, patient } = await setup()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-20T10:00:00Z'))
+    for (const through of ['', 'invalid', '2026-11-20T10:00:00', '2026-02-30T10:00:00Z']) {
+      await expect(api.markCommentsRead(patient.id, { through }, first)).rejects.toMatchObject({
+        status: 422,
+      })
+    }
+    const receipt = await api.markCommentsRead(
+      patient.id,
+      { through: '2999-01-01T00:00:00Z' },
+      first,
+    )
+    expect(timestampMicros(receipt.last_read_at)).toBe(BigInt(Date.now()) * 1000n)
+    expect(
+      await api.markCommentsRead(patient.id, { through: '2020-01-01T00:00:00Z' }, first),
+    ).toEqual(receipt)
   })
 
   it('generates current summaries from profile and active notes, excluding discussion and deleted content', async () => {
@@ -477,5 +563,95 @@ describe('demo conversation and notes API', () => {
     await expect(api.listNotes(patient.id, first)).rejects.toMatchObject({ status: 404 })
     await expect(api.listComments(patient.id, {}, first)).rejects.toMatchObject({ status: 404 })
     expect((await api.getNotificationSummary(first)).patients_with_unread_comments).toBe(11)
+  })
+})
+
+describe('demo assigned workload', () => {
+  it('splits the shared directory into disjoint per-actor cohorts, filtered before totals and paging', async () => {
+    const { api, users, first, second, all } = await setup()
+    // Omitting assigned_to keeps the same global directory for every actor.
+    expect(
+      (await api.listPatients({ page_size: 100 }, second)).items.map((item) => item.id),
+    ).toEqual(all.items.map((item) => item.id))
+    const mine = await api.listPatients({ assigned_to: 'me', page_size: 100 }, first)
+    const theirs = await api.listPatients({ assigned_to: 'me', page_size: 100 }, second)
+    expect([mine.total, theirs.total]).toEqual([52, 48])
+    expect(mine.items.every((item) => item.assigned_user_id === users[0]!.id)).toBe(true)
+    expect(theirs.items.every((item) => item.assigned_user_id === users[1]!.id)).toBe(true)
+    expect(new Set([...mine.items, ...theirs.items].map((item) => item.id)).size).toBe(100)
+    const params = { status: 'active', sort_by: 'last_visit', order: 'desc' } as const
+    const expected = (await api.listPatients({ ...params, page_size: 100 }, first)).items.filter(
+      (item) => item.assigned_user_id === users[0]!.id,
+    )
+    const page = await api.listPatients(
+      { ...params, assigned_to: 'me', page: 2, page_size: 7 },
+      first,
+    )
+    expect(page.total).toBe(expected.length)
+    expect(page.items).toEqual(expected.slice(7, 14))
+    const queue = await api.listPatients({ has_unread_comments: true, page_size: 100 }, first)
+    const assignedQueue = await api.listPatients(
+      { assigned_to: 'me', has_unread_comments: true, q: 'example.com', page_size: 100 },
+      first,
+    )
+    expect(assignedQueue.items.map((item) => item.id)).toEqual(
+      queue.items.filter((item) => item.assigned_user_id === users[0]!.id).map((item) => item.id),
+    )
+    // Unread notifications stay personal across all patients, not the cohort.
+    expect((await api.getNotificationSummary(first)).unread_comments_count).toBe(queue.total)
+    expect(assignedQueue.total).toBeLessThan(queue.total)
+  })
+
+  it('assigns creates to the selected actor, preserves assignment on PUT and rejects assignment input', async () => {
+    const { api, users, first, second, patient } = await setup()
+    const original = await api.getPatient(patient.id, first)
+    const input = writeFrom(original)
+    const created = await api.createPatient(input, second)
+    expect(created.assigned_user_id).toBe(users[1]!.id)
+    expect((await api.listPatients({ assigned_to: 'me' }, second)).total).toBe(49)
+    expect((await api.listPatients({ assigned_to: 'me' }, first)).total).toBe(52)
+    expect((await api.listPatients({}, first)).total).toBe(101)
+    const edited = await api.updatePatient(
+      patient.id,
+      { ...input, status: 'inactive' },
+      original.assigned_user_id === users[0]!.id ? second : first,
+    )
+    expect(edited.status).toBe('inactive')
+    expect(edited.assigned_user_id).toBe(original.assigned_user_id)
+    const forged = { ...input, assigned_user_id: users[1]!.id } as PatientWrite
+    await expect(api.createPatient(forged, first)).rejects.toMatchObject({
+      status: 422,
+      fieldErrors: { assigned_user_id: 'Unexpected field.' },
+    })
+    await expect(api.updatePatient(patient.id, forged, first)).rejects.toMatchObject({
+      status: 422,
+    })
+    expect((await api.getPatient(patient.id, first)).assigned_user_id).toBe(
+      original.assigned_user_id,
+    )
+    expect((await api.listPatients({}, first)).total).toBe(101)
+  })
+
+  it('rejects invalid assigned filters and missing actors, and verifies empty cohorts', async () => {
+    const { first } = await setup()
+    const state = createDemoData()
+    state.patients = state.patients.map((item) => ({ ...item, assigned_user_id: null }))
+    const api = createMockApi(state)
+    expect(await api.listPatients({ assigned_to: 'me' }, first)).toMatchObject({
+      items: [],
+      total: 0,
+      page: 1,
+    })
+    // Unassigned patients remain in the shared directory.
+    expect((await api.listPatients({}, first)).total).toBe(100)
+    await expect(api.listPatients({ assigned_to: 'me' })).rejects.toMatchObject({ status: 401 })
+    for (const assigned_to of ['you', '', 'ME']) {
+      await expect(
+        api.listPatients({ assigned_to } as Parameters<DashboardApi['listPatients']>[0], first),
+      ).rejects.toMatchObject({
+        status: 422,
+        fieldErrors: { 'query.assigned_to': 'Value is not one of the allowed choices.' },
+      })
+    }
   })
 })

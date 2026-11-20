@@ -94,6 +94,7 @@ def _list_item(
     return PatientListItem.model_validate(
         {
             "id": patient.id,
+            "assigned_user_id": patient.assigned_user_id,
             "source_patient_id": patient.source_patient_id,
             "mrn": patient.mrn,
             "first_name": patient.first_name,
@@ -118,13 +119,15 @@ def _escape_like(value: str) -> str:
 def list_patients(
     session: Session, query: PatientListQuery, actor: User | None = None
 ) -> PatientPage:
-    """Search and sort the whole dataset, count filtered rows, then select one page.
+    """Search and sort the selected cohort, count filtered rows, then select one page.
 
     Search treats LIKE metacharacters literally and includes first/last/full names,
     email, source ID, MRN, and application UUID. Unread means another author's
     comment created strictly after this actor's last read; edits do not make it new.
     Missing read state means all other-author comments are unread. Reads do not mark
     discussions read. Without an actor unread counts are zero; unread_only needs one.
+    assigned_to=me needs one too and narrows the cohort before every other filter, the
+    total, sorting, and pagination. Omitting it keeps the shared all-patient directory.
     """
     if query.unread_only and actor is None:
         raise AppError(
@@ -132,8 +135,16 @@ def list_patients(
             code="demo_user_required",
             message="Select a demo user to view unread conversations.",
         )
-    notes, comments, unread = _counts(actor.id if actor is not None else None)
     filters: list[ColumnElement[bool]] = []
+    if query.assigned_to == "me":
+        if actor is None:
+            raise AppError(
+                status_code=401,
+                code="demo_user_required",
+                message="Select an active demo user to view assigned patients.",
+            )
+        filters.append(Patient.assigned_user_id == actor.id)
+    notes, comments, unread = _counts(actor.id if actor is not None else None)
     if query.q:
         pattern = f"%{_escape_like(query.q)}%"
         fields = (
@@ -182,6 +193,7 @@ def list_patients(
         .options(
             load_only(
                 Patient.id,
+                Patient.assigned_user_id,
                 Patient.source_patient_id,
                 Patient.mrn,
                 Patient.first_name,
@@ -252,6 +264,13 @@ def _constraint_error(error: IntegrityError) -> AppError:
             code="patient_conflict",
             message="The patient change conflicts with an existing record.",
         )
+    if constraint == "patients_assigned_user_id_fkey":
+        # Only a create assigns; its actor row disappeared after identity resolution.
+        return AppError(
+            status_code=401,
+            code="invalid_demo_user",
+            message="Select an active demo user.",
+        )
     if sqlstate == "23502" or constraint in {
         "patients_names",
         "patients_status",
@@ -272,13 +291,23 @@ def _constraint_error(error: IntegrityError) -> AppError:
     )
 
 
-def create_patient(session: Session, payload: PatientCreate) -> PatientDetail:
-    """Insert one profile and commit it; no source or identity fields are writable."""
+def create_patient(
+    session: Session, payload: PatientCreate, actor: User | None = None
+) -> PatientDetail:
+    """Commit a profile with server-owned assignment to the selected actor, if any.
+
+    The payload cannot carry assignment: its schema forbids unknown fields, so the
+    selected actor (or null without one) is the only source of the initial owner.
+    """
     try:
-        patient = Patient(id=uuid4(), **payload.model_dump(mode="python"))
+        patient = Patient(
+            id=uuid4(),
+            assigned_user_id=actor.id if actor is not None else None,
+            **payload.model_dump(mode="python"),
+        )
         session.add(patient)
         session.flush()
-        response = get_patient(session, patient.id)
+        response = get_patient(session, patient.id, actor)
         session.commit()
         return response
     except IntegrityError as error:
@@ -292,7 +321,11 @@ def create_patient(session: Session, payload: PatientCreate) -> PatientDetail:
 def replace_patient(
     session: Session, patient_id: UUID, payload: PatientReplace, actor: User | None = None
 ) -> PatientDetail:
-    """Replace every editable value and commit, preserving all imported provenance."""
+    """Replace editable values and commit, preserving assignment and import provenance.
+
+    Only the 17 editable fields are written, so neither the editor nor an anonymous
+    caller changes who the patient is assigned to.
+    """
     try:
         patient = require_patient(session, patient_id)
         edited_at: datetime = session.execute(select(func.clock_timestamp())).scalar_one()

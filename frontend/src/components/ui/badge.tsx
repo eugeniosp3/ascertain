@@ -11,13 +11,15 @@ const badgeVariants = cva(
       variant: {
         default: 'bg-primary text-primary-foreground [a&]:hover:bg-primary/90',
         secondary: 'bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90',
-        destructive: 'bg-destructive text-white [a&]:hover:bg-destructive/90',
+        // Semantic pairs (AST-003): white on the light-pink dark-mode destructive was 1.98:1.
+        destructive: 'bg-destructive text-destructive-foreground [a&]:hover:bg-destructive/90',
         outline:
           'border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
         ghost: '[a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 [a&]:hover:underline',
         count: 'bg-selected text-muted-foreground tabular-nums',
-        unread: 'bg-violet text-lilac-ink',
+        // Same pair as CountPill's unread variant; lilac ink on violet was 1.05:1 in dark mode.
+        unread: 'bg-unread text-unread-foreground',
       },
     },
     defaultVariants: {

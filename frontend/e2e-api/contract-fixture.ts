@@ -1,17 +1,26 @@
 import { expect, test as base, type Page, type Route } from '@playwright/test'
+import { decodeDiscussionCursor, encodeDiscussionCursor } from '../src/api/mock-discussion-cursor'
+import { timestampFromMicros, timestampMicros } from '../src/utils/dates'
+import type { NotificationSummaryDto, PatientDetailDto, PatientListItemDto } from '../src/api/dto'
 import type {
   Comment,
+  CommentPage,
+  DiscussionReadInput,
   CommentWrite,
   Note,
   NoteWrite,
-  PatientDetail,
   PatientWrite,
 } from '../src/api/types'
 
-export const actor = { id: 'a0000000-0000-4000-8000-000000000001', display_name: 'API Avery' }
+export const actor = {
+  id: 'a0000000-0000-4000-8000-000000000001',
+  display_name: 'API Avery',
+  display_role: 'Physician',
+}
 export const colleague = {
   id: 'a0000000-0000-4000-8000-000000000002',
   display_name: 'API Blake',
+  display_role: null,
 }
 export const patientId = 'b0000000-0000-4000-8000-000000000001'
 export const patientPath = `/patients/${patientId}`
@@ -39,10 +48,12 @@ export const emptyWrite: PatientWrite = {
   allergy_status: 'unknown',
 }
 
-export function detail(overrides: Partial<PatientDetail> = {}): PatientDetail {
+export function detail(overrides: Partial<PatientDetailDto> = {}): PatientDetailDto {
   return {
     ...emptyWrite,
     id: patientId,
+    // The backend assigns creates to the selected actor; PUT preserves it.
+    assigned_user_id: actor.id,
     name: 'HTTP Patient',
     source_patient_id: 'HTTP-0001',
     mrn: '00004123',
@@ -52,14 +63,8 @@ export function detail(overrides: Partial<PatientDetail> = {}): PatientDetail {
     unread_comments_count: 11,
     created_at: instant,
     updated_at: instant,
-    profile_details: {
-      care_team: {
-        pcp_name: 'HTTP source clinician',
-        pcp_npi: '0000000001',
-        home_facility_key: 'HTTP',
-        first_registered_date: '2020-01-01',
-      },
-    },
+    profile_details: null,
+    source_lineage: null,
     source_created_at: '2020-01-01T00:00:00Z',
     source_updated_at: '2020-01-02T00:00:00Z',
     ...overrides,
@@ -83,7 +88,7 @@ export function failure(status: number, message: string): Reply {
 }
 type Handler = (request: ApiRequest) => Reply | undefined | Promise<Reply | undefined>
 
-/** Contract fixtures, not an implementation of the current backend dialect.
+/** Intercepted fixtures using the current backend wire contract.
  * Every test gets a fresh HTTP store and Playwright browser context. All API
  * traffic passes through the real browser fetch adapter, never injected state.
  */
@@ -93,11 +98,14 @@ export class ContractApi {
   selectedActor: string | undefined
   patient = detail()
   deleted = false
-  notifications = { unread_comments_count: 37, patients_with_unread_comments: 8 }
+  notifications: NotificationSummaryDto = { unread_comments: 37, patients_with_unread: 8 }
+  private databaseTime = timestampMicros('2026-11-20T15:00:00.123456Z')
+  private lastReadAt: string | undefined
   notes: Note[] = [
     {
       id: noteId,
       patient_id: patientId,
+      title: 'HTTP clinical note',
       timestamp: instant,
       content: 'HTTP clinical note\nLiteral <b>response</b>',
       author: actor,
@@ -111,8 +119,8 @@ export class ContractApi {
     patient_id: patientId,
     body: `HTTP comment ${index + 1}`,
     author: index === 0 ? actor : colleague,
-    created_at: `2026-11-${String(15 - index).padStart(2, '0')}T15:00:00Z`,
-    updated_at: `2026-11-${String(15 - index).padStart(2, '0')}T15:00:00Z`,
+    created_at: `2026-11-${String(4 + index).padStart(2, '0')}T15:00:00.123456Z`,
+    updated_at: `2026-11-${String(4 + index).padStart(2, '0')}T15:00:00.123456Z`,
     is_unread: index !== 0,
     note_links: [],
   }))
@@ -152,7 +160,7 @@ export class ContractApi {
         if (call.path === '/users') {
           expect([undefined, this.selectedActor]).toContain(call.actorId)
         } else {
-          expect(this.selectedActor, 'Domain requests must follow explicit user selection').toBe(
+          expect(this.selectedActor, 'Domain requests must follow backend user discovery').toBe(
             actor.id,
           )
           expect(call.actorId).toBe(actor.id)
@@ -201,7 +209,8 @@ export class ContractApi {
         'order',
         'page',
         'page_size',
-        'has_unread_comments',
+        'unread_only',
+        'assigned_to',
       ]
       expect(Object.keys(query).every((key) => allowed.includes(key))).toBe(true)
       for (const key of ['page', 'page_size']) {
@@ -210,17 +219,23 @@ export class ContractApi {
       if (query.page_size !== undefined) expect(Number(query.page_size)).toBeLessThanOrEqual(100)
       if (query.q !== undefined) expect(query.q.length).toBeLessThanOrEqual(200)
       if (query.status !== undefined) expect(['active', 'inactive']).toContain(query.status)
+      if (query.assigned_to !== undefined) expect(query.assigned_to).toBe('me')
       if (query.order !== undefined) expect(['asc', 'desc']).toContain(query.order)
       if (query.sort_by !== undefined)
         expect(['name', 'dob', 'last_visit', 'status', 'notes_count', 'comments_count']).toContain(
           query.sort_by,
         )
-      if (query.has_unread_comments !== undefined)
-        expect(['true', 'false']).toContain(query.has_unread_comments)
+      if (query.unread_only !== undefined) expect(['true', 'false']).toContain(query.unread_only)
     } else if (method === 'GET' && comments) {
-      expect(Object.keys(query).sort()).toEqual(['page', 'page_size'])
-      expect(query.page).toMatch(/^[1-9]\d*$/)
-      expect(['10', '20']).toContain(query.page_size)
+      expect(Object.keys(query).every((key) => ['page', 'page_size', 'cursor'].includes(key))).toBe(
+        true,
+      )
+      if (query.cursor !== undefined) {
+        expect(query.page).toBeUndefined()
+        expect(query.cursor).not.toBe('')
+      } else if (query.page !== undefined) expect(query.page).toBe('1')
+      if (query.page_size !== undefined) expect(Number(query.page_size)).toBeGreaterThanOrEqual(1)
+      if (query.page_size !== undefined) expect(Number(query.page_size)).toBeLessThanOrEqual(100)
     } else expect(query).toEqual({})
 
     if (method === 'GET' || method === 'DELETE') expect(body).toBeUndefined()
@@ -236,13 +251,37 @@ export class ContractApi {
         (body as CommentWrite).note_ids.every((id) => this.notes.some((n) => n.id === id)),
       ).toBe(true)
     } else if (read) {
-      expect(Object.keys(body as object)).toEqual(['comment_ids'])
-      expect((body as { comment_ids: string[] }).comment_ids.length).toBeLessThanOrEqual(100)
+      expect(Object.keys(body as object)).toEqual(['through'])
+      expect(() => timestampMicros((body as DiscussionReadInput).through)).not.toThrow()
     }
   }
 
-  private respond({ method, path, query, body }: ApiRequest): Reply {
-    if (path === '/users') return { json: [actor, colleague] }
+  patientListItem(): PatientListItemDto {
+    const patient = this.patient
+    return {
+      id: patient.id,
+      assigned_user_id: patient.assigned_user_id,
+      source_patient_id: patient.source_patient_id,
+      mrn: patient.mrn,
+      first_name: patient.first_name,
+      last_name: patient.last_name,
+      name: patient.name,
+      date_of_birth: patient.date_of_birth,
+      age: patient.age,
+      last_visit: patient.last_visit,
+      status: patient.status,
+      conditions: patient.conditions,
+      notes_count: patient.notes_count,
+      comments_count: patient.comments_count,
+      unread_comments_count: patient.unread_comments_count,
+    }
+  }
+
+  private respond({ method, path, query, body, actorId }: ApiRequest): Reply {
+    if (path === '/users') {
+      this.selectedActor = actor.id
+      return { json: [actor, colleague] }
+    }
     if (path === '/notifications/summary') return { json: this.notifications }
     if (method === 'GET' && path === '/patients') {
       const included =
@@ -252,10 +291,11 @@ export class ContractApi {
           `${this.patient.name} ${this.patient.source_patient_id} ${this.patient.mrn}`
             .toLowerCase()
             .includes(query.q.toLowerCase())) &&
-        (!query.has_unread_comments || this.patient.unread_comments_count > 0)
+        (query.unread_only !== 'true' || this.patient.unread_comments_count > 0) &&
+        (query.assigned_to !== 'me' || this.patient.assigned_user_id === actorId)
       return {
         json: {
-          items: included ? [this.patient] : [],
+          items: included ? [this.patientListItem()] : [],
           total: included ? 1 : 0,
           page: Number(query.page ?? 1),
           page_size: Number(query.page_size ?? 20),
@@ -263,7 +303,11 @@ export class ContractApi {
       }
     }
     if (method === 'POST' && path === '/patients') {
-      this.patient = detail({ ...(body as PatientWrite), name: 'HTTP Created' })
+      this.patient = detail({
+        ...(body as PatientWrite),
+        assigned_user_id: actorId ?? null,
+        name: 'HTTP Created',
+      })
       return { status: 201, json: this.patient }
     }
     if (path === patientPath) {
@@ -316,18 +360,22 @@ export class ContractApi {
       return this.notes.length ? { json: this.notes[0] } : failure(410, 'This note was deleted.')
     }
     if (path === `${patientPath}/comments/read`) {
-      const ids = (body as { comment_ids: string[] }).comment_ids
-      this.comments = this.comments.map((comment) =>
-        ids.includes(comment.id) ? { ...comment, is_unread: false } : comment,
-      )
+      const unreadBefore = this.comments.filter((comment) => comment.is_unread).length
+      const requested = timestampMicros((body as DiscussionReadInput).through)
+      const now = ++this.databaseTime
+      const bounded = requested > now ? now : requested
+      const previous = this.lastReadAt === undefined ? undefined : timestampMicros(this.lastReadAt)
+      const through = previous !== undefined && previous > bounded ? previous : bounded
+      this.lastReadAt = timestampFromMicros(through)
+      this.comments = this.comments.map((comment) => ({
+        ...comment,
+        is_unread: comment.author.id !== actor.id && timestampMicros(comment.created_at) > through,
+      }))
       this.patient.unread_comments_count = this.comments.filter((c) => c.is_unread).length
-      return {
-        json: {
-          patient_id: patientId,
-          read_comment_ids: ids,
-          unread_comments_count: this.patient.unread_comments_count,
-        },
-      }
+      this.notifications.unread_comments -= unreadBefore - this.patient.unread_comments_count
+      if (unreadBefore > 0 && this.patient.unread_comments_count === 0)
+        this.notifications.patients_with_unread--
+      return { json: { patient_id: patientId, last_read_at: this.lastReadAt } }
     }
     if (path === `${patientPath}/comments`) {
       if (method === 'POST') {
@@ -337,28 +385,70 @@ export class ContractApi {
           id: 'd0000000-0000-4000-8000-000000000099',
           body: values.body,
           author: actor,
+          created_at: timestampFromMicros(++this.databaseTime),
+          updated_at: timestampFromMicros(this.databaseTime),
           is_unread: false,
           note_links: values.note_ids.map((id) => ({
             id,
+            title: 'HTTP clinical note',
+            timestamp: this.notes.find((note) => note.id === id)!.timestamp,
             label: 'HTTP clinical note',
             url: `${patientPath}/notes/${id}`,
             is_deleted: false,
           })),
         }
-        this.comments.unshift(comment)
+        this.comments.push(comment)
         this.patient.comments_count = this.comments.length
         return { status: 201, json: comment }
       }
-      const page = Number(query.page)
-      const size = Number(query.page_size)
-      return {
-        json: {
-          items: this.comments.slice((page - 1) * size, page * size),
-          total: this.comments.length,
-          page,
-          page_size: size,
-        },
+      const now = ++this.databaseTime
+      const continuation =
+        query.cursor === undefined
+          ? undefined
+          : decodeDiscussionCursor(query.cursor, patientId, now)
+      const cutoff = continuation === undefined ? now : timestampMicros(continuation.snapshot_at)
+      const page = continuation?.page ?? Number(query.page ?? 1)
+      const size = Number(query.page_size ?? 20)
+      const snapshot = this.comments
+        .filter((item) => timestampMicros(item.created_at) <= cutoff)
+        .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
+      const remaining =
+        continuation === undefined
+          ? snapshot
+          : snapshot.filter(
+              (item) =>
+                timestampMicros(item.created_at) > timestampMicros(continuation.after_created_at) ||
+                (timestampMicros(item.created_at) ===
+                  timestampMicros(continuation.after_created_at) &&
+                  item.id > continuation.after_id),
+            )
+      const items = remaining.slice(0, size)
+      const more = remaining.length > items.length
+      const last = items.at(-1)
+      const equalGroup =
+        more &&
+        timestampMicros(remaining[items.length]!.created_at) === timestampMicros(last!.created_at)
+      const read_through = more
+        ? timestampFromMicros(timestampMicros(last!.created_at) - (equalGroup ? 1n : 0n))
+        : timestampFromMicros(cutoff)
+      const next_cursor = more
+        ? encodeDiscussionCursor({
+            patient_id: patientId,
+            snapshot_at: timestampFromMicros(cutoff),
+            after_created_at: last!.created_at,
+            after_id: last!.id,
+            page: page + 1,
+          })
+        : null
+      const result: CommentPage = {
+        items,
+        total: snapshot.length,
+        page,
+        page_size: size,
+        read_through,
+        next_cursor,
       }
+      return { json: result }
     }
     throw new Error(`No fixture response: ${method} ${path}`)
   }
@@ -381,14 +471,11 @@ export const test = base.extend<{ contract: ContractApi }>({
 export { expect }
 
 export async function selectActor(page: Page, contract: ContractApi) {
-  // A direct record opens a modal immediately after selection and makes the
-  // header inert; the chosen value remains present outside the modal.
+  // User A is selected automatically. A direct record may already make the
+  // header inert, so verify its value without forcing a selection interaction.
   const selector = page.getByRole('combobox', { name: 'Select demo user', includeHidden: true })
-  await expect(selector).toHaveText('Choose a user')
-  await selector.click()
-  contract.selectedActor = actor.id
-  await page.getByRole('option', { name: actor.display_name, exact: true }).click()
   await expect(selector).toHaveText(actor.display_name)
+  expect(contract.selectedActor).toBe(actor.id)
 }
 
 export async function openPatient(page: Page, contract: ContractApi, path = patientPath) {

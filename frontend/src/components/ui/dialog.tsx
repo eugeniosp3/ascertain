@@ -22,6 +22,7 @@ function DialogClose({ ...props }: React.ComponentProps<typeof DialogPrimitive.C
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
 }
 
+/** Light: the mock's plum scrim (rgba(38,33,44,.3), 10px blur). Dark keeps its 55% black (globals.css). */
 function DialogOverlay({
   className,
   ...props
@@ -30,7 +31,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        'fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0',
+        'fixed inset-0 z-50 bg-[rgb(38_33_44/0.3)] backdrop-blur-[10px] backdrop-saturate-[.9] dark:backdrop-blur-sm dark:backdrop-saturate-100 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0',
         className,
       )}
       {...props}

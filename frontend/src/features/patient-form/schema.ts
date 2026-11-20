@@ -1,9 +1,14 @@
 import { z } from 'zod'
 import { formatDate } from '@/utils/dates'
+import { isValidPhone, PATIENT_FIELD_LIMITS as limits } from '@/api/constraints'
 
 export const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const
 
-const optionalText = (max: number) => z.string().trim().max(max, `Use at most ${max} characters.`)
+const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .refine((value) => [...value].length <= max, `Use at most ${max} characters.`)
 const requiredText = (label: string, max: number) => optionalText(max).min(1, `Enter ${label}.`)
 
 function validDate(value: string) {
@@ -15,45 +20,57 @@ function validDate(value: string) {
   }
 }
 
+// The user's local calendar day; UTC's date is already tomorrow on a US evening.
+function localToday(): string {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}
+
 // Date validation: preserve calendar dates and reject invalid or future values before a write.
 const calendarDate = z
   .string()
   .refine(validDate, 'Enter a valid date.')
-  .refine(
-    (value) => !validDate(value) || value <= new Date().toISOString().slice(0, 10),
-    'Date cannot be in the future.',
-  )
+  .refine((value) => !validDate(value) || value <= localToday(), 'Date cannot be in the future.')
 
 /** Form schema: validate input strings here; the write mapper converts blank optional values to null. */
 export const patientFormSchema = z
   .object({
-    first_name: requiredText('a first name', 60),
-    middle_initial: optionalText(1).refine(
-      (value) => !value || /^\p{L}$/u.test(value),
-      'Use one letter.',
-    ),
-    last_name: requiredText('a last name', 60),
+    first_name: requiredText('a first name', limits.name),
+    middle_initial: optionalText(limits.middle_initial),
+    last_name: requiredText('a last name', limits.name),
     date_of_birth: calendarDate,
-    phone: optionalText(40).refine(
-      (value) => !value || /^(?=.*\d)[+\d\s().#xext-]{3,40}$/i.test(value),
+    phone: optionalText(limits.phone).refine(
+      (value) => !value || isValidPhone(value),
       'Enter a valid phone number.',
     ),
-    email: optionalText(254).refine(
+    email: optionalText(limits.email).refine(
       (value) => !value || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value),
       'Enter a valid email address.',
     ),
-    address_line1: optionalText(200),
-    address_line2: optionalText(200),
-    city: optionalText(100),
-    state: optionalText(100),
-    postal_code: optionalText(20),
+    address_line1: optionalText(limits.address),
+    address_line2: optionalText(limits.address),
+    city: optionalText(limits.city),
+    state: optionalText(limits.state).refine(
+      (value) => !value || [...value].length === 2,
+      'Use exactly two characters.',
+    ),
+    postal_code: optionalText(limits.postal_code),
     blood_type: z.enum(['', ...bloodTypes], { error: 'Choose a valid blood type.' }),
     status: z.enum(['active', 'inactive'], { error: 'Choose Active or Inactive.' }),
     last_visit: z.union([z.literal(''), calendarDate]),
     conditions: z
-      .array(z.object({ code: optionalText(40), label: requiredText('a condition', 200) }))
+      .array(
+        z.object({
+          code: optionalText(limits.condition_code),
+          label: requiredText('a condition', limits.condition_label),
+        }),
+      )
       .max(100, 'Use at most 100 conditions.'),
-    allergies: z.array(requiredText('an allergy', 200)).max(100, 'Use at most 100 allergies.'),
+    allergies: z
+      .array(requiredText('an allergy', limits.allergy))
+      .max(100, 'Use at most 100 allergies.'),
     allergy_status: z.enum(['unknown', 'no_known', 'reported'], {
       error: 'Choose an allergy status.',
     }),

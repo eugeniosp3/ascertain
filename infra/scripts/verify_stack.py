@@ -4,6 +4,8 @@ import argparse
 import json
 import os
 import re
+import shutil
+import signal
 import socket
 import struct
 import subprocess
@@ -13,7 +15,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlsplit
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 from uuid import UUID, uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -78,6 +80,26 @@ class EntryAssets(HTMLParser):
                 self.styles.append(source)
 
 
+def cache_directives(url: str, expected_status: int = 200) -> set[str]:
+    try:
+        result = urlopen(Request(url, method="HEAD"), timeout=5)
+    except HTTPError as error:
+        result = error
+    with result:
+        require(
+            result.status == expected_status, f"Unexpected cache-probe status: {url}"
+        )
+        require(
+            result.headers.get("X-Content-Type-Options") == "nosniff",
+            "Cache configuration dropped the content-type protection header.",
+        )
+        return {
+            directive.strip().lower()
+            for directive in result.headers.get("Cache-Control", "").split(",")
+            if directive.strip()
+        }
+
+
 def verify_http(frontend: str, backend: str) -> None:
     html, content_type = response(frontend + "/")
     require(
@@ -88,6 +110,11 @@ def verify_http(frontend: str, backend: str) -> None:
     assets.feed(html.decode("utf-8"))
     require(bool(assets.scripts), "Entry page has no built JavaScript module.")
     require(bool(assets.styles), "Entry page has no built stylesheet.")
+    for route in ("/", "/index.html", "/patients/infra-verification"):
+        require(
+            "no-cache" in cache_directives(frontend + route),
+            f"Entry HTML must be revalidated: {route}",
+        )
     for source, suffix, media_types in (
         *(
             (source, ".js", {"application/javascript", "text/javascript"})
@@ -108,12 +135,22 @@ def verify_http(frontend: str, backend: str) -> None:
             bool(body) and asset_type in media_types,
             f"Invalid asset response: {source}",
         )
+        require(
+            {"public", "max-age=31536000", "immutable"}
+            <= cache_directives(urljoin(frontend + "/", source)),
+            f"Fingerprinted asset is missing its immutable cache policy: {source}",
+        )
     deep_link, deep_type = response(frontend + "/patients/infra-verification")
     require(
         deep_type == "text/html" and deep_link == html,
         "Frontend deep-link fallback failed.",
     )
     response(frontend + "/assets/infra-missing-file.js", 404)
+    require(
+        "immutable"
+        not in cache_directives(frontend + "/assets/infra-missing-file.js", 404),
+        "Missing assets must not be cached as immutable.",
+    )
     for address, expected in (
         (backend + "/health", {"status": "ok"}),
         (backend + "/ready", {"status": "ready"}),
@@ -137,14 +174,65 @@ def verify_http(frontend: str, backend: str) -> None:
     )
 
 
+def run_live_browser(frontend: str, environment: dict[str, str]) -> None:
+    """Run the frontend-owned suite and stop its process group before stack teardown."""
+    command = ["npm", "run", "e2e:live", "--", "--workers=1"]
+    with subprocess.Popen(
+        command,
+        cwd=ROOT / "frontend",
+        env={**environment, "PLAYWRIGHT_LIVE_BASE_URL": frontend},
+        start_new_session=True,
+    ) as process:
+        try:
+            return_code = process.wait(timeout=900)
+        except BaseException:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait(timeout=10)
+            raise
+        if return_code:
+            raise subprocess.CalledProcessError(return_code, command)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument(
         "--database-only",
         action="store_true",
         help="verify only PostgreSQL startup and persistence",
     )
+    modes.add_argument(
+        "--live-browser",
+        action="store_true",
+        help="run the frontend live browser suite against an isolated API-mode build",
+    )
     args = parser.parse_args()
+    if args.live_browser:
+        require(
+            os.name == "posix",
+            "Run live browser verification in macOS/Linux or a WSL 2 terminal.",
+        )
+        manifest = json.loads((ROOT / "frontend/package.json").read_text())
+        require(
+            bool(manifest.get("scripts", {}).get("e2e:live"))
+            and (ROOT / "frontend/playwright.live.config.ts").is_file()
+            and (ROOT / "frontend/e2e-live").is_dir(),
+            "Frontend live test handoff is missing: e2e:live, playwright.live.config.ts and e2e-live/ are required.",
+        )
+        require(
+            shutil.which("npm") is not None,
+            "Live browser verification needs Node/npm, frontend dependencies and installed Chrome.",
+        )
     project = f"ascertain-verify-{uuid4().hex[:10]}"
     # Strip inherited Compose settings as well as every configurable project key.
     # Keep Docker connection settings so this uses the caller's selected engine.
@@ -157,7 +245,9 @@ def main() -> None:
         **{
             key: value
             for key, value in os.environ.items()
-            if key not in keys and not key.startswith("COMPOSE_")
+            if key not in keys
+            and not key.startswith("COMPOSE_")
+            and not key.startswith("PLAYWRIGHT_")
         },
         "COMPOSE_PROJECT_NAME": project,
         "COMPOSE_PROFILES": "",
@@ -167,7 +257,7 @@ def main() -> None:
         "POSTGRES_PORT": "0",
         "BACKEND_PORT": "0",
         "FRONTEND_PORT": "0",
-        "VITE_DATA_MODE": "demo",
+        "VITE_DATA_MODE": "api" if args.live_browser else "demo",
         "VITE_API_BASE": "/api",
         "MIGRATE_ON_STARTUP": "false" if args.database_only else "true",
         "SEED_ON_STARTUP": "false" if args.database_only else "true",
@@ -222,6 +312,38 @@ def main() -> None:
             backend = "http://" + compose("port", "backend", "8000")
             verify_http(frontend, backend)
 
+        def verify_proxy_log_privacy() -> None:
+            frontend = "http://" + compose("port", "frontend", "8080")
+            marker = "infra-private-search-" + uuid4().hex
+            patient_id = str(
+                UUID(query("SELECT id FROM patients ORDER BY id LIMIT 1;"))
+            )
+            response(frontend + "/api/patients?q=" + marker)
+            response(frontend + "/api/patients/" + patient_id)
+            # An upstream failure can also put raw request URLs in nginx error
+            # logs. Exercise it only in this random disposable Compose project.
+            try:
+                compose("stop", "backend")
+                response(frontend + "/api/patients?q=" + marker, 502)
+            finally:
+                compose("start", "backend")
+                backend = "http://" + compose("port", "backend", "8000")
+                ready, ready_type = response(backend + "/ready", recovery_timeout=120)
+                require(
+                    ready_type == "application/json"
+                    and json.loads(ready) == {"status": "ready"},
+                    "Backend did not recover after the isolated log-privacy probe.",
+                )
+            logs = compose("logs", "--no-color", "frontend", "backend")
+            require(
+                marker not in logs and patient_id not in logs,
+                "An API search value or patient identifier appeared in service logs.",
+            )
+            print(
+                "PASS: API search/entity/upstream-failure logs omit request values and patient IDs.",
+                flush=True,
+            )
+
         def patient_ids() -> set[str]:
             return {
                 str(UUID(value))
@@ -234,6 +356,13 @@ def main() -> None:
                     "SELECT coalesce(jsonb_agg(to_jsonb(seed_runs) ORDER BY dataset_key), "
                     "'[]'::jsonb) FROM seed_runs;"
                 )
+            )
+
+        def seed_patient_fingerprint() -> str:
+            # Return only a digest, never patient contents in the verification log.
+            return query(
+                "SELECT md5(coalesce(jsonb_agg(to_jsonb(p) ORDER BY id), '[]'::jsonb)::text) "
+                "FROM patients p WHERE source_patient_id IS NOT NULL;"
             )
 
         def verify_seed_preserved(
@@ -336,6 +465,33 @@ def main() -> None:
                     == "100",
                     "Seeded patients are not linked to their completed import marker.",
                 )
+                if args.live_browser:
+                    original_patient_fingerprint = seed_patient_fingerprint()
+                    verify_published_http()
+                    frontend_address = "http://" + compose("port", "frontend", "8080")
+                    print(
+                        f"Running live browser tests against isolated API frontend: {frontend_address}",
+                        flush=True,
+                    )
+                    # The frontend owns the tests. They use real same-origin /api
+                    # calls, create unique patients, and clean up only their own IDs.
+                    run_live_browser(frontend_address, environment)
+                    require(
+                        patient_ids() == initial_ids,
+                        "Live browser tests changed the seed patient set or left disposable patients behind.",
+                    )
+                    require(
+                        seed_markers() == original_markers,
+                        "Live browser tests modified completed seed markers.",
+                    )
+                    require(
+                        seed_patient_fingerprint() == original_patient_fingerprint,
+                        "Live browser tests modified seed patient profiles.",
+                    )
+                    print(
+                        "PASS: real frontend/API browser journeys and disposable-patient cleanup.",
+                        flush=True,
+                    )
                 # UUID parsing constrains the only values interpolated into mutation SQL.
                 # These edits affect only the random verification project's database.
                 edited_id, deleted_id = [
@@ -439,6 +595,10 @@ def main() -> None:
                     expected_ids, edited_id, deleted_id, original_markers
                 )
                 verify_published_http()
+                verify_proxy_log_privacy()
+                verify_seed_preserved(
+                    expected_ids, edited_id, deleted_id, original_markers
+                )
                 print(
                     "PASS: full stack recreation preserves the edit, deletion, markers and HTTP availability.",
                     flush=True,

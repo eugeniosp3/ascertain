@@ -4,6 +4,7 @@ import {
   type PatientTab,
 } from '@/features/patient-list/search-params'
 import { emptyListView, useUIStore, type ListViewState } from './ui-store'
+import type { PatientListGeometry } from '@/features/patient-list/scroll-restoration'
 export type { ListViewState } from './ui-store'
 
 // Return-to-list snapshots: each viewer and list/notification view keeps its own position.
@@ -27,7 +28,13 @@ export function updateListView(
   actorId: string | null,
   patch: Partial<ListViewState>,
 ) {
-  useUIStore.getState().updateListView(viewKey(view, actorId), patch)
+  const previous = getListView(view, actorId)
+  const changedSearch =
+    patch.search && JSON.stringify(previous.search) !== JSON.stringify(patch.search)
+  useUIStore.getState().updateListView(viewKey(view, actorId), {
+    ...(changedSearch ? { geometry: null } : {}),
+    ...patch,
+  })
 }
 
 export function resetListView(view: ListView, actorId: string | null) {
@@ -35,6 +42,7 @@ export function resetListView(view: ListView, actorId: string | null) {
     search: { ...defaultListSearch },
     scrollTop: 0,
     restoreFocus: false,
+    geometry: null,
   })
 }
 
@@ -45,13 +53,25 @@ export function rememberPatient(
   id: string,
   index: number,
   tab: PatientTab,
+  geometry: PatientListGeometry | null = null,
 ) {
   updateListView(view, actorId, {
     lastPatientId: id,
     lastRowIndex: index,
     triggerTab: tab,
     restoreFocus: true,
+    geometry,
+    ...(geometry ? { scrollTop: geometry.scrollTop } : {}),
   })
+}
+
+// History Forward starts another visit without activating the list link again.
+// Reuse its origin snapshot; tab changes and linked notes must not replace that origin.
+export function resumePatientVisit(view: ListView, actorId: string | null, id: string) {
+  const snapshot = getListView(view, actorId)
+  if (snapshot.lastPatientId === id && !snapshot.restoreFocus) {
+    updateListView(view, actorId, { restoreFocus: true })
+  }
 }
 
 // Focus fallback: if the old patient disappeared, use a nearby surviving row or the list heading.

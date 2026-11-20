@@ -14,6 +14,8 @@ def test_empty_overview_does_not_invent_patients(api_client: TestClient) -> None
     response = api_client.get("/dashboard/overview")
     assert response.status_code == 200
     assert response.json() == {
+        "scope": "global",
+        "assigned_user": None,
         "totals": {"patients": 0, "active": 0, "inactive": 0, "clinical_notes": 0, "no_visit": 0},
         "recent_visits": [],
         "no_visit_patients": [],

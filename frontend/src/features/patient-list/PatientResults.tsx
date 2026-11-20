@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, type KeyboardEvent } from 'react'
+import { useMemo, type KeyboardEvent, type MouseEvent } from 'react'
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import {
   flexRender,
@@ -7,9 +7,8 @@ import {
   useReactTable,
   type ColumnDef,
 } from '@tanstack/react-table'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import type { PatientListItem } from '@/api/types'
-import { getListView, restoredRowIndex, updateListView } from '@/app/view-state'
+import { updateListView } from '@/app/view-state'
 import { StatusPill } from '@/components/ui/status-pill'
 import {
   Table,
@@ -24,6 +23,7 @@ import { formatDate } from '@/utils/dates'
 import { PatientActivity } from './PatientActivity'
 import { PatientIdentity } from './PatientIdentity'
 import type { PatientLinkContext } from './PatientOpenLink'
+import { usePatientListRestoration } from './usePatientListRestoration'
 import { searchForSorting, tableSorting, type ListSearch } from './search-params'
 
 interface PatientResultsProps {
@@ -35,6 +35,29 @@ interface PatientResultsProps {
   onFocusHeading: () => void
 }
 
+/** Use the existing overview link so row/card clicks share navigation and return-state behavior. */
+function openPatientRow(event: MouseEvent<HTMLElement>) {
+  if (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey
+  )
+    return
+  const target = event.target
+  if (!(target instanceof Element)) return
+  if (
+    target.closest(
+      'a, button, input, select, textarea, label, [role="button"], [role="link"], [role="checkbox"], [contenteditable="true"]',
+    )
+  )
+    return
+  if (event.currentTarget.ownerDocument.getSelection()?.toString()) return
+  event.currentTarget.querySelector<HTMLAnchorElement>('a[data-open-tab="overview"]')?.click()
+}
+
 export default function PatientResults({
   items,
   total,
@@ -43,13 +66,15 @@ export default function PatientResults({
   onChange,
   onFocusHeading,
 }: PatientResultsProps) {
-  const scrollRef = useRef<HTMLDivElement>(null)
   const isMobile = useMediaQuery('(max-width: 767px)')
   const showConditions = useMediaQuery('(min-width: 1280px)')
-  const saved = useRef(getListView(context.view, context.actorId))
-  const restored = useRef(false)
-  const signature = JSON.stringify(context.search)
-  const previousSignature = useRef(signature)
+  const { scrollRef, saved, rowVirtualizer, linkContext, focusRow } = usePatientListRestoration({
+    items,
+    context,
+    isMobile,
+    busy,
+    onFocusHeading,
+  })
   // Memoization: reuse column definitions until the patient-link context changes.
   const columns = useMemo<ColumnDef<PatientListItem>[]>(
     () => [
@@ -58,7 +83,7 @@ export default function PatientResults({
         accessorKey: 'name',
         header: 'Patient',
         cell: ({ row }) => (
-          <PatientIdentity patient={row.original} index={row.index} context={context} />
+          <PatientIdentity patient={row.original} index={row.index} context={linkContext} />
         ),
       },
       {
@@ -112,7 +137,7 @@ export default function PatientResults({
           <PatientActivity
             patient={row.original}
             index={row.index}
-            context={context}
+            context={linkContext}
             kind="notes"
           />
         ),
@@ -125,13 +150,13 @@ export default function PatientResults({
           <PatientActivity
             patient={row.original}
             index={row.index}
-            context={context}
+            context={linkContext}
             kind="discussion"
           />
         ),
       },
     ],
-    [context],
+    [linkContext],
   )
   // Server-driven table: the API filters, sorts and pages; Table manages column and UI state.
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table is used outside the React Compiler.
@@ -155,20 +180,6 @@ export default function PatientResults({
     defaultColumn: { sortDescFirst: false },
   })
   const rows = table.getRowModel().rows
-  // Virtualization: render visible rows plus a small buffer within the fetched page.
-  // Stable patient keys keep row identity intact when results change.
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => (isMobile ? 216 : 64),
-    getItemKey: (index) => items[index]?.id ?? index,
-    overscan: 4,
-    useFlushSync: false,
-    scrollMargin: isMobile ? 0 : 42,
-    scrollPaddingStart: isMobile ? 0 : 42,
-    initialOffset: saved.current.scrollTop,
-    initialRect: { width: 1000, height: 500 },
-  })
   const virtualItems = rowVirtualizer.getVirtualItems()
   // Virtual spacers: preserve the full scroll height without mounting offscreen patient rows.
   const margin = isMobile ? 0 : 42
@@ -177,57 +188,6 @@ export default function PatientResults({
     0,
     rowVirtualizer.getTotalSize() - ((virtualItems.at(-1)?.end ?? margin) - margin),
   )
-
-  // Focus target: return to the same patient action, such as Notes or Discussion, when possible.
-  const focusRow = (index: number, tab = 'overview') => {
-    const id = items[index]?.id
-    const row = Array.from(
-      scrollRef.current?.querySelectorAll<HTMLElement>('[data-patient-id]') ?? [],
-    ).find((element) => element.dataset.patientId === id)
-    const target =
-      row?.querySelector<HTMLElement>(`a[data-open-tab="${tab}"]`) ??
-      row?.querySelector<HTMLElement>('a')
-    if (target) target.focus({ preventScroll: true })
-    return Boolean(target)
-  }
-
-  // Search-view reset: a different filter, sort or page starts at the top of its results.
-  useEffect(() => {
-    if (previousSignature.current !== signature) {
-      previousSignature.current = signature
-      rowVirtualizer.scrollToOffset(0)
-      updateListView(context.view, context.actorId, { scrollTop: 0 })
-    }
-  }, [signature, context.view, context.actorId, rowVirtualizer])
-
-  // Scroll and focus restoration: scroll the saved row into the virtual window before focusing it.
-  // Wait for its DOM to mount; fall back to the heading if the patient is no longer in the results.
-  useLayoutEffect(() => {
-    if (busy || restored.current) return
-    const snapshot = saved.current
-    rowVirtualizer.scrollToOffset(snapshot.scrollTop)
-    if (!snapshot.restoreFocus) {
-      restored.current = true
-      return
-    }
-    const index = restoredRowIndex(
-      items.map((patient) => patient.id),
-      snapshot,
-    )
-    if (index !== null) rowVirtualizer.scrollToIndex(index, { align: 'auto' })
-    let secondFrame = 0
-    const frame = requestAnimationFrame(() => {
-      secondFrame = requestAnimationFrame(() => {
-        if (index === null || !focusRow(index, snapshot.triggerTab)) onFocusHeading()
-        restored.current = true
-        updateListView(context.view, context.actorId, { restoreFocus: false })
-      })
-    })
-    return () => {
-      cancelAnimationFrame(frame)
-      cancelAnimationFrame(secondFrame)
-    }
-  })
 
   // Keyboard navigation: virtual rows must be scrolled into view before they can receive focus.
   const onRowKeyDown = (event: KeyboardEvent<HTMLElement>, index: number) => {
@@ -274,35 +234,39 @@ export default function PatientResults({
                 ref={rowVirtualizer.measureElement}
                 data-index={virtual.index}
                 data-patient-id={patient.id}
-                className={`ac-patient-card${saved.current.lastPatientId === patient.id ? ' ac-last-visited' : ''}`}
+                className={`ac-patient-card ac-clickable-patient${saved.lastPatientId === patient.id ? ' ac-last-visited' : ''}`}
+                onClick={openPatientRow}
                 onKeyDown={(event) => onRowKeyDown(event, virtual.index)}
               >
                 <div className="ac-card-heading">
-                  <PatientIdentity patient={patient} index={virtual.index} context={context} />
+                  <PatientIdentity patient={patient} index={virtual.index} context={linkContext} />
                   <StatusPill status={patient.status} />
                 </div>
-                <div className="ac-card-meta">
-                  <span>
-                    <b>{patient.age}</b> years old
-                  </span>
-                  <span>
-                    Last visit:{' '}
-                    <b>{patient.last_visit ? formatDate(patient.last_visit) : 'None recorded'}</b>
-                  </span>
-                </div>
-                <div className="ac-card-actions">
-                  <PatientActivity
-                    patient={patient}
-                    index={virtual.index}
-                    context={context}
-                    kind="notes"
-                  />
-                  <PatientActivity
-                    patient={patient}
-                    index={virtual.index}
-                    context={context}
-                    kind="discussion"
-                  />
+                {/* Compact card: facts and the two activity shortcuts share one row. */}
+                <div className="ac-card-foot">
+                  <div className="ac-card-meta">
+                    <span>
+                      <b>{patient.age}</b> years old
+                    </span>
+                    <span>
+                      Last visit:{' '}
+                      <b>{patient.last_visit ? formatDate(patient.last_visit) : 'None recorded'}</b>
+                    </span>
+                  </div>
+                  <div className="ac-card-actions">
+                    <PatientActivity
+                      patient={patient}
+                      index={virtual.index}
+                      context={linkContext}
+                      kind="notes"
+                    />
+                    <PatientActivity
+                      patient={patient}
+                      index={virtual.index}
+                      context={linkContext}
+                      kind="discussion"
+                    />
+                  </div>
                 </div>
               </li>
             )
@@ -374,7 +338,8 @@ export default function PatientResults({
                   aria-rowindex={
                     (context.search.page - 1) * context.search.page_size + virtual.index + 2
                   }
-                  className={saved.current.lastPatientId === row.id ? 'ac-last-visited' : undefined}
+                  className={`ac-clickable-patient${saved.lastPatientId === row.id ? ' ac-last-visited' : ''}`}
+                  onClick={openPatientRow}
                   onKeyDown={(event) => onRowKeyDown(event, virtual.index)}
                 >
                   {row.getVisibleCells().map((cell) => (

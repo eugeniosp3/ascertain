@@ -9,10 +9,13 @@ export interface Condition {
 export interface User {
   id: string
   display_name: string
+  display_role?: string | null
 }
 
 export interface PatientListItem {
   id: string
+  // Stored workload membership (a user ID or unassigned): read-only, never writable or access control.
+  readonly assigned_user_id: string | null
   source_patient_id: string | null
   mrn: string | null
   first_name: string
@@ -135,8 +138,18 @@ export interface PatientDetail extends PatientListItem {
   created_at: string
   updated_at: string
   readonly profile_details?: ProfileDetails
+  readonly source_lineage?: SourceLineage | null
   readonly source_created_at?: string | null
   readonly source_updated_at?: string | null
+}
+
+export interface SourceLineage {
+  readonly bronze_id: string
+  readonly silver_id: string
+  readonly source_row_number: number
+  readonly export_id: string | null
+  readonly source_file_id: string | null
+  readonly transformation_version: string | null
 }
 
 export interface PatientWrite {
@@ -162,6 +175,9 @@ export interface PatientWrite {
 export interface PatientListParams {
   q?: string
   status?: PatientStatus
+  // 'me' narrows to the selected actor's assigned cohort before totals and paging; omit it for
+  // the shared directory.
+  assigned_to?: 'me'
   sort_by?: 'name' | 'dob' | 'last_visit' | 'status' | 'notes_count' | 'comments_count'
   order?: 'asc' | 'desc'
   page?: number
@@ -189,6 +205,7 @@ export interface Note {
   patient_id: string
   timestamp: string
   content: string
+  title?: string
   author: User
   created_at: string
   updated_at: string
@@ -208,7 +225,14 @@ export interface Comment {
   created_at: string
   updated_at: string
   is_unread: boolean
-  note_links: Array<{ id: string; label: string; url: string; is_deleted: boolean }>
+  note_links: Array<{
+    id: string
+    title?: string
+    label: string
+    timestamp?: string
+    url: string
+    is_deleted: boolean
+  }>
 }
 
 export interface CommentWrite {
@@ -219,6 +243,16 @@ export interface CommentWrite {
 export interface CommentPageParams {
   page?: number
   page_size?: number
+  cursor?: string
+}
+
+export interface CommentPage extends Page<Comment> {
+  read_through: string
+  next_cursor: string | null
+}
+
+export interface DiscussionReadInput {
+  through: string
 }
 
 export interface PatientSummary {
@@ -235,8 +269,7 @@ export interface NotificationSummary {
 
 export interface ReadReceipt {
   patient_id: string
-  read_comment_ids: string[]
-  unread_comments_count: number
+  last_read_at: string
 }
 
 export interface RequestContext {
@@ -260,7 +293,7 @@ export interface DashboardApi {
     patientId: string,
     params: CommentPageParams,
     ctx?: RequestContext,
-  ): Promise<Page<Comment>>
+  ): Promise<CommentPage>
   createComment(patientId: string, input: CommentWrite, ctx?: RequestContext): Promise<Comment>
   updateComment(
     patientId: string,
@@ -271,7 +304,7 @@ export interface DashboardApi {
   deleteComment(patientId: string, commentId: string, ctx?: RequestContext): Promise<void>
   markCommentsRead(
     patientId: string,
-    commentIds: string[],
+    input: DiscussionReadInput,
     ctx?: RequestContext,
   ): Promise<ReadReceipt>
   getNotificationSummary(ctx?: RequestContext): Promise<NotificationSummary>

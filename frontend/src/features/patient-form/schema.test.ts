@@ -27,12 +27,11 @@ describe('patient form validation', () => {
     ['last_visit', '2024-04-31'],
     ['email', 'bad-email'],
     ['phone', 'telephone'],
-    ['middle_initial', '1'],
     ['middle_initial', 'AB'],
     ['status', 'pending'],
     ['blood_type', 'C+'],
     ['allergy_status', 'none'],
-    ['postal_code', 'x'.repeat(21)],
+    ['postal_code', 'x'.repeat(11)],
   ])('rejects invalid %s: %s', (field, value) => {
     const result = patientFormSchema.safeParse({ ...valid, [field]: value })
     expect(result.success).toBe(false)
@@ -77,7 +76,7 @@ describe('patient form validation', () => {
     ).toBe(false)
     const result = patientFormSchema.safeParse({
       ...valid,
-      conditions: [{ code: 'x'.repeat(41), label: '' }],
+      conditions: [{ code: 'x'.repeat(17), label: '' }],
     })
     expect(result.success).toBe(false)
     if (!result.success)
@@ -88,7 +87,7 @@ describe('patient form validation', () => {
     expect(
       patientFormSchema.safeParse({
         ...valid,
-        allergies: ['x'.repeat(201)],
+        allergies: ['x'.repeat(501)],
         allergy_status: 'reported',
       }).success,
     ).toBe(false)

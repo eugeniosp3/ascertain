@@ -44,8 +44,10 @@ export default function PatientFilters({
     value: search.q,
   })
   // Navigation synchronization: Back/Forward cancels old drafts before effects commit.
+  // When our own trimmed commit lands, keep the raw text so a just-typed space survives.
   if (draftState.navigationKey !== navigationKey || draftState.canonical !== search.q) {
-    setDraftState({ navigationKey, canonical: search.q, value: search.q })
+    const value = draftState.value.trim() === search.q ? draftState.value : search.q
+    setDraftState({ navigationKey, canonical: search.q, value })
   }
   const draft = draftState.value
   const setDraft = (value: string) => setDraftState({ navigationKey, canonical: search.q, value })
@@ -54,8 +56,9 @@ export default function PatientFilters({
   // Cleanup cancels an outdated timer; the Effect Event reads the latest change handler.
   const commitSearch = useEffectEvent((q: string) => onChange({ q, page: 1 }, true))
   useEffect(() => {
-    if (draft === search.q) return
-    const timer = window.setTimeout(() => commitSearch(draft.trim()), 250)
+    const q = draft.trim()
+    if (q === search.q) return
+    const timer = window.setTimeout(() => commitSearch(q), 250)
     return () => window.clearTimeout(timer)
   }, [draft, search.q, navigationKey])
   const sort = tableSorting(search)[0]
@@ -97,9 +100,19 @@ export default function PatientFilters({
             variant="ghost"
             size="sm"
             aria-pressed={search.status === status}
+            // Phones show "All"; the accessible name stays "All patients" and starts with it.
+            aria-label={status === 'all' ? 'All patients' : undefined}
             onClick={() => onChange({ status, q: draft.trim(), page: 1 })}
           >
-            {status === 'all' ? 'All patients' : status === 'active' ? 'Active' : 'Inactive'}
+            {status === 'all' ? (
+              <>
+                All<span className="ac-status-suffix"> patients</span>
+              </>
+            ) : status === 'active' ? (
+              'Active'
+            ) : (
+              'Inactive'
+            )}
           </Button>
         ))}
       </div>

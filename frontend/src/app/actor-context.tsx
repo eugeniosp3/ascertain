@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { api, dataMode } from '@/api'
+import { api } from '@/api'
 import type { User } from '@/api/types'
 import { useUIStore } from './ui-store'
 
@@ -17,7 +17,7 @@ interface ActorContextValue {
 const ActorContext = createContext<ActorContextValue | null>(null)
 
 export function ActorProvider({ children }: { children: ReactNode }) {
-  const initializedDemoActor = useRef(false)
+  const initializedActor = useRef(false)
   const selectedId = useUIStore((state) => state.selectedActorId)
   const setSelectedId = useUIStore((state) => state.setSelectedActorId)
   const query = useQuery({
@@ -27,8 +27,9 @@ export function ActorProvider({ children }: { children: ReactNode }) {
   })
   const users = query.data ?? []
   useEffect(() => {
-    if (dataMode !== 'demo' || initializedDemoActor.current || !query.data?.length) return
-    initializedDemoActor.current = true
+    if (initializedActor.current || !query.data?.length) return
+    initializedActor.current = true
+    // Start with User A from the actual user list; preserve a valid saved choice.
     if (!query.data.some((candidate) => candidate.id === selectedId)) {
       setSelectedId(query.data[0]!.id)
     }

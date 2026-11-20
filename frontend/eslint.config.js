@@ -13,7 +13,8 @@ export default tseslint.config(
       'playwright-report/**',
       'test-results/**',
       'e2e-api/results/**',
-      'UI_mocks/**',
+      'e2e-live/results/**',
+      'docs/**',
       'reference/**',
     ],
   },
@@ -41,7 +42,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['*.{js,ts}', 'e2e/**/*.ts', 'e2e-api/**/*.ts'],
+    files: ['*.{js,ts}', 'e2e/**/*.ts', 'e2e-api/**/*.ts', 'e2e-live/**/*.ts'],
     languageOptions: { globals: globals.node },
   },
 )

@@ -7,8 +7,8 @@ afterEach(() => {
 })
 
 describe('explicit data mode', () => {
-  it('defaults to the isolated demo without making HTTP calls', async () => {
-    vi.stubEnv('VITE_DATA_MODE', undefined)
+  it('uses the isolated demo only when explicitly selected', async () => {
+    vi.stubEnv('VITE_DATA_MODE', 'demo')
     const fetcher = vi.fn<typeof fetch>()
     vi.stubGlobal('fetch', fetcher)
     const { api, dataMode } = await import('./index')
@@ -16,6 +16,18 @@ describe('explicit data mode', () => {
     const users = await api.listUsers()
     expect((await api.listPatients({}, { actorId: users[0]!.id })).total).toBe(100)
     expect(fetcher).not.toHaveBeenCalled()
+  })
+
+  it('defaults to the HTTP API and never falls back when it fails', async () => {
+    vi.stubEnv('VITE_DATA_MODE', undefined)
+    vi.stubEnv('VITE_API_BASE', undefined)
+    const fetcher = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('offline'))
+    vi.stubGlobal('fetch', fetcher)
+    const { api, dataMode } = await import('./index')
+    expect(dataMode).toBe('api')
+    await expect(api.listUsers()).rejects.toMatchObject({ kind: 'network' })
+    expect(fetcher.mock.calls[0]?.[0]).toBe('/api/users')
+    expect(fetcher).toHaveBeenCalledOnce()
   })
 
   it('uses the configured API exclusively and surfaces failures', async () => {

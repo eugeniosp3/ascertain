@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { dataMode, isApiError } from '@/api'
+import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CountPill } from '@/components/ui/count-pill'
 import { Skeleton } from '@/components/ui/skeleton'
 import { InlineError } from '@/components/shared/InlineError'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { formatCount } from '@/utils/count'
 import { getFormErrors } from '@/utils/form-errors'
 import { PatientIdentity } from './PatientIdentity'
 import { ProfilePanel } from './ProfilePanel'
@@ -74,9 +76,10 @@ function WorkspaceVisit({
   const backToNotes = () => {
     if (live.current) onTabChange('notes')
   }
-  const missing = isApiError(patient.error) && patient.error.status === 404
+  // A malformed ID is rejected with 422 before lookup; like 404, retrying can never succeed.
+  const missing = isApiError(patient.error) && [404, 422].includes(patient.error.status)
   const unavailable =
-    isApiError(patient.error) && [401, 403, 404, 410].includes(patient.error.status)
+    isApiError(patient.error) && [401, 403, 404, 410, 422].includes(patient.error.status)
   // Workspace composition: clinical notes, summary and discussion remain separate feature panels.
   return (
     <>
@@ -101,7 +104,8 @@ function WorkspaceVisit({
       >
         <DialogContent
           showCloseButton={false}
-          className="pw-dialog"
+          // Override shadcn's centering utilities as well as CSS positioning in production builds.
+          className="pw-dialog translate-x-0 translate-y-0"
           onOpenAutoFocus={(event) => {
             event.preventDefault()
             heading.current?.focus({ preventScroll: true })
@@ -131,8 +135,12 @@ function WorkspaceVisit({
               <div className="pw-scroll">
                 <EmptyState
                   title="Patient not found"
-                  description="This patient may have been deleted or is no longer available. Close the workspace to return to your list."
-                />
+                  description="This patient may have been deleted, or the link is not a valid patient record."
+                >
+                  <Button variant="outline" onClick={onClose}>
+                    Back to list
+                  </Button>
+                </EmptyState>
               </div>
             )}
             {patient.isError && !missing && (!patient.data || unavailable) && (
@@ -162,18 +170,28 @@ function WorkspaceVisit({
                 <TabsList className="pw-tab-list" aria-label="Patient record sections">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
                   <TabsTrigger value="notes">
-                    Notes <CountPill count={patient.data.notes_count} label="clinical notes" />
+                    Notes{' '}
+                    <CountPill
+                      count={patient.data.notes_count}
+                      singularLabel="clinical note"
+                      label="clinical notes"
+                    />
                   </TabsTrigger>
                   <TabsTrigger value="summary">Summary</TabsTrigger>
                   <TabsTrigger value="discussion">
-                    Discussion <CountPill count={patient.data.comments_count} label="comments" />
+                    Discussion{' '}
+                    <CountPill
+                      count={patient.data.comments_count}
+                      singularLabel="comment"
+                      label="comments"
+                    />
                     {patient.data.unread_comments_count > 0 && (
                       <>
                         <span className="pw-new" aria-hidden="true">
                           New
                         </span>
                         <span className="sr-only">
-                          {patient.data.unread_comments_count} unread comments
+                          {formatCount(patient.data.unread_comments_count, 'unread comment')}
                         </span>
                       </>
                     )}

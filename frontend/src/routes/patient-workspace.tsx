@@ -1,3 +1,4 @@
+import { useLayoutEffect } from 'react'
 import {
   useLocation,
   useNavigate,
@@ -9,6 +10,7 @@ import {
 import type { PatientDetail } from '@/api/types'
 import { useActor } from '@/app/actor-context'
 import { ActorRequired } from '@/app/ActorSelector'
+import { resumePatientVisit } from '@/app/view-state'
 import {
   validateListSearch,
   validateWorkspaceSearch,
@@ -70,6 +72,12 @@ function WorkspaceRoute() {
   const params = useParams({ strict: false })
   const { search, navigate, close, returnToList, state } = useWorkspaceNavigation()
   const patientId = params.patientId ?? ''
+  // A committed history visit re-arms return focus without remounting visit-local drafts.
+  useLayoutEffect(() => {
+    if (actorId && state.workspaceOrigin === search.returnTo) {
+      resumePatientVisit(search.returnTo, actorId, patientId)
+    }
+  }, [actorId, patientId, search.returnTo, state.workspaceOrigin])
   // The patient parent stays mounted while its note child changes.
   const noteId = useRouterState({
     select: (routerState) => {

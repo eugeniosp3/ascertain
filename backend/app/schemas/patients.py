@@ -1,13 +1,14 @@
 """Editable patient contracts and typed read-only context from the patient dataset.
 
 POST supplies optional-field defaults; PUT requires every editable field, including
-explicit nulls. Source identifiers, imported context, and audit fields are read-only.
+explicit nulls. Source identifiers, imported context, audit fields, and workload
+assignment are read-only; write bodies reject them as unexpected fields.
 The complete original source_record is deliberately absent from every API schema.
 """
 
 import re
 from datetime import date, datetime
-from typing import Annotated, Literal, Self
+from typing import Annotated, Any, Literal, Self
 from uuid import UUID
 
 from pydantic import (
@@ -16,6 +17,8 @@ from pydantic import (
     EmailStr,
     Field,
     StringConstraints,
+    ValidationError,
+    ValidatorFunctionWrapHandler,
     field_validator,
     model_validator,
 )
@@ -29,6 +32,7 @@ from app.schemas.patient_details import (
 )
 from app.utils import dates
 from app.utils.pagination import Page, PageParams
+from app.validation import reject
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
 ShortText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
@@ -70,7 +74,7 @@ class PatientEditable(BaseModel):
     @classmethod
     def reject_future_date(cls, value: date | None) -> date | None:
         if value is not None and value > dates.utc_today():
-            raise ValueError("Date must not be in the future.")
+            reject("date_in_future")
         return value
 
     @field_validator("phone")
@@ -80,15 +84,27 @@ class PatientEditable(BaseModel):
             not re.fullmatch(r"\+?[\d\s().-]+(?:\s*(?:x|ext\.?|#)\s*\d{1,6})?", value, re.I)
             or not 7 <= sum(character.isdecimal() for character in value) <= 20
         ):
-            raise ValueError("Enter a valid phone number.")
+            reject("invalid_phone")
         return value
+
+    @field_validator("email", mode="wrap")
+    @classmethod
+    def validate_email_message(
+        cls, value: Any, handler: ValidatorFunctionWrapHandler
+    ) -> EmailStr | None:
+        """Keep EmailStr validation while never reflecting its exception context."""
+        try:
+            validated: EmailStr | None = handler(value)
+        except ValidationError:
+            reject("invalid_email")
+        return validated
 
     @model_validator(mode="after")
     def validate_allergies(self) -> Self:
-        if bool(self.allergies) != (self.allergy_status == "reported"):
-            raise ValueError(
-                "Reported allergies require a list; other allergy states require none."
-            )
+        if self.allergy_status == "reported" and not self.allergies:
+            reject("allergies_required")
+        if self.allergy_status != "reported" and self.allergies:
+            reject("allergies_not_reported")
         return self
 
 
@@ -118,6 +134,13 @@ class PatientReplace(PatientEditable):
 class PatientListQuery(PageParams):
     q: Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] | None = None
     status: PatientStatus | None = None
+    assigned_to: Literal["me"] | None = Field(
+        default=None,
+        description=(
+            "Only `me`: restrict the cohort to the selected X-Demo-User-ID before totals "
+            "and pagination. Omit it for the shared all-patient directory."
+        ),
+    )
     sort_by: Literal[
         "name", "dob", "last_visit", "status", "notes_count", "comments_count", "notes", "comments"
     ] = "name"
@@ -127,6 +150,9 @@ class PatientListQuery(PageParams):
 
 class PatientListItem(BaseModel):
     id: UUID
+    assigned_user_id: UUID | None = Field(
+        description="Read-only, server-owned workload assignment; null when unassigned."
+    )
     source_patient_id: str | None
     mrn: str | None
     first_name: str

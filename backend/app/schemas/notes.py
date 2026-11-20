@@ -17,6 +17,7 @@ from pydantic import (
 
 from app.models import DEFAULT_NOTE_TITLE, NOTE_CONTENT_MAX_LENGTH, NOTE_TITLE_MAX_LENGTH
 from app.schemas.users import UserResponse
+from app.validation import reject
 
 NoteTitle = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1, max_length=NOTE_TITLE_MAX_LENGTH)
@@ -29,7 +30,7 @@ NoteContent = Annotated[
 def clinical_time(value: datetime) -> datetime:
     value = value.astimezone(UTC)
     if value > datetime.now(UTC):
-        raise ValueError("Clinical time cannot be in the future.")
+        reject("clinical_time_in_future")
     return value
 
 
@@ -61,7 +62,7 @@ class AttachmentCreate(BaseModel):
     @classmethod
     def require_https(cls, value: HttpUrl) -> HttpUrl:
         if value.scheme != "https" or value.username is not None or value.password is not None:
-            raise ValueError("Use an HTTPS URL without credentials.")
+            reject("invalid_source_url")
         return value
 
 

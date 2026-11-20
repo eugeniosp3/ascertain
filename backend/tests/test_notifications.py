@@ -161,6 +161,7 @@ def test_equal_timestamp_page_boundary_remains_unread_until_group_is_loaded(
     collection = f"/patients/{patient.id}/comments"
     first = api_client.get(collection, params={"page_size": 1}, headers=viewer).json()
     assert datetime.fromisoformat(first["read_through"]) < same_time
+    assert first["items"][0]["is_unread"] is True
     assert (
         api_client.post(
             f"{collection}/read", headers=viewer, json={"through": first["read_through"]}
@@ -171,6 +172,7 @@ def test_equal_timestamp_page_boundary_remains_unread_until_group_is_loaded(
     last = api_client.get(
         collection, params={"page_size": 1, "cursor": first["next_cursor"]}, headers=viewer
     ).json()
+    assert last["items"][0]["is_unread"] is True
     assert (
         api_client.post(
             f"{collection}/read", headers=viewer, json={"through": last["read_through"]}
@@ -178,6 +180,10 @@ def test_equal_timestamp_page_boundary_remains_unread_until_group_is_loaded(
         == 200
     )
     assert api_client.get("/notifications/summary", headers=viewer).json()["unread_comments"] == 0
+    assert all(
+        item["is_unread"] is False
+        for item in api_client.get(collection, headers=viewer).json()["items"]
+    )
 
 
 def test_inflight_creation_is_in_snapshot_and_later_creation_stays_unread(

@@ -18,6 +18,7 @@ from pydantic import (
 
 from app.models import COMMENT_BODY_MAX_LENGTH
 from app.schemas.users import UserResponse
+from app.validation import reject
 
 
 class CommentCursor(BaseModel):
@@ -50,7 +51,10 @@ class CommentCursor(BaseModel):
 
 
 def _validate_cursor(value: str) -> str:
-    CommentCursor.decode(value)
+    try:
+        CommentCursor.decode(value)
+    except ValueError:
+        reject("invalid_discussion_cursor")
     return value
 
 
@@ -74,7 +78,7 @@ class CommentWrite(BaseModel):
     @classmethod
     def distinct_note_ids(cls, values: list[UUID]) -> list[UUID]:
         if len(set(values)) != len(values):
-            raise ValueError("Note references must be distinct.")
+            reject("duplicate_note_reference")
         return values
 
 
@@ -94,6 +98,7 @@ class CommentResponse(BaseModel):
     author: UserResponse
     created_at: datetime
     updated_at: datetime
+    is_unread: bool
     note_links: list[NoteLinkResponse]
 
 

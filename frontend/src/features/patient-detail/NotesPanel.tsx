@@ -7,7 +7,7 @@ import { InlineError } from '@/components/shared/InlineError'
 import { formatDateTime } from '@/utils/dates'
 import { getFormErrors } from '@/utils/form-errors'
 import { usePatientNotes } from './queries'
-import { noteLabel } from './schema'
+import { noteLabel, notePreview } from './schema'
 import { NoteForm } from './NoteForm'
 import { NoteView } from './NoteView'
 
@@ -43,9 +43,7 @@ export function NotesPanel({ patientId, actorId, active, noteId, onNoteOpen, onB
         <div className="pw-panel-head">
           <div>
             <h3 className="text-lg font-semibold">Clinical notes</h3>
-            <p className="text-sm text-muted-foreground">
-              Newest clinical date first. Notes are kept separate from team discussion.
-            </p>
+            <p className="text-sm text-muted-foreground">Newest clinical date first.</p>
           </div>
           <Button ref={add} onClick={() => setComposing(true)} disabled={composing}>
             <Plus aria-hidden="true" />
@@ -97,7 +95,11 @@ export function NotesPanel({ patientId, actorId, active, noteId, onNoteOpen, onB
                   </time>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">{note.author.display_name}</p>
-                <p className="mt-2 line-clamp-2 whitespace-pre-wrap">{note.content}</p>
+                {notePreview(note.content) && (
+                  <p className="mt-2 line-clamp-2 whitespace-pre-wrap">
+                    {notePreview(note.content)}
+                  </p>
+                )}
               </button>
             </li>
           ))}

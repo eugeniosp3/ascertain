@@ -9,7 +9,7 @@ if (configuredMode !== undefined && configuredMode !== 'demo' && configuredMode 
   throw new Error('VITE_DATA_MODE must be demo or api.')
 }
 
-export const dataMode: 'demo' | 'api' = configuredMode ?? 'demo'
+export const dataMode: 'demo' | 'api' = configuredMode ?? 'api'
 export const api: DashboardApi =
   dataMode === 'api' ? createHttpApi(import.meta.env.VITE_API_BASE ?? '/api') : createMockApi()
 

@@ -119,7 +119,17 @@ export function NoteForm({
         }}
       </form.Field>
       <div className="flex flex-wrap justify-end gap-2">
-        <Button type="button" variant="outline" disabled={save.isPending} onClick={onCancel}>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={save.isPending}
+          onClick={() => {
+            // Cancel discards the draft and last error; the next note starts at the current time.
+            form.reset({ timestamp: toDateTimeLocal(), content: '' })
+            save.reset()
+            onCancel()
+          }}
+        >
           Cancel
         </Button>
         <form.Subscribe selector={(state) => state.isSubmitting}>

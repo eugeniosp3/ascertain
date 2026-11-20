@@ -4,7 +4,8 @@ coverage/
 playwright-report/
 test-results/
 e2e-api/results/
-UI_mocks/
+e2e-live/results/
+docs/ui-mocks/
 reference/
 *.md
 package-lock.json

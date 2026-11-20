@@ -1,12 +1,24 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { emptyListView, useUIStore } from './ui-store'
-import { getListView, rememberPatient, restoredRowIndex, updateListView } from './view-state'
+import {
+  getListView,
+  rememberPatient,
+  restoredRowIndex,
+  resumePatientVisit,
+  resetListView,
+  updateListView,
+} from './view-state'
 import { defaultListSearch } from '@/features/patient-list/search-params'
 import { patientKeys } from './query-keys'
 import { retryQuery } from './query-client'
 
 beforeEach(() =>
-  useUIStore.setState({ returnSnapshots: {}, selectedActorId: null, sidebarExpanded: false }),
+  useUIStore.setState({
+    returnSnapshots: {},
+    selectedActorId: null,
+    sidebarExpanded: false,
+    theme: 'dark',
+  }),
 )
 
 describe('workspace UI state', () => {
@@ -33,6 +45,29 @@ describe('workspace UI state', () => {
     expect(restoredRowIndex(['a'], saved)).toBe(0)
     expect(restoredRowIndex([], saved)).toBeNull()
   })
+  it('re-arms a returning history visit without changing its saved list or origin action', () => {
+    updateListView('patients', 'one', {
+      search: { ...defaultListSearch, q: 'Ada', status: 'active', page: 3 },
+      scrollTop: 845,
+    })
+    rememberPatient('patients', 'one', 'patient-99', 18, 'notes')
+    updateListView('patients', 'one', { restoreFocus: false })
+    const snapshot = getListView('patients', 'one')
+    resumePatientVisit('patients', 'one', 'patient-99')
+    expect(getListView('patients', 'one')).toEqual({ ...snapshot, restoreFocus: true })
+    const pending = getListView('patients', 'one')
+    resumePatientVisit('patients', 'one', 'patient-99')
+    expect(getListView('patients', 'one')).toBe(pending)
+  })
+  it('leaves unrelated patients, viewers and list origins alone', () => {
+    rememberPatient('patients', 'one', 'patient-99', 18, 'notes')
+    updateListView('patients', 'one', { restoreFocus: false })
+    const snapshots = useUIStore.getState().returnSnapshots
+    resumePatientVisit('patients', 'one', 'another-patient')
+    resumePatientVisit('patients', 'two', 'patient-99')
+    resumePatientVisit('notifications', 'one', 'patient-99')
+    expect(useUIStore.getState().returnSnapshots).toBe(snapshots)
+  })
   it('persists preferences without search, patient IDs, or return snapshots', () => {
     useUIStore.getState().setSidebarExpanded(true)
     useUIStore.getState().setSelectedActorId('demo-one')
@@ -40,7 +75,37 @@ describe('workspace UI state', () => {
     const stored = JSON.parse(localStorage.getItem('ascertain:ui-preferences') ?? '{}') as {
       state: object
     }
-    expect(stored.state).toEqual({ sidebarExpanded: true, selectedActorId: 'demo-one' })
+    expect(stored.state).toEqual({
+      sidebarExpanded: true,
+      selectedActorId: 'demo-one',
+      theme: 'dark',
+    })
+  })
+  it('retains measured origin memory through history and discards it for a new query or action', () => {
+    const geometry = {
+      scope: 'patient-list-scope',
+      measurements: [{ index: 4, key: 'patient-99', start: 792, end: 990, size: 198, lane: 0 }],
+      scrollTop: 700,
+      viewport: { width: 364, height: 195 },
+      rowTop: 92,
+      actionTop: 110,
+      pin: null,
+    }
+    rememberPatient('patients', 'one', 'patient-99', 4, 'notes', geometry)
+    updateListView('patients', 'one', { restoreFocus: false, scrollTop: 705 })
+    resumePatientVisit('patients', 'one', 'patient-99')
+    expect(getListView('patients', 'one').geometry).toBe(geometry)
+    expect(JSON.stringify(localStorage.getItem('ascertain:ui-preferences'))).not.toContain(
+      'patient-99',
+    )
+    updateListView('patients', 'one', { search: { ...defaultListSearch, page: 2 } })
+    expect(getListView('patients', 'one').geometry).toBeNull()
+    rememberPatient('patients', 'one', 'patient-99', 4, 'notes', geometry)
+    rememberPatient('patients', 'one', 'new-patient', 0, 'overview')
+    expect(getListView('patients', 'one').geometry).toBeNull()
+    rememberPatient('patients', 'one', 'patient-99', 4, 'notes', geometry)
+    resetListView('patients', 'one')
+    expect(getListView('patients', 'one').geometry).toBeNull()
   })
 })
 

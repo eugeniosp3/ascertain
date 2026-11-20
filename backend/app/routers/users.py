@@ -7,11 +7,12 @@ from sqlalchemy.orm import Session
 
 from app.db import get_session
 from app.dependencies import get_optional_user
+from app.errors import error_responses
 from app.models import User
 from app.schemas.users import UserResponse
 from app.services import users
 
-router = APIRouter(tags=["Users"])
+router = APIRouter(tags=["Users"], responses=error_responses(401, 422, 500, 503))
 
 
 @router.get("/users", response_model=list[UserResponse])

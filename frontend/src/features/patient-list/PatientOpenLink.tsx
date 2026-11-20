@@ -3,11 +3,13 @@ import { Link } from '@tanstack/react-router'
 import type { PatientListItem } from '@/api/types'
 import { rememberPatient } from '@/app/view-state'
 import type { ListSearch, ListView, PatientTab } from './search-params'
+import type { PatientListGeometry } from './scroll-restoration'
 
 export interface PatientLinkContext {
   actorId: string | null
   view: ListView
   search: ListSearch
+  captureOrigin?: (action: HTMLAnchorElement) => PatientListGeometry | null
 }
 
 export function PatientOpenLink({
@@ -48,7 +50,14 @@ export function PatientOpenLink({
           !event.shiftKey &&
           !event.altKey
         ) {
-          rememberPatient(context.view, context.actorId, patient.id, index, tab)
+          rememberPatient(
+            context.view,
+            context.actorId,
+            patient.id,
+            index,
+            tab,
+            context.captureOrigin?.(event.currentTarget) ?? null,
+          )
         }
       }}
     >

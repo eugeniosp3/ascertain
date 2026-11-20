@@ -178,4 +178,13 @@ describe('patient and activity pills', () => {
     expect(screen.getByText('99+')).toHaveAttribute('aria-hidden', 'true')
     expect(screen.getByText('120 unread comments')).not.toHaveAttribute('aria-hidden')
   })
+
+  it('announces singular counts without repeating the visual number', () => {
+    const { rerender } = render(<CountPill count={1} variant="unread" />)
+    expect(screen.getByText('1 unread comment')).not.toHaveAttribute('aria-hidden')
+    rerender(<CountPill count={1} label="clinical notes" singularLabel="clinical note" />)
+    expect(screen.getByText('1 clinical note')).not.toHaveAttribute('aria-hidden')
+    rerender(<CountPill count={0} label="clinical notes" singularLabel="clinical note" />)
+    expect(screen.getByText('0 clinical notes')).not.toHaveAttribute('aria-hidden')
+  })
 })

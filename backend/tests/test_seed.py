@@ -122,7 +122,7 @@ def test_seed_is_atomic_and_preserves_edits_deletions_and_tombstones(
     assert lock < first_write
     assert operations[first_write].startswith(f"INSERT INTO {seed_schema}.seed_runs")
     expected = {name: 0 for name in Base.metadata.tables}
-    expected.update({"seed_runs": 2, "patients": 100, **seeding.DEMO_COUNTS})
+    expected.update({"seed_runs": 3, "patients": 100, **seeding.DEMO_COUNTS})
     assert counts(pg_engine, seed_schema) == expected
 
     snapshot = load_duckdb_source()
@@ -153,6 +153,7 @@ def test_seed_is_atomic_and_preserves_edits_deletions_and_tombstones(
         assert {row["dataset_key"] for row in markers} == {
             snapshot.dataset_key,
             seeding.DEMO_DATASET_KEY,
+            seeding.DEMO_ASSIGNMENTS_DATASET_KEY,
         }
         assert all(row["completed_at"] is not None for row in markers)
         connection.execute(
@@ -201,23 +202,25 @@ def test_seed_is_atomic_and_preserves_edits_deletions_and_tombstones(
         ).one() == (None, None, seeding.DEMO_USER_IDS[0])
 
 
-def test_write_failure_rolls_back_patients_users_and_both_markers(
+@pytest.mark.parametrize("step", ["_write_demo", "_assign_surviving_patients"])
+def test_write_failure_rolls_back_patients_users_assignments_and_markers(
     pg_engine: Engine,
     seed_schema: str,
     monkeypatch: pytest.MonkeyPatch,
+    step: str,
 ) -> None:
-    original = seeding._write_demo
+    original = getattr(seeding, step)
 
-    def fail_after_demo(*args: object, **kwargs: object) -> None:
+    def fail_after_step(*args: object, **kwargs: object) -> object:
         original(*args, **kwargs)
         raise RuntimeError("secret patient payload should never be printed")
 
-    monkeypatch.setattr(seeding, "_write_demo", fail_after_demo)
+    monkeypatch.setattr(seeding, step, fail_after_step)
     outcome = seeding.run_seed(engine=pg_engine, schema=seed_schema)
     assert outcome.status == "failed", outcome
     assert "secret" not in str(outcome)
     assert all(value == 0 for value in counts(pg_engine, seed_schema).values())
-    monkeypatch.setattr(seeding, "_write_demo", original)
+    monkeypatch.setattr(seeding, step, original)
     assert seeding.run_seed(engine=pg_engine, schema=seed_schema).status == "seeded"
 
 
@@ -243,7 +246,7 @@ def test_concurrent_startup_rechecks_markers_under_the_shared_lock(
     assert {outcome.status for outcome in outcomes} == {"seeded", "already_complete"}, outcomes
     assert outcomes[0].seed_run_id == outcomes[1].seed_run_id
     actual = counts(pg_engine, seed_schema)
-    assert actual["patients"] == 100 and actual["seed_runs"] == 2
+    assert actual["patients"] == 100 and actual["seed_runs"] == 3
     assert all(actual[name] == count for name, count in seeding.DEMO_COUNTS.items())
 
 
@@ -255,6 +258,9 @@ def test_concurrent_startup_rechecks_markers_under_the_shared_lock(
         "ALTER TABLE patients DROP CONSTRAINT patients_source_provenance",
         "ALTER TABLE patients ALTER COLUMN source_patient_id TYPE integer USING NULL",
         "ALTER TABLE patients ALTER COLUMN first_name DROP NOT NULL",
+        "ALTER TABLE patients DROP COLUMN assigned_user_id",
+        "ALTER TABLE patients DROP CONSTRAINT patients_assigned_user_id_fkey",
+        "ALTER TABLE patients ALTER COLUMN assigned_user_id SET NOT NULL",
         "ALTER TABLE users ALTER COLUMN created_at DROP DEFAULT",
         "DROP TABLE comments CASCADE",
         "UPDATE alembic_version SET version_num = 'outdated'",
@@ -281,13 +287,29 @@ def test_schema_or_revision_failure_writes_no_markers(
         )
 
 
-@pytest.mark.parametrize("damage", ["hash", "count", "missing_demo", "version"])
+ASSIGNMENT_MARKER_DAMAGE = {
+    "assignment_hash": {"source_hashes": {"changed": "hash"}},
+    "assignment_count": {"row_counts": {"patients": 101}},
+    "assignment_manifest": {"export_manifest": {"fixture_version": "demo-assignments-v1"}},
+    "assignment_version": {"dataset_key": "demo-assignments-v0"},
+}
+
+
+@pytest.mark.parametrize(
+    "damage", ["hash", "count", "missing_demo", "version", *ASSIGNMENT_MARKER_DAMAGE]
+)
 def test_marker_conflicts_never_overwrite(pg_engine: Engine, seed_schema: str, damage: str) -> None:
     assert seeding.run_seed(engine=pg_engine, schema=seed_schema).status == "seeded"
     runs = Base.metadata.tables["seed_runs"]
     with pg_engine.begin() as connection:
         connection = connection.execution_options(schema_translate_map={None: seed_schema})
-        if damage == "hash":
+        if damage in ASSIGNMENT_MARKER_DAMAGE:
+            connection.execute(
+                update(runs)
+                .where(runs.c.dataset_key == seeding.DEMO_ASSIGNMENTS_DATASET_KEY)
+                .values(**ASSIGNMENT_MARKER_DAMAGE[damage])
+            )
+        elif damage == "hash":
             connection.execute(update(runs).values(source_hashes={"changed": "hash"}))
         elif damage == "count":
             connection.execute(update(runs).values(row_counts={}))

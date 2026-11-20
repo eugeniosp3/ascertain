@@ -28,6 +28,7 @@ const write: PatientWrite = {
 const detail: PatientDetail = {
   ...write,
   id: 'patient-id',
+  assigned_user_id: null,
   source_patient_id: 'PT-0001',
   mrn: '01000001',
   name: 'Ada J Example',

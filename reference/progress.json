@@ -1,0 +1,3884 @@
+{
+  "updated_at": "2026-11-20 20:25 UTC",
+  "baseline_revision": "611bda5400332550708b3c39f049d3ee7690b01f",
+  "verification_records": [
+    {
+      "label": "Latest accepted repairs and independent checks",
+      "detail": "Pass03 closes four detailed items and moves P4-03/04/06 to specific-proof-pending, with no new core closure. Infra checks image cb1aa310…469d3 verifies owner backend34e2150b,236 backend +160 data tests, all30 approved harness sources retained and zero generated artifacts. OPR008 combined proof awaits lead/QA-export closure; no application server or frontend was run in that check. New assigned-overview backend work is now in flight;34e2150b remains the identity of the completed checks, not the upcoming application candidate.",
+      "paths": [
+        "infra/docs/checklist.md",
+        "reference/chatroom/integration-coordination.md"
+      ]
+    },
+    {
+      "label": "Published baseline",
+      "detail": "Revision 611bda5 passed hosted checks, image builds, seeded startup/restart/proxy verification and demo/intercepted browser suites. This is earlier baseline evidence, not acceptance of later local integration changes.",
+      "paths": [
+        "https://github.com/eugeniosp3/ascertain/actions/runs/44781809472"
+      ]
+    },
+    {
+      "label": "Backend handoff",
+      "detail": "196 full tests and 27 focused discussion/unread tests passed against disposable PostgreSQL; lint, format and strict typing passed. Independent QA subsequently reproduced the 196-test pass and all 317 live HTTP scenarios on isolated services.",
+      "paths": [
+        "backend/README.md",
+        "backend/docs/API_CONTRACT.md",
+        "reference/chatroom/integration-coordination.md"
+      ]
+    },
+    {
+      "label": "Frontend baseline",
+      "detail": "168 unit/component, 22 demo-browser and seven intercepted-HTTP tests passed on the earlier baseline. These scopes do not establish persistent live UI behavior.",
+      "paths": [
+        "frontend/README.md",
+        "reference/chatroom/frontend-updates.md"
+      ]
+    },
+    {
+      "label": "Current focused frontend work",
+      "detail": "Historical adapter/row checks passed. Subsequent form recovery (24 browser / 42 unit) and history focus (6 browser) repairs are accepted in compiled-DEMO scope by pass 03. Current visual/restoration work and the expanded live suite remain pending.",
+      "paths": [
+        "reference/chatroom/integration-coordination.md"
+      ]
+    },
+    {
+      "label": "Data preparation",
+      "detail": "160 pipeline/fixture tests reported passing; 21 read-only stage validations verify 100 patients and raw/clean lineage. This preparation evidence is separate from UI integration.",
+      "paths": [
+        "data/docs/HOLEPUNCH.md",
+        "data/README.md"
+      ]
+    },
+    {
+      "label": "Independent QA snapshots",
+      "detail": "The 17:45 QA snapshot and its failures are historical. Current exported baseline retains637 UI cases (115 PASS / 515 NOT_RUN / 7 BLOCKED as of19:17) and336 API cases (317 PASS /19 NOT_RUN); versioned scroll definitions and separate pass03 backend decisions do not erase older failures. Chart proposals remain outside637; do not sum executions as unique coverage.",
+      "paths": [
+        "reference/project.md"
+      ]
+    },
+    {
+      "label": "Live CI preparation",
+      "detail": "The isolated API-mode runner and live lane are prepared with static/mocked checks. No real live runner pass or shared mode transition is claimed yet.",
+      "paths": [
+        "infra/docs/checklist.md",
+        "reference/chatroom/integration-coordination.md"
+      ]
+    },
+    {
+      "label": "Initial staged compiled live run",
+      "detail": "Frontend owner reports 3 passed and 13 failed across 16 cases on its compiled preview at 4176 against the real shared API. Confirmed modal-positioning failure places controls outside the viewport. Other directory/locator failures are being classified separately. Failure evidence was archived before reruns; disposable-record cleanup restored 100 patients. This is a failed acceptance run, not a release pass.",
+      "paths": [
+        "reference/chatroom/integration-coordination.md",
+        "frontend/playwright.live.config.ts"
+      ]
+    },
+    {
+      "label": "Additional forms demo candidates",
+      "detail": "Historical producer delivery: 26 candidate IDs and 51 applicable observations across 39 executions. Pass 01 accepted nine full form DEMO mappings and retained 17 partial/supporting scopes. Later pass 03 accepts the separate form-recovery repair; no blanket live persistence claim follows.",
+      "paths": [
+        "reference/project.md"
+      ]
+    },
+    {
+      "label": "Opus lead decisions",
+      "detail": "The first written pass adjudicated 85 unique case IDs: 41 full compiled-DEMO proofs, 28 supporting, three failures, two rejected mappings, six definition revisions and five blocked. It grants no live or release acceptance; subsequent source drift and chart proposals are separate.",
+      "paths": [
+        "reference/project.md"
+      ]
+    },
+    {
+      "label": "Functional live candidate",
+      "detail": "The frontend owner verified 75 artifact hashes for candidate-03: 16/16 desktop/mobile live journeys pass, 58 created IDs cleaned, baseline totals preserved. No immutable backend identity was captured at run start. Current-source/visual and isolated post-OPR platform acceptance remain open; shared8080 is still demo.",
+      "paths": [
+        "reference/chatroom/integration-coordination.md",
+        "reference/chatroom/review-actions.md"
+      ]
+    },
+    {
+      "label": "Opus visual and platform findings",
+      "detail": "Compiled modal/theme behavior passes in reviewed scope, but visual form/mobile/navigation issues remain. Platform review found actionable logging, validation-message, OpenAPI and artifact-exclusion issues. Owners are fixing them; reviews are not a release pass.",
+      "paths": [
+        "reference/chatroom/review-actions.md"
+      ]
+    },
+    {
+      "label": "Opus pass-02 scoped closures",
+      "detail": "Nine core IDs are closed in stated candidate scopes: eight are counted verified, and P2-12 is shown separately as desktop-only partial because mobile pagination remains blocked by F3. Five work items close in that same candidate scope; client/server feedback items reopen. Current source drift, shared demo mode and visual blockers still prevent overall acceptance.",
+      "paths": [
+        "reference/project.md"
+      ]
+    },
+    {
+      "label": "Stable post-OPR backend candidate",
+      "detail": "Owner-frozen 112-file backend source 34e2150b…bbb7 passed236 ordinary tests; pass03 accepts the validation/OpenAPI/backend artifact-exclusion clauses. Infra independently reproduced236 backend and160 data tests plus lint/format/mypy in a checks image. Pre-OPR HTTP/fault proofs keep their identities; new runtime/frontend acceptance remains open.",
+      "paths": [
+        "backend/README.md",
+        "reference/chatroom/integration-coordination.md"
+      ]
+    }
+  ],
+  "phases": [
+    {
+      "id": "decide",
+      "title": "Selected architecture",
+      "description": "Implemented library, model and interface choices; cross-owner integration remains explicitly tracked.",
+      "items": [
+        {
+          "id": "d-fe",
+          "tag": "rec",
+          "part": "P1",
+          "reference": "P1 FE-2",
+          "title": "Lock the frontend stack",
+          "detail": "Vite/React/strict TypeScript, Tailwind with shadcn/Radix, TanStack Router/Query/Table/Virtual/Form, Zod and a small Zustand UI store are selected and installed. Replaces the original Mantine/React Router/React Hook Form suggestions.",
+          "status": "verified",
+          "scope": "configuration",
+          "evidence": [
+            "frontend/package.json",
+            "frontend/README.md"
+          ],
+          "basis": "Inspected current source/configuration; no new execution in this audit."
+        },
+        {
+          "id": "d-be",
+          "tag": "rec",
+          "part": "P1",
+          "reference": "P1 BE",
+          "title": "Lock the backend stack",
+          "detail": "FastAPI, Pydantic, SQLAlchemy typed models, psycopg, Alembic, pydantic-settings, uv lockfiles, Ruff, mypy and pytest/httpx2 are configured.",
+          "status": "verified",
+          "scope": "configuration",
+          "evidence": [
+            "backend/pyproject.toml",
+            "backend/uv.lock",
+            "backend/README.md"
+          ],
+          "basis": "Inspected current source/configuration; no new execution in this audit."
+        },
+        {
+          "id": "d-patient",
+          "tag": "req",
+          "part": "P1",
+          "reference": "P1 BE-2 · P4.1",
+          "title": "Define the Patient model",
+          "detail": "Eight-table model includes an editable patient profile with derived age, active/inactive status, nullable blood type, medical fields, audit timestamps and protected imported context.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/models.py",
+            "backend/app/schemas/patients.py",
+            "backend/docs/DATA_MODEL.md"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "d-seed-src",
+          "tag": "rec",
+          "part": "P1",
+          "reference": "P1 BE-3 · P2 Req",
+          "title": "Seed 100 prepared fictional patients through DuckDB",
+          "detail": "Prepare 100 fictional patient rows from reference/prior-auth-pack/data/patients_100.csv in bronze/silver DuckDB, then seed with backend app.seed. Preserve unknown blood type; active is an explicit app default. Do not fabricate source clinical facts.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "data/README.md",
+            "backend/app/utils/duckdb_source.py",
+            "backend/app/services/seeding.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "d-design",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · UI/UX",
+          "title": "Theme the UI with <code>design-system/</code>",
+          "detail": "Tailwind/shadcn tokens use the Ascertain paper/ink/lilac palette, flat surfaces, text status pills and font fallbacks.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/styles/globals.css",
+            "frontend/src/components/ui/status-pill.tsx",
+            "reference/design-system/tokens.css"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "d-note",
+          "tag": "req",
+          "part": "P3",
+          "reference": "P3 BE-1",
+          "title": "Define the Note model",
+          "detail": "Notes store stable UUID, patient/author, title, clinical timestamp, content, created/updated times and a content-free deletion tombstone.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/models.py",
+            "backend/app/schemas/notes.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "d-contract",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · API design",
+          "title": "Write the API contract down before building",
+          "detail": "Opus pass 03 accepts the corrected API contract and generated error schema on backend source 34e2150b…bbb7. Frontend error rendering remains under pf-server.",
+          "status": "verified",
+          "scope": "backend 34e2150b API contract",
+          "evidence": [
+            "backend/docs/API_CONTRACT.md",
+            "reference/chatroom/frontend-data-contract.md",
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Written Opus 5.5 UltraCode pass-03 CLOSED_IN_STATED_SCOPE decision; not a blanket integrated release pass.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "cross owner integration",
+              "detail": "Opus pass 02 keeps this open: OPR-004 (in flight, unverified).  Later fixes need their own candidate verification.",
+              "basis": "Inspected current source/configuration; no new execution in this audit.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "d-paths",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · requirements",
+          "title": "Keep backend paths exactly as the spec writes them",
+          "detail": "FastAPI paths remain unprefixed as specified. Vite and nginx strip browser /api prefixes; health and API errors have been checked through the proxy.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            "backend/app/routers/",
+            "frontend/vite.config.ts",
+            "infra/nginx/default.conf"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "d-growth",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Context",
+          "title": "Choose a structure that can grow",
+          "detail": "One workspace has frontend, backend, data and infra ownership. Frontend is feature-oriented; backend uses routers/schemas/services/models/utils. Real authentication and broader workflows are future extensions.",
+          "status": "verified",
+          "scope": "source structure",
+          "evidence": [
+            "frontend/README.md",
+            "backend/README.md",
+            "data/README.md",
+            "infra/README.md"
+          ],
+          "basis": "Inspected current source/configuration; no new execution in this audit."
+        },
+        {
+          "id": "d-summary",
+          "tag": "rec",
+          "part": "P3",
+          "reference": "P3 BE-2",
+          "title": "Decide the summary approach",
+          "detail": "Deterministic template summaries need no provider key. An external LLM provider is not implemented or required.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/services/summaries.py",
+            "backend/tests/test_summary.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        }
+      ]
+    },
+    {
+      "id": "skeleton",
+      "title": "Workspace and configuration",
+      "description": "One repository with separate frontend, backend, data and infrastructure ownership.",
+      "items": [
+        {
+          "id": "s-tree",
+          "tag": "rec",
+          "part": "SUB",
+          "reference": "Submission",
+          "title": "Create the folder layout",
+          "detail": "The monorepo layout and root setup entry exist; runtime infra files live under infra with a small root Compose include.",
+          "status": "verified",
+          "scope": "source structure",
+          "evidence": [
+            "README.md",
+            "docker-compose.yml",
+            "setup.sh",
+            "infra/compose.yml"
+          ],
+          "basis": "Inspected current source/configuration; no new execution in this audit."
+        },
+        {
+          "id": "s-ignore",
+          "tag": "rec",
+          "part": "SUB",
+          "reference": "Submission",
+          "title": "Add <code>.gitignore</code> and <code>.dockerignore</code> files",
+          "detail": "Git/build ignores exclude real env files, dependencies, caches, generated browser failures and personal study_mats; .env.example remains committed.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            ".gitignore",
+            ".dockerignore"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        }
+      ]
+    },
+    {
+      "id": "be-foundation",
+      "title": "Backend foundation",
+      "description": "Part 1 · backend tasks.",
+      "items": [
+        {
+          "id": "b-init",
+          "tag": "req",
+          "part": "P1",
+          "reference": "P1 BE-1",
+          "title": "Initialize the FastAPI app",
+          "detail": "App factory, lifespan-owned engine, validated settings and outer explicit-origin CORS middleware are implemented.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/main.py",
+            "backend/app/config.py",
+            "backend/tests/test_app.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "b-health",
+          "tag": "req",
+          "part": "P1",
+          "reference": "P1 BE-1",
+          "title": "<code>GET /health</code> returns exactly <code>{\"status\": \"ok\"}</code>",
+          "detail": "GET /health returns200 exactly {status:ok}; /ready separately checks database connectivity and is the container readiness probe.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/routers/health.py",
+            "backend/tests/test_app.py",
+            "infra/compose.yml"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "b-db-dev",
+          "tag": "rec",
+          "part": "P1",
+          "reference": "P5.3",
+          "title": "Run Postgres in Docker from the start",
+          "detail": "PostgreSQL runs in Compose on a persistent named volume with localhost access and readiness checks.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            "infra/compose.yml",
+            "infra/README.md"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "b-db",
+          "tag": "req",
+          "part": "P1",
+          "reference": "P1 BE-2",
+          "title": "Connect to PostgreSQL",
+          "detail": "The app owns one SQLAlchemy engine; FastAPI dependencies supply short-lived sessions and services own commits/rollbacks.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/db.py",
+            "backend/app/config.py",
+            "backend/tests/test_database_checks.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "b-schema",
+          "tag": "req",
+          "part": "P1",
+          "reference": "P1 BE-2",
+          "title": "Create the patients table in an Alembic migration",
+          "detail": "Initial Alembic revision creates patients and all supporting tables, constraints and indexes.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/alembic/versions/20261120_0001_initial_schema.py",
+            "backend/app/models.py",
+            "backend/tests/test_migrations.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "b-recreate",
+          "tag": "req",
+          "part": "P1",
+          "reference": "P1 BE-2",
+          "title": "Make the database easy to recreate",
+          "detail": "Startup applies Alembic before seeding when initialization is enabled; the sample configuration enables both and the setup script preserves existing env settings.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            "infra/scripts/entrypoint.py",
+            ".env.example",
+            "backend/tests/test_migrations.py"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "b-seed",
+          "tag": "req",
+          "part": "P1",
+          "reference": "P1 BE-3",
+          "title": "Seed 15–20 realistic patients on startup",
+          "detail": "Fresh initialized startup imports100 fictional patients plus two demo users, two notes, two comments and one note link. Unknown blood type remains null; status defaults are labelled.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            "backend/app/services/seeding.py",
+            "backend/tests/test_seed.py",
+            "infra/scripts/verify_stack.py"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "b-seed-safe",
+          "tag": "rec",
+          "part": "P1",
+          "reference": "P1 BE-3 · P2 Req",
+          "title": "Make seeding idempotent and scalable",
+          "detail": "Read-only DuckDB validation, schema preflight, bounded advisory locking, transactional writes and completion markers avoid duplicates, overwritten edits and resurrected deletions. This is versioned initialization, not arbitrary source synchronization.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/services/seeding.py",
+            "backend/tests/test_seed.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "b-seed-notes",
+          "tag": "rec",
+          "part": "P3",
+          "reference": "P3 BE-2",
+          "title": "Seed labelled demonstration notes and comments",
+          "detail": "The selected seed contains two explicitly fictional demonstration notes and comments, not a fabricated note history for every patient.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/services/seeding.py",
+            "backend/tests/test_seed.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "b-ruff",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · code quality",
+          "title": "Backend linting: Ruff lint + format, type hints throughout",
+          "detail": "Backend Ruff lint/format and strict mypy passed with the 196-test handoff.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/pyproject.toml",
+            "backend/README.md",
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        }
+      ]
+    },
+    {
+      "id": "crud",
+      "title": "Patient CRUD API",
+      "description": "Part 2 · task 1, plus the validation and error-handling requirements.",
+      "items": [
+        {
+          "id": "a-schemas",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.1 · P4.2",
+          "title": "Validated patient create replace detail and page schemas",
+          "detail": "PatientCreate, PatientReplace, PatientDetail and PatientPage provide typed write/read contracts; computed age appears on reads.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/schemas/patients.py",
+            "backend/tests/test_patients.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "a-rules",
+          "tag": "req",
+          "part": "P4",
+          "reference": "P2 Req · P4.2",
+          "title": "Server-side validation rules",
+          "detail": "Validate required/trimmed/bounded names, nonfuture calendar dates, phone/email, allowed statuses/blood types and consistent allergy states. Do not claim the old proposed130-year age limit or automatic list deduplication as implemented rules.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/schemas/patients.py",
+            "backend/tests/test_patients.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "a-list",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.1",
+          "title": "<code>GET /patients</code> with pagination",
+          "detail": "GET /patients validates page >= 1 and page_size 1-100, defaults to 20, and returns items/total/page/page_size.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/routers/patients.py",
+            "backend/app/utils/pagination.py",
+            "backend/tests/test_patients.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "a-query",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.3 · Stretch",
+          "title": "Search, filter and sort as query params on <code>GET /patients</code>",
+          "detail": "SQL search/filter/sort applies before pagination. Search includes names/email/MRN/source ID/UUID; status and unread_only filters and count sorts are supported with stable UUID tiebreaking.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/services/patients.py",
+            "backend/app/schemas/patients.py",
+            "backend/tests/test_patients.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "a-get",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.1",
+          "title": "<code>GET /patients/{id}</code>",
+          "detail": "GET patient returns profile/counts/typed source context without raw source_record, or a structured404.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/routers/patients.py",
+            "backend/tests/test_patients.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "a-post",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.1",
+          "title": "<code>POST /patients</code> → 201",
+          "detail": "POST creates a patient with HTTP 201, response detail and Location.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/routers/patients.py",
+            "backend/tests/test_patients.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "a-put",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.1",
+          "title": "<code>PUT /patients/{id}</code> → 200",
+          "detail": "PUT replaces all editable fields while preserving provenance; nullable fields must be explicitly supplied. Returns 200 or 404.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/routers/patients.py",
+            "backend/app/schemas/patients.py",
+            "backend/tests/test_patients.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "a-delete",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.1",
+          "title": "<code>DELETE /patients/{id}</code> → 204",
+          "detail": "DELETE patient returns 204 and cascades patient-owned records; missing patient returns 404.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/routers/patients.py",
+            "backend/app/models.py",
+            "backend/tests/test_patients.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "a-errors",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2 Req",
+          "title": "Global exception handlers with proper status codes",
+          "detail": "Public errors use error/code/message/fields with safe field paths: validation 422, missing 404, conflict 409 and generic 500. Server logs redact sensitive exception details.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/errors.py",
+            "backend/app/utils/logging.py",
+            "backend/tests/test_errors.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "a-docs",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · API design",
+          "title": "Polish the OpenAPI docs at <code>/docs</code>",
+          "detail": "Opus pass 03 accepts ErrorResponse declarations and exact failure status sets for all 23 operations, supported by schema regressions and the recorded TCP OpenAPI snapshot.",
+          "status": "verified",
+          "scope": "backend 34e2150b OpenAPI",
+          "evidence": [
+            "backend/docs/API_CONTRACT.md",
+            "backend/app/routers/notes.py"
+          ],
+          "basis": "Written Opus 5.5 UltraCode pass-03 CLOSED_IN_STATED_SCOPE decision; not a blanket integrated release pass.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "OpenAPI error-contract correction",
+              "detail": "The implemented API is documented, but Opus found generated error models/status declarations disagree with runtime envelopes on non-patient routes (OPR-004). Backend correction and schema regressions are in flight.",
+              "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "a-smoke",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · correctness",
+          "title": "Exercise every endpoint by hand",
+          "detail": "Every endpoint is exercised by the 301 backend tests and through the browser in the clean-room live run.",
+          "status": "verified",
+          "scope": "backend tests and clean-room live run",
+          "evidence": [
+            "reference/project.md"
+          ],
+          "basis": "Reconciled written pass-03 decisions and subsequent owner handoffs; no unreviewed result promoted to final acceptance.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "real API matrix passed; additional QA pending",
+              "detail": "Opus pass 02 candidate pending: Rerun or explicit carry-forward decision against the stable post-OPR-003/004 backend; FAULT-009 host-clock wording decision. Archived PRE-OPR source only. No current-backend claim. LONG-002 stays NOT_RUN with no invented load/SLO gate",
+              "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fe-foundation",
+      "title": "Frontend foundation",
+      "description": "Part 1 · frontend tasks.",
+      "items": [
+        {
+          "id": "f-vite",
+          "tag": "req",
+          "part": "P1",
+          "reference": "P1 FE-1",
+          "title": "Scaffold the app with Vite (<code>react-ts</code> template)",
+          "detail": "Vite React/TypeScript application, package scripts and locked dependencies are implemented.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/package.json",
+            "frontend/src/main.tsx",
+            "frontend/vite.config.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "f-ts",
+          "tag": "req",
+          "part": "P1",
+          "reference": "P1 FE-3",
+          "title": "TypeScript configuration",
+          "detail": "Strict TypeScript/noUncheckedIndexedAccess and @ alias are configured; baseline typecheck/build passed.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/tsconfig.app.json",
+            "frontend/vite.config.ts",
+            "frontend/README.md"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "f-lint",
+          "tag": "req",
+          "part": "P1",
+          "reference": "P1 FE-3",
+          "title": "Linting and formatting",
+          "detail": "ESLint flat config, Prettier and scripts exist; baseline checks passed. Current integration edits need their final rerun.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/eslint.config.js",
+            "frontend/package.json",
+            "frontend/README.md"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "f-ui",
+          "tag": "req",
+          "part": "P1",
+          "reference": "P1 FE-2",
+          "title": "Install and configure the UI library and styling approach",
+          "detail": "Themed shadcn/Radix primitives, Tailwind tokens and shared feedback components replace the earlier Mantine proposal.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/components/ui/",
+            "frontend/src/styles/globals.css"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "f-router",
+          "tag": "req",
+          "part": "P1",
+          "reference": "P1 FE-2",
+          "title": "Install and configure routing",
+          "detail": "TanStack Router defines a typed code-based route tree with validation, lazy page modules and shared boundaries.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/app/router.tsx",
+            "frontend/src/features/patient-list/search-params.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "f-query",
+          "tag": "req",
+          "part": "P1",
+          "reference": "P1 FE-2",
+          "title": "Install and configure state management",
+          "detail": "TanStack Query owns server results with 30-second freshness and retry policy; Zustand owns UI preferences and return snapshots; Router owns URL state and Form owns drafts.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/app/query-client.ts",
+            "frontend/src/app/ui-store.ts",
+            "frontend/src/app/query-keys.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "f-api",
+          "tag": "rec",
+          "part": "P4",
+          "reference": "P4.3",
+          "title": "Build a typed API client layer",
+          "detail": "Closed by the written Opus pass-02 decision in the recorded candidate scope. OPR-005 (no runtime validation / contract-drift check) remains a Low advisory This does not approve later source edits, the default demo setup or final visual readiness.",
+          "status": "verified",
+          "scope": "Opus-approved compiled LIVE candidate-03",
+          "evidence": [
+            "frontend/src/api/client.ts",
+            "frontend/src/api/dto.ts",
+            "frontend/src/api/constraints.ts",
+            "frontend/e2e-api/"
+          ],
+          "basis": "Opus pass 02; compiled LIVE candidate-03 at the recorded run, against a shared backend without immutable start identity. Later working-tree fixes and the default/shared setup are outside this closure.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "backend wire alignment",
+              "basis": "Inspected current source/configuration; no new execution in this audit.",
+              "before": "2026-11-20 18:57 UTC"
+            }
+          ]
+        },
+        {
+          "id": "f-proxy",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · local setup",
+          "title": "Vite dev proxy to the backend",
+          "detail": "Vite forwards same-origin /api to backend and strips the prefix; nginx provides the compiled equivalent.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            "frontend/vite.config.ts",
+            "infra/nginx/default.conf"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        }
+      ]
+    },
+    {
+      "id": "layout",
+      "title": "Layout & routing",
+      "description": "Part 2 · tasks 2 and 4.",
+      "items": [
+        {
+          "id": "l-shell",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.2",
+          "title": "App layout: header with navigation, sidebar, main content area",
+          "detail": "Header, sidebar, main content, skip link, actor selection and mobile navigation are composed in AppShell.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/app/AppShell.tsx",
+            "frontend/e2e/directory.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "l-resp",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2 Req",
+          "title": "Responsive at lower resolutions",
+          "detail": "Verified 20 Nov at 390px: no horizontal overflow, compact cards, unclipped pagination, and all detail tabs visible.",
+          "status": "verified",
+          "scope": "api-mode app at 1440px and 390px",
+          "evidence": [
+            "frontend/e2e/directory.spec.ts",
+            "frontend/e2e/clinical-workspace.spec.ts",
+            "reference/chatroom/frontend-updates.md",
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Frontend owner reported a 3-pass/13-fail initial staged compiled live run and identified modal positioning as the main confirmed product blocker.",
+          "verification_history": [
+            {
+              "status": "verified",
+              "scope": "demo ui and http fixture baseline",
+              "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration.",
+              "recorded_before": "2026-11-20 17:53 UTC"
+            }
+          ]
+        },
+        {
+          "id": "l-routes",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.4",
+          "title": "Routes: <code>/</code> · <code>/patients</code> · <code>/patients/:id</code> · catch-all 404",
+          "detail": "Home/list/patient-detail/catch-all routes exist, with new/edit/notifications/note-detail extensions.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/app/router.tsx",
+            "frontend/src/app/router-workspace.test.tsx"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "l-form-routes",
+          "tag": "rec",
+          "part": "P4",
+          "reference": "P4",
+          "title": "Form routes: <code>/patients/new</code> and <code>/patients/:id/edit</code>",
+          "detail": "New/edit routes share the form and session identity rules.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/routes/patient-workspace.tsx",
+            "frontend/src/features/patient-form/PatientFormPage.tsx"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "l-404",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.4",
+          "title": "404 page",
+          "detail": "Unknown routes have a not-found page; missing patient responses have distinct detail error states.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/routes/not-found.tsx",
+            "frontend/src/features/patient-detail/PatientWorkspace.tsx",
+            "frontend/e2e-api/http-workspace.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "l-home",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.4",
+          "title": "Dashboard home at <code>/</code>",
+          "detail": "Overview shows dataset totals/recent visits and navigation shortcuts; live backend mapping remains part of integration.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/routes/home.tsx",
+            "frontend/e2e/directory.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "l-boundary",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · error handling",
+          "title": "Route-level error boundary with a retry",
+          "detail": "Shared route error boundary provides recovery; feature reads also expose error/retry states.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/routes/route-error.tsx",
+            "frontend/src/app/router.tsx"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "l-polish",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · code quality",
+          "title": "Active nav highlighting and a page title per route",
+          "detail": "Navigation highlights current destination and titles change with route; baseline navigation/browser checks cover behavior.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/app/AppShell.tsx",
+            "frontend/e2e/directory.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "l-lazy",
+          "tag": "stretch",
+          "part": "X",
+          "reference": "Stretch · Performance",
+          "title": "Lazy-load routes with TanStack Router",
+          "detail": "lazyRouteComponent uses dynamic imports for page modules; shared root pending/error handling remains eager.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/app/router.tsx"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        }
+      ]
+    },
+    {
+      "id": "list",
+      "title": "Patient list",
+      "description": "Part 2 · task 3. The most heavily specified screen.",
+      "items": [
+        {
+          "id": "pl-cols",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.3",
+          "title": "Rows or cards show name, age, last visit and status",
+          "detail": "Rows/cards display name, derived age, last visit and patient status plus selected notes/conversation/condition columns.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-list/PatientResults.tsx",
+            "frontend/src/features/patient-list/PatientIdentity.tsx"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "pl-search",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.3 · P2 Req",
+          "title": "Search that never blocks typing",
+          "detail": "Local input updates immediately; a 250 ms debounce commits URL search and cancellation avoids obsolete results. No useDeferredValue claim is needed.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-list/PatientFilters.tsx",
+            "frontend/src/features/patient-list/queries.ts",
+            "frontend/src/features/patient-list/PatientFilters.test.tsx"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "pl-filter",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.3",
+          "title": "Filter by status",
+          "detail": "Status controls update URL-backed search and reset pagination; backend filters the complete dataset.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-list/PatientFilters.tsx",
+            "frontend/src/features/patient-list/search-params.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "pl-sort",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.3",
+          "title": "Sort by name, age and last visit, both directions",
+          "detail": "Header/mobile controls drive API ordering; age direction maps to inverse DOB ordering and aria-sort is exposed.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-list/PatientResults.tsx",
+            "frontend/src/features/patient-list/search-params.ts",
+            "frontend/src/features/patient-list/search-params.test.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "pl-page",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.3",
+          "title": "Pagination",
+          "detail": "Page/page-size/count controls, reset after filter changes and clamp after deletion are implemented.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-list/PatientPagination.tsx",
+            "frontend/src/features/patient-list/PatientListScreen.tsx",
+            "frontend/e2e/directory.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "pl-url",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · state management",
+          "title": "Keep search, filter, sort and page in the URL",
+          "detail": "Validated URL state retains search/filter/sort/page through navigation and refresh; per-view return memory is separated by actor.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-list/search-params.ts",
+            "frontend/src/app/view-state.ts",
+            "frontend/e2e/directory.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "pl-states",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · error handling",
+          "title": "Loading skeleton, empty state, and error state with retry",
+          "detail": "Loading, prior-results refresh, empty/no-match/caught-up and error/retry states are implemented.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-list/PatientListScreen.tsx",
+            "frontend/src/features/patient-list/PatientListScreen.test.tsx"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "pl-mobile",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2 Req",
+          "title": "Responsive list",
+          "detail": "Narrow screens render patient cards using the same result window and controls.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-list/PatientResults.tsx",
+            "frontend/e2e/directory.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "pl-click",
+          "tag": "rec",
+          "part": "P2",
+          "reference": "P2.4",
+          "title": "Clicking a patient opens <code>/patients/:id</code>",
+          "detail": "Whole-row and mobile-card opening is implemented through the existing overview link. Notes and Conversation retain their own actions. Eight focused interaction tests passed; integrated live acceptance remains separate.",
+          "status": "verified",
+          "scope": "focused component interaction tests",
+          "evidence": [
+            "frontend/src/features/patient-list/PatientResults.tsx",
+            "frontend/src/features/patient-list/PatientResults.test.tsx",
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Frontend owner reported eight focused row tests passing during current integration."
+        },
+        {
+          "id": "pl-100",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2 Req",
+          "title": "Prove it with 100+ patients",
+          "detail": "Baseline demo tests cover 100-row pages and creation of a 101st patient; backend prepares 100 seeded patients. Real combined-stack performance remains unmeasured.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/e2e/directory.spec.ts",
+            "frontend/e2e/patient-write.spec.ts",
+            "backend/tests/test_patients.py"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "pl-virtual",
+          "tag": "stretch",
+          "part": "X",
+          "reference": "Stretch · Performance",
+          "title": "Virtualized rows and memoized column definitions",
+          "detail": "TanStack Virtual bounds mounted rows with stable IDs, overscan and spacers; Table uses server-driven paging/sorting. Columns use useMemo; no blanket React.memo or benchmark claim.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-list/PatientResults.tsx",
+            "frontend/src/features/patient-list/PatientResults.test.tsx"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        }
+      ]
+    },
+    {
+      "id": "detail",
+      "title": "Patient detail",
+      "description": "The /patients/:id view that notes and summary attach to.",
+      "items": [
+        {
+          "id": "pd-view",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2.4",
+          "title": "Detail page at <code>/patients/:id</code> shows the full profile",
+          "detail": "Closed by the written Opus pass-02 decision in the recorded candidate scope. The reason for reopening (compiled modal off-viewport) is resolved live. Clipped Discussion tab F4 is owned by l-resp. A3 duplication is a visual-gate item This does not approve later source edits, the default demo setup or final visual readiness.",
+          "status": "verified",
+          "scope": "Opus-approved compiled LIVE candidate-03",
+          "evidence": [
+            "frontend/src/features/patient-detail/PatientWorkspace.tsx",
+            "frontend/src/features/patient-detail/ProfilePanel.tsx",
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Opus pass 02; compiled LIVE candidate-03 at the recorded run, against a shared backend without immutable start identity. Later working-tree fixes and the default/shared setup are outside this closure.",
+          "verification_history": [
+            {
+              "status": "verified",
+              "scope": "demo ui and http fixture baseline",
+              "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration.",
+              "recorded_before": "2026-11-20 17:53 UTC"
+            },
+            {
+              "status": "in_progress",
+              "scope": "compiled patient-workspace acceptance",
+              "basis": "Frontend owner reported a 3-pass/13-fail initial staged compiled live run and identified modal positioning as the main confirmed product blocker.",
+              "before": "2026-11-20 18:57 UTC"
+            }
+          ]
+        },
+        {
+          "id": "pd-404",
+          "tag": "req",
+          "part": "P2",
+          "reference": "P2 Req",
+          "title": "A missing or deleted patient shows a not-found state, not a crash",
+          "detail": "Missing/deleted/denied detail invalidates terminal cache data and shows explicit errors instead of stale record resurrection.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/app/patient-query.ts",
+            "frontend/src/app/patient-query.test.ts",
+            "frontend/src/features/patient-detail/PatientWorkspace.tsx"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "pd-actions",
+          "tag": "rec",
+          "part": "P2",
+          "reference": "P2.1",
+          "title": "Edit and Delete actions",
+          "detail": "Edit/delete actions and confirmation are implemented; mutations refresh caches and return navigation.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-detail/ProfilePanel.tsx",
+            "frontend/src/features/patient-detail/ConfirmDelete.tsx",
+            "frontend/e2e/patient-write.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        }
+      ]
+    },
+    {
+      "id": "notes",
+      "title": "Clinical notes",
+      "description": "Part 3 · backend task 1 and frontend task 1.",
+      "items": [
+        {
+          "id": "n-migr",
+          "tag": "req",
+          "part": "P3",
+          "reference": "P3 BE-1",
+          "title": "Create notes in the reviewed application migration",
+          "detail": "The initial reviewed migration creates notes with patient/author relationships, indexes and tombstone consistency constraints. A separate second migration was not needed for initial schema creation.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/alembic/versions/20261120_0001_initial_schema.py",
+            "backend/app/models.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "n-post",
+          "tag": "req",
+          "part": "P3",
+          "reference": "P3 BE-1",
+          "title": "<code>POST /patients/{id}/notes</code> accepts timestamp and text → 201",
+          "detail": "POST accepts timezone-aware timestamp/content and optional title, rejects future clinical times and returns 201; authored writes require a valid demo actor.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/routers/notes.py",
+            "backend/app/schemas/notes.py",
+            "backend/tests/test_notes.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "n-get",
+          "tag": "req",
+          "part": "P3",
+          "reference": "P3 BE-1",
+          "title": "<code>GET /patients/{id}/notes</code> lists all notes",
+          "detail": "GET returns active clinical notes newest timestamp first and 404 for a missing patient.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/routers/notes.py",
+            "backend/app/services/notes.py",
+            "backend/tests/test_notes.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "n-del",
+          "tag": "req",
+          "part": "P3",
+          "reference": "P3 BE-1",
+          "title": "<code>DELETE /patients/{id}/notes/{note_id}</code> → 204",
+          "detail": "Author deletion returns 204 and retains a content-free tombstone for existing comment links. Cross-patient/missing notes return 404; direct deleted-note GET returns 410.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/services/notes.py",
+            "backend/tests/test_notes.py",
+            "backend/docs/API_CONTRACT.md"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "n-list",
+          "tag": "req",
+          "part": "P3",
+          "reference": "P3 FE-1",
+          "title": "Notes section on the detail page, with timestamps",
+          "detail": "Notes panel renders timestamps and author information separately from discussion.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-detail/NotesPanel.tsx",
+            "frontend/src/features/patient-detail/notes.test.tsx",
+            "frontend/e2e/clinical-workspace.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "n-form",
+          "tag": "req",
+          "part": "P3",
+          "reference": "P3 FE-1",
+          "title": "Form to add a note",
+          "detail": "Reusable note form collects timestamp/content, validates and disables pending submission; fixture-mode behavior is covered.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-detail/NoteForm.tsx",
+            "frontend/src/features/patient-detail/notes.test.tsx",
+            "frontend/e2e-api/http-workspace.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "n-delete-ui",
+          "tag": "req",
+          "part": "P3",
+          "reference": "P3 FE-1",
+          "title": "Delete a note from the UI",
+          "detail": "Confirmation and note/summary/activity invalidation are implemented; persistent integrated UI acceptance remains pending.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-detail/NoteView.tsx",
+            "frontend/src/features/patient-detail/queries.ts",
+            "frontend/e2e/clinical-workspace.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        }
+      ]
+    },
+    {
+      "id": "summary",
+      "title": "Patient summary",
+      "description": "Part 3 · backend task 2 and frontend task 2.",
+      "items": [
+        {
+          "id": "sm-ep",
+          "tag": "req",
+          "part": "P3",
+          "reference": "P3 BE-2",
+          "title": "<code>GET /patients/{id}/summary</code>",
+          "detail": "GET summary returns patient_id/summary/generated_at/method with required identifiers and current clinical information; a missing patient returns 404.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/routers/summaries.py",
+            "backend/tests/test_summary.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "sm-tpl",
+          "tag": "req",
+          "part": "P3",
+          "reference": "P3 BE-2",
+          "title": "Template-based summarizer",
+          "detail": "Deterministic narrative uses current profile and active notes, handles unknown/no-note states, excludes comments and deleted notes, and needs no external key.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/services/summaries.py",
+            "backend/tests/test_summary.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "sm-llm",
+          "tag": "stretch",
+          "part": "X",
+          "reference": "P3 hint",
+          "title": "Optional LLM summarizer behind the same interface",
+          "detail": "External LLM summarization is not implemented; the allowed template approach is selected.",
+          "status": "not_selected",
+          "scope": "optional",
+          "evidence": [
+            "backend/app/services/summaries.py"
+          ],
+          "basis": "Inspected current source/configuration; no new execution in this audit."
+        },
+        {
+          "id": "sm-ui",
+          "tag": "req",
+          "part": "P3",
+          "reference": "P3 FE-2",
+          "title": "Summary view in the UI",
+          "detail": "SummaryPanel reads the summary query and handles loading/error/retry; note mutations invalidate its key.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-detail/SummaryPanel.tsx",
+            "frontend/src/features/patient-detail/queries.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        }
+      ]
+    },
+    {
+      "id": "form",
+      "title": "Patient form",
+      "description": "Part 4 · create and edit with real validation.",
+      "items": [
+        {
+          "id": "pf-zod",
+          "tag": "req",
+          "part": "P4",
+          "reference": "P4.2",
+          "title": "Zod schema that mirrors the server rules",
+          "detail": "Client rules show field messages before saving. The server mirrors the rules and its 422s map onto fields (browser HTTP suite 11/11).",
+          "status": "verified",
+          "scope": "api-mode app and browser http suite",
+          "evidence": [
+            "frontend/src/features/patient-form/schema.ts",
+            "frontend/src/api/constraints.ts",
+            "backend/app/schemas/patients.py"
+          ],
+          "basis": "Reconciled written pass-03 decisions and subsequent owner handoffs; no unreviewed result promoted to final acceptance.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "focused validation checks; final integration pending",
+              "detail": "Opus pass 02 keeps this open: OPR-003; QA-LEAD-001.  Later fixes need their own candidate verification.",
+              "basis": "Inspected current source/configuration; no new execution in this audit.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "pf-personal",
+          "tag": "req",
+          "part": "P4",
+          "reference": "P4.1",
+          "title": "Personal information: name, DOB, contact (phone, email), address",
+          "detail": "Shared personal/contact field components collect name,DOB,phone,email and address.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-form/PersonalFields.tsx",
+            "frontend/src/features/patient-form/ContactFields.tsx"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "pf-medical",
+          "tag": "req",
+          "part": "P4",
+          "reference": "P4.1",
+          "title": "Medical information: allergies, conditions, blood type, status",
+          "detail": "Allergies, conditions, blood type and status edit and save. The allergy-row validation bug found on 20 Nov is fixed, and the desktop and mobile patient-write journeys pass.",
+          "status": "verified",
+          "scope": "frontend browser suites",
+          "evidence": [
+            "frontend/src/features/patient-form/MedicalFields.tsx",
+            "frontend/src/features/patient-form/AllergiesEditor.tsx"
+          ],
+          "basis": "Reconciled written pass-03 decisions and subsequent owner handoffs; no unreviewed result promoted to final acceptance.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "medical form control QA",
+              "detail": "Opus pass 02 keeps this open: QA-LEAD-001.  Later fixes need their own candidate verification.",
+              "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "pf-modes",
+          "tag": "req",
+          "part": "P4",
+          "reference": "P4",
+          "title": "One form for both create and edit",
+          "detail": "Create/edit share PatientForm with a keyed patient/actor session and initialized draft that survives recoverable refetch failures.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-form/PatientForm.tsx",
+            "frontend/src/features/patient-form/PatientFormPage.tsx"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "pf-client",
+          "tag": "req",
+          "part": "P4",
+          "reference": "P4.2",
+          "title": "Inline client-side error messages",
+          "detail": "Compiled-DEMO client validation and form recovery accepted by Opus pass 03: 24 browser checks and 42 form units. Later candidates must match the approved form-file hashes; integrated server feedback remains tracked separately.",
+          "status": "verified",
+          "scope": "Opus-accepted compiled DEMO form snapshot",
+          "evidence": [
+            "frontend/src/features/patient-form/use-patient-form.ts",
+            "frontend/src/features/patient-form/PatientInput.tsx",
+            "frontend/src/features/patient-form/schema.test.ts"
+          ],
+          "basis": "Written Opus 5.5 UltraCode pass-03 CLOSED_IN_STATED_SCOPE decision; not a blanket integrated release pass.",
+          "verification_history": [
+            {
+              "status": "verified",
+              "scope": "demo ui and http fixture baseline",
+              "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration.",
+              "before": "2026-11-20 18:57 UTC"
+            },
+            {
+              "status": "in_progress",
+              "scope": "demo ui and http fixture baseline",
+              "detail": "Opus pass 02 keeps this open: QA-LEAD-001; F1. Blur feedback flags untouched fields, and invalid-submit feedback is not brought into view or focused. Later fixes need their own candidate verification.",
+              "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "pf-server",
+          "tag": "req",
+          "part": "P4",
+          "reference": "P4.2 · P4.3",
+          "title": "Show server 422 errors on the matching fields",
+          "detail": "Server 422 messages appear beside the matching fields (browser HTTP suite 11/11, 301 backend tests).",
+          "status": "verified",
+          "scope": "browser http suite and backend tests",
+          "evidence": [
+            "backend/app/errors.py",
+            "frontend/src/api/client.ts"
+          ],
+          "basis": "Reconciled written pass-03 decisions and subsequent owner handoffs; no unreviewed result promoted to final acceptance.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "meaningful server validation feedback",
+              "detail": "Opus pass 02 keeps this open: OPR-003. The custom-validator message and allergy path from the server do not reach a matching field. Later fixes need their own candidate verification.",
+              "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "pf-net",
+          "tag": "req",
+          "part": "P4",
+          "reference": "P4.3",
+          "title": "Handle network failures on submit",
+          "detail": "Failed writes preserve the draft and show retry/recovery; mutation retries are explicit rather than automatic.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-form/use-patient-form.ts",
+            "frontend/src/features/patient-form/PatientFormPage.test.tsx",
+            "frontend/e2e-api/http-workspace.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "pf-submit",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · UX",
+          "title": "Submit flow",
+          "detail": "Pending form controls prevent duplicate submission; successful saves refresh related query caches and navigate only while mounted.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-form/PatientForm.tsx",
+            "frontend/src/features/patient-form/PatientFormPage.tsx",
+            "frontend/e2e/patient-write.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        }
+      ]
+    },
+    {
+      "id": "errors",
+      "title": "Error handling & polish",
+      "description": "Part 4 · task 3, plus what the evaluation criteria look for.",
+      "items": [
+        {
+          "id": "e-global",
+          "tag": "req",
+          "part": "P4",
+          "reference": "P4.3",
+          "title": "App-wide network failure handling",
+          "detail": "Feature query errors expose retry; field/form errors retain useful feedback and arbitrary server failures become safe messages.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/api/client.ts",
+            "frontend/src/components/shared/InlineError.tsx",
+            "frontend/e2e-api/http-workspace.spec.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "e-retry",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · error handling",
+          "title": "Retry policy",
+          "detail": "Read policy excludes 4xx and abort errors and bounds retries; writes are never automatically retried.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/app/query-client.ts",
+            "frontend/src/api/client.test.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "e-a11y",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · best practices",
+          "title": "Accessibility basics",
+          "detail": "Skip link, labelled fields with inline errors and an error summary, keyboard row navigation, focus restoration, and a persistent marker on the active navigation item (accessibility review P1 item AST-001) are in place.",
+          "status": "verified",
+          "scope": "api-mode app and source review",
+          "evidence": [
+            "frontend/src/components/ui/",
+            "frontend/e2e/"
+          ],
+          "basis": "Reconciled written pass-03 decisions and subsequent owner handoffs; no unreviewed result promoted to final acceptance.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "comprehensive ui qa",
+              "detail": "Opus pass 02 keeps this open: F1; NAV-QA-002; QA-LEAD-003; AST-001.  Later fixes need their own candidate verification.",
+              "basis": "Inspected current source/configuration; no new execution in this audit.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "e-console",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · code quality",
+          "title": "A clean browser console: no errors or warnings",
+          "detail": "Baseline mock and React browser checks reported no runtime JavaScript errors; this is not a claim about every current integration run.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "reference/chatroom/frontend-updates.md",
+            "frontend/e2e/"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        }
+      ]
+    },
+    {
+      "id": "docker",
+      "title": "Containerization",
+      "description": "Part 5 · one command to run everything.",
+      "items": [
+        {
+          "id": "c-be",
+          "tag": "req",
+          "part": "P5",
+          "reference": "P5.1",
+          "title": "Backend image at infra/docker/backend.Dockerfile",
+          "detail": "The infra-owned backend Dockerfile uses locked dependencies, a nonroot runtime and reproducible DuckDB generation; startup applies migration then seed before API.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            "infra/docker/backend.Dockerfile",
+            "infra/scripts/entrypoint.py"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "c-fe",
+          "tag": "req",
+          "part": "P5",
+          "reference": "P5.2",
+          "title": "Frontend image at infra/docker/frontend.Dockerfile",
+          "detail": "The infra-owned multi-stage frontend image builds with Node/Vite and serves compiled assets through nonroot nginx.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            "infra/docker/frontend.Dockerfile"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "c-nginx",
+          "tag": "req",
+          "part": "P5",
+          "reference": "P5.2 · P2.4",
+          "title": "nginx config: SPA fallback and API proxy",
+          "detail": "SPA deep-link fallback, API-prefix stripping, JSON error preservation and static-asset 404s were verified in compiled-stack checks.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            "infra/nginx/default.conf",
+            "infra/scripts/verify_stack.py"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "c-compose",
+          "tag": "req",
+          "part": "P5",
+          "reference": "P5.3",
+          "title": "<code>docker-compose.yml</code> starts the backend API, PostgreSQL and the frontend",
+          "detail": "Root Compose includes infra definitions for frontend, FastAPI and PostgreSQL. The frontend now builds in API mode by default, and the backend migrates and seeds on startup; demo data is opt-in.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            "docker-compose.yml",
+            "infra/compose.yml"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "c-health",
+          "tag": "rec",
+          "part": "P5",
+          "reference": "P5.3",
+          "title": "Healthchecks and startup order",
+          "detail": "PostgreSQL pg_isready gates backend; /ready connectivity gates frontend. /health is exact liveness and does not independently prove seeded business flows.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            "infra/compose.yml",
+            "backend/app/routers/health.py"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "c-vol",
+          "tag": "rec",
+          "part": "P5",
+          "reference": "P5.3",
+          "title": "Named volume for Postgres data",
+          "detail": "A named PostgreSQL volume persists across container recreation; the isolated verifier checks data survives and seeding does not restore deleted records.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            "infra/compose.yml",
+            "infra/scripts/verify_stack.py"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "c-env",
+          "tag": "req",
+          "part": "P5",
+          "reference": "P5.4",
+          "title": "<code>.env.example</code> with every required variable",
+          "detail": "Root .env.example lists actual Compose/runtime and public Vite settings. Sample migration/seed flags are true; an existing .env is retained. No unimplemented SEED_EXTRA_PATIENTS setting or mandatory LLM key is claimed.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            ".env.example",
+            "setup.sh",
+            "infra/scripts/entrypoint.py"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "c-clean",
+          "tag": "req",
+          "part": "SUB",
+          "reference": "Submission",
+          "title": "Clean-room test",
+          "detail": "Verified 20 Nov: fresh isolated Compose project with no .env; build, API-mode frontend, automatic migrate and seed, HTTP/proxy/restart/persistence checks and live browser journeys pass.",
+          "status": "verified",
+          "scope": "clean-room isolated compose project",
+          "evidence": [
+            "infra/scripts/verify_stack.py",
+            "frontend/e2e-live/",
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "c-hot",
+          "tag": "stretch",
+          "part": "X",
+          "reference": "Stretch · DX",
+          "title": "Hot reload in Docker for frontend and backend",
+          "detail": "Development Compose mounts source for Vite and Uvicorn reload. Infra recorded a real HMR websocket update and Python-worker restart after edits.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            "infra/compose.dev.yml",
+            "infra/README.md",
+            "infra/docs/checklist.md"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        }
+      ]
+    },
+    {
+      "id": "stretch",
+      "title": "Stretch goals and selected extensions",
+      "description": "The brief suggests one or two; this project selected more. Optional items that were not selected remain clearly labelled.",
+      "items": [
+        {
+          "id": "x-alembic",
+          "tag": "stretch",
+          "part": "X",
+          "reference": "Stretch · Advanced Backend",
+          "title": "<span class=\"star\">★</span> Database migrations with Alembic",
+          "detail": "Reviewed Alembic revisions and real PostgreSQL migration round-trip/schema-agreement tests are implemented and reported passing.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/alembic/versions/20261120_0001_initial_schema.py",
+            "backend/tests/test_migrations.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "x-tests",
+          "tag": "stretch",
+          "part": "X",
+          "reference": "Stretch · Testing",
+          "title": "<span class=\"star\">★</span> Unit tests for the API endpoints",
+          "detail": "Pytest covers API responses, validation, database constraints, ownership, notes/summaries, imports and unread concurrency on disposable PostgreSQL. The current backend handoff reports 196 tests passed.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/tests/",
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "x-log",
+          "tag": "stretch",
+          "part": "X",
+          "reference": "Stretch · Advanced Backend",
+          "title": "Request logging middleware",
+          "detail": "Exception redaction and disabled raw access logs exist; structured request-ID/duration logging middleware is not implemented.",
+          "status": "not_selected",
+          "scope": "optional",
+          "evidence": [
+            "backend/app/utils/logging.py",
+            "infra/scripts/entrypoint.py"
+          ],
+          "basis": "Inspected current source/configuration; no new execution in this audit."
+        },
+        {
+          "id": "x-theme",
+          "tag": "stretch",
+          "part": "X",
+          "reference": "Stretch · UI/UX",
+          "title": "Dark/light theme switching",
+          "detail": "Dark and light themes switch from the sidebar Theme control. Theme provider and control unit tests pass.",
+          "status": "verified",
+          "scope": "api-mode app and unit tests",
+          "evidence": [
+            "frontend/src/styles/globals.css",
+            "frontend/src/app/ui-store.ts",
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Frontend owner reported a dedicated Sol 6.1 Ultra implementation worker started for this new requirement."
+        },
+        {
+          "id": "x-adv-search",
+          "tag": "stretch",
+          "part": "X",
+          "reference": "Stretch · UI/UX",
+          "title": "Advanced search with filters",
+          "detail": "Basic search/status/unread filters are implemented; blood-type, condition, age-range and visit-range filters are not selected.",
+          "status": "not_selected",
+          "scope": "optional",
+          "evidence": [
+            "backend/app/schemas/patients.py",
+            "frontend/src/features/patient-list/PatientFilters.tsx"
+          ],
+          "basis": "Inspected current source/configuration; no new execution in this audit."
+        },
+        {
+          "id": "x-chart",
+          "tag": "stretch",
+          "part": "X",
+          "reference": "Stretch · UI/UX",
+          "title": "Patient status chart on the dashboard",
+          "detail": "Verified 20 Nov: the patient status chart and three other overview charts render from each user's assigned patients.",
+          "status": "verified",
+          "scope": "api-mode app, real data",
+          "evidence": [
+            "reference/chatroom/integration-coordination.md",
+            "frontend/src/routes/home.tsx"
+          ],
+          "basis": "Reconciled written pass-03 decisions and subsequent owner handoffs; no unreviewed result promoted to final acceptance.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "selected overview charts",
+              "detail": "Opus pass 02 keeps this open: C1; AST-002; QA-LEAD-006 (clarification). There is no rendered evidence for the current chart source (candidate overview files postdate r2), and all 7 UI-CHART IDs are supporting-only. Later fixes need their own candidate verification.",
+              "basis": "Frontend owner proposed four charts under the latest user request; project manager confirmed scope and acceptance requirements.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "x-comp",
+          "tag": "stretch",
+          "part": "X",
+          "reference": "Stretch · Testing",
+          "title": "Component tests for PatientList and PatientForm",
+          "detail": "Vitest/Testing Library covers list/form/detail components, API adapters, utilities and state behavior. Historical baseline: 168 passed. Current integration discussion tests need reruns/fixes.",
+          "status": "verified",
+          "scope": "demo ui and http fixture baseline",
+          "evidence": [
+            "frontend/src/features/patient-list/PatientResults.test.tsx",
+            "frontend/src/features/patient-form/PatientFormPage.test.tsx",
+            "frontend/src/features/patient-detail/discussion.test.tsx"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "x-e2e",
+          "tag": "stretch",
+          "part": "X",
+          "reference": "Stretch · Testing",
+          "title": "E2E test of the main user journey",
+          "detail": "Closed by the written Opus pass-02 decision in the recorded candidate scope. Stretch item; frontend candidate only; backend identity unbound This does not approve later source edits, the default demo setup or final visual readiness.",
+          "status": "verified",
+          "scope": "Opus-approved compiled LIVE candidate-03",
+          "evidence": [
+            "frontend/e2e-live/"
+          ],
+          "basis": "Opus pass 02; compiled LIVE candidate-03 at the recorded run, against a shared backend without immutable start identity. Later working-tree fixes and the default/shared setup are outside this closure.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "current browser qa and live integration",
+              "basis": "Read current QA JSON summaries; historical owner reports are retained separately.",
+              "before": "2026-11-20 18:57 UTC"
+            }
+          ]
+        },
+        {
+          "id": "x-ci",
+          "tag": "stretch",
+          "part": "X",
+          "reference": "Stretch · DX",
+          "title": "CI pipeline config",
+          "detail": "GitHub Actions on PR/default-branch changes runs quality checks, real PostgreSQL tests, Docker builds/seeded restart verification and separately labelled demo/HTTP-fixture browser tests. Published-baseline CI passed; the new live-browser lane awaits frontend.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            ".github/workflows/ci.yml",
+            "infra/scripts/checks.sh",
+            "infra/scripts/verify_stack.py"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        }
+      ]
+    },
+    {
+      "id": "qa",
+      "title": "Final application quality",
+      "description": "Historical scoped passes do not close current integration and detailed QA checks.",
+      "items": [
+        {
+          "id": "q-spec",
+          "tag": "req",
+          "part": "EVAL",
+          "reference": "Eval · requirements",
+          "title": "Walk <code>project.md</code> line by line against the running app",
+          "detail": "Walked the assessment on 20 Nov against the running API-mode app at 1440px and 390px: routes, list fields, search, filter, sort, pagination, notes, summary, form validation and 404. The clean-room Docker run and QA's live HTTP matrix (317/317 cases, plus 32/32 assignment and 16/16 seed-rerun checks) also pass.",
+          "status": "verified",
+          "scope": "api-mode app, clean-room run, live api matrix",
+          "evidence": [
+            "reference/project.md",
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Inspected current source/configuration; no new execution in this audit."
+        },
+        {
+          "id": "q-lint",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · code quality",
+          "title": "Lint, format and typecheck pass on both sides",
+          "detail": "Verified 20 Nov: backend and data Ruff, format and strict mypy pass in an isolated checks container. Frontend ESLint, Prettier and strict TypeScript pass.",
+          "status": "verified",
+          "scope": "isolated checks image and frontend tree",
+          "evidence": [
+            ".github/workflows/ci.yml",
+            "frontend/package.json",
+            "backend/pyproject.toml"
+          ],
+          "basis": "Reconciled written pass-03 decisions and subsequent owner handoffs; no unreviewed result promoted to final acceptance.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "current tree quality",
+              "detail": "Published-baseline quality checks were green and the current backend handoff passes. The actively changing frontend/infra integration needs a combined rerun.",
+              "basis": "Inspected current source/configuration; no new execution in this audit.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "q-tests",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · code quality",
+          "title": "All tests pass",
+          "detail": "20 Nov, final tree. Backend 301 and data 160 tests pass, with Ruff, format and strict mypy clean, in an isolated checks container. Frontend: 351 unit/component tests, 117 demo-browser tests and 11/11 HTTP-adapter browser tests pass, with ESLint, Prettier and strict TypeScript clean. The clean-room live browser journeys pass on real PostgreSQL. QA's live API matrix is 317/317, with 32/32 assignment and 16/16 seed-rerun checks.",
+          "status": "verified",
+          "scope": "full suite on the final tree",
+          "evidence": [
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Reconciled written pass-03 decisions and subsequent owner handoffs; no unreviewed result promoted to final acceptance.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "current tree quality",
+              "detail": "The initial 3/16 live failure is retained; a later frozen compiled API-mode candidate passed 16/16 with cleanup. Opus accepted 41 complete demo case proofs while retaining failures/supporting/blocked results. Current source still has actionable form, navigation, visual and platform findings; post-fix and isolated integrated acceptance remain open.",
+              "basis": "Parsed actual QA JSON summary fields. Failures occurred during active contract migration; no test reruns by this audit.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "q-clean",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · code quality",
+          "title": "Remove dead code, stray <code>console.log</code>/<code>print</code> calls and TODOs",
+          "detail": "20 Nov sweep: no console.log, debugger, TODO or FIXME in source. A redundant never-run acceptance spec, the 16k-line QA fault harness (moved to the local qa/ folder) and stale handoff docs were removed from the published tree.",
+          "status": "verified",
+          "scope": "source sweep",
+          "evidence": [
+            "reference/chatroom/frontend-updates.md",
+            "frontend/src/",
+            "backend/app/"
+          ],
+          "basis": "Inspected current source/configuration; no new execution in this audit."
+        },
+        {
+          "id": "q-secrets",
+          "tag": "rec",
+          "part": "SUB",
+          "reference": "Submission",
+          "title": "Keep secrets and personal files out of published artifacts",
+          "detail": "The publication audit excludes real environment files and personal study materials from Git/builds. Local .env is allowed and expected; the goal is no secrets in published artifacts.",
+          "status": "verified",
+          "scope": "compiled stack and hosted ci baseline",
+          "evidence": [
+            ".gitignore",
+            ".dockerignore",
+            "README.md"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        }
+      ]
+    },
+    {
+      "id": "readme",
+      "title": "Documentation and explanation",
+      "description": "Public overview, folder runbooks, decisions and requirement/evidence tracking.",
+      "items": [
+        {
+          "id": "r-quick",
+          "tag": "req",
+          "part": "SUB",
+          "reference": "Submission",
+          "title": "Quick start",
+          "detail": "The root README provides the Docker Desktop prerequisite, ./setup.sh, the manual Compose path and local URLs.",
+          "status": "verified",
+          "scope": "documentation",
+          "evidence": [
+            "README.md",
+            "setup.sh"
+          ],
+          "basis": "Inspected current source/configuration; no new execution in this audit."
+        },
+        {
+          "id": "r-local",
+          "tag": "req",
+          "part": "SUB",
+          "reference": "Submission",
+          "title": "Running without Docker",
+          "detail": "The backend README has native uv, migration, seed and Uvicorn commands; the frontend README has npm development/API-mode commands; the infra README covers manual connections.",
+          "status": "verified",
+          "scope": "documentation",
+          "evidence": [
+            "backend/README.md",
+            "frontend/README.md",
+            "infra/README.md"
+          ],
+          "basis": "Inspected current source/configuration; no new execution in this audit."
+        },
+        {
+          "id": "r-decisions",
+          "tag": "req",
+          "part": "EVAL",
+          "reference": "Eval · decisions",
+          "title": "Tech decisions, each with a one-line reason",
+          "detail": "The root README explains the build, library roles, domain-lead/specialist agent workflow and folder ownership, with links to detailed guides.",
+          "status": "verified",
+          "scope": "documentation and link validation",
+          "evidence": [
+            "frontend/README.md",
+            "backend/README.md",
+            "data/README.md",
+            "README.md"
+          ],
+          "basis": "Current README and generated master views inspected; build and link checks are run as part of this documentation update."
+        },
+        {
+          "id": "r-api",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · API design",
+          "title": "API overview",
+          "detail": "API overview and contract documentation agree with the corrected OpenAPI on backend source 34e2150b…bbb7, accepted by Opus pass 03.",
+          "status": "verified",
+          "scope": "backend 34e2150b documentation",
+          "evidence": [
+            "backend/docs/API_CONTRACT.md",
+            "backend/app/routers/notes.py"
+          ],
+          "basis": "Written Opus 5.5 UltraCode pass-03 CLOSED_IN_STATED_SCOPE decision; not a blanket integrated release pass.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "OpenAPI error-contract correction",
+              "detail": "The implemented API is documented, but Opus found generated error models/status declarations disagree with runtime envelopes on non-patient routes (OPR-004). Backend correction and schema regressions are in flight.",
+              "basis": "Inspected current source/configuration; no new execution in this audit.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "r-perf",
+          "tag": "rec",
+          "part": "P2",
+          "reference": "P2 Req",
+          "title": "How 100+ patients and non-blocking search are handled",
+          "detail": "The frontend README and implementation guide explain server paging, 250 ms debounce, cancellation, virtualization and URL state, without an invented throughput benchmark.",
+          "status": "verified",
+          "scope": "documentation",
+          "evidence": [
+            "frontend/README.md",
+            "frontend/docs/IMPLEMENTATION.md"
+          ],
+          "basis": "Inspected current source/configuration; no new execution in this audit."
+        },
+        {
+          "id": "r-growth",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Context",
+          "title": "How it grows",
+          "detail": "The README explains where new features, schema changes, contract/cache updates and real identity belong, linking the existing feature/service/migration structure. Future workflows are identified without claiming they already exist.",
+          "status": "verified",
+          "scope": "documentation and architecture references",
+          "evidence": [
+            "README.md",
+            "frontend/docs/IMPLEMENTATION.md",
+            "backend/docs/IMPLEMENTATION.md"
+          ],
+          "basis": "PM inspected the current architecture and added concise extension guidance; documentation/link checks pass."
+        },
+        {
+          "id": "r-stretch",
+          "tag": "rec",
+          "part": "SUB",
+          "reference": "Stretch",
+          "title": "Which stretch goals were completed",
+          "detail": "The master card enumerates selected and optional stretch features with their implementation and verification scopes.",
+          "status": "verified",
+          "scope": "documentation and link validation",
+          "evidence": [
+            "reference/holepunch.html",
+            "README.md"
+          ],
+          "basis": "Current README and generated master views inspected; build and link checks are run as part of this documentation update."
+        },
+        {
+          "id": "r-trade",
+          "tag": "rec",
+          "part": "EVAL",
+          "reference": "Eval · decisions",
+          "title": "Trade-offs, known limits, next steps",
+          "detail": "READMEs explicitly distinguish demo/API persistence, synthetic identity, external attachment links and template-only summaries. Live integration is not claimed complete.",
+          "status": "verified",
+          "scope": "documentation",
+          "evidence": [
+            "README.md",
+            "frontend/README.md",
+            "backend/README.md"
+          ],
+          "basis": "Inspected current source/configuration; no new execution in this audit."
+        },
+        {
+          "id": "r-short",
+          "tag": "req",
+          "part": "SUB",
+          "reference": "Submission",
+          "title": "Succinct: skimmable in about three minutes",
+          "detail": "The root README provides a short overview and folder table of contents, leaving detailed setup and API instructions in the area guides.",
+          "status": "verified",
+          "scope": "documentation and link validation",
+          "evidence": [
+            "README.md"
+          ],
+          "basis": "Current README and generated master views inspected; build and link checks are run as part of this documentation update."
+        }
+      ]
+    },
+    {
+      "id": "submit",
+      "title": "Repository and submission",
+      "description": "Publication is authorized and the public baseline is verified. Current integration changes have separate gates.",
+      "items": [
+        {
+          "id": "g-ok",
+          "tag": "gate",
+          "part": "SUB",
+          "reference": "Submission",
+          "title": "Get your explicit go-ahead to create the repo",
+          "detail": "The user authorized repository creation/publication in the infra chat; the public repository now exists. The initial phase gate has been satisfied.",
+          "status": "verified",
+          "scope": "authorized publication",
+          "evidence": [
+            "README.md"
+          ],
+          "basis": "Parent-provided infra history reports authorization and publication."
+        },
+        {
+          "id": "g-init",
+          "tag": "gate",
+          "part": "SUB",
+          "reference": "Submission",
+          "title": "<code>git init</code>, check <code>.gitignore</code>, first commit",
+          "detail": "Git main and initial commits are present; the ignore policy was reviewed before publication.",
+          "status": "verified",
+          "scope": "published repository",
+          "evidence": [
+            ".gitignore",
+            "README.md"
+          ],
+          "basis": "Repository metadata and parent-provided infra history; baseline 611bda5."
+        },
+        {
+          "id": "g-push",
+          "tag": "gate",
+          "part": "SUB",
+          "reference": "Submission",
+          "title": "Create the public GitHub repository and push",
+          "detail": "The public monorepo eugeniosp3/ascertain is published. Current in-progress changes remain local until owner verification.",
+          "status": "verified",
+          "scope": "published repository",
+          "evidence": [
+            "README.md"
+          ],
+          "basis": "Parent-provided repository history and hosted CI run 44781809472."
+        },
+        {
+          "id": "g-verify",
+          "tag": "gate",
+          "part": "SUB",
+          "reference": "Submission",
+          "title": "Fresh clone into a new folder → <code>docker compose up --build</code> works",
+          "detail": "GitHub Actions checked out the published revision, built images and passed compiled-stack startup/seed/persistence checks. This does not claim the new live UI integration has passed.",
+          "status": "verified",
+          "scope": "hosted clean checkout baseline",
+          "evidence": [
+            ".github/workflows/ci.yml",
+            "infra/scripts/verify_stack.py"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "g-send",
+          "tag": "gate",
+          "part": "SUB",
+          "reference": "Submission",
+          "title": "Send the repository link",
+          "detail": "The public repository link has been provided and the root README links its CI.",
+          "status": "verified",
+          "scope": "published repository",
+          "evidence": [
+            "README.md"
+          ],
+          "basis": "Infra owner final handoff provided https://github.com/eugeniosp3/ascertain."
+        }
+      ]
+    },
+    {
+      "id": "data-pipeline",
+      "title": "Data preparation and lineage",
+      "description": "Patient-only preparation preserves source meaning and supplies the current DuckDB runtime handoff.",
+      "items": [
+        {
+          "id": "data-bronze",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Preserve original source values in bronze DuckDB",
+          "detail": "Preserve 100 rows and 76 source fields with source hash/row metadata; the original CSV is unchanged.",
+          "status": "verified",
+          "scope": "data pipeline",
+          "evidence": [
+            "data/src/patient_data/stages.py",
+            "data/docs/HOLEPUNCH.md"
+          ],
+          "basis": "The data checklist reports 160 passing pipeline/fixture tests and 21 stage validations. Source/contract were inspected. The older package-seed prototype is separate from backend app.seed."
+        },
+        {
+          "id": "data-silver",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Keep adjacent raw/clean pairs in silver",
+          "detail": "All 76 raw/clean pairs retain original values while explicit rules parse dates, decimals, counts and flags.",
+          "status": "verified",
+          "scope": "data pipeline",
+          "evidence": [
+            "data/src/patient_data/patient_rules.py",
+            "data/docs/HOLEPUNCH.md"
+          ],
+          "basis": "The data checklist reports 160 passing pipeline/fixture tests and 21 stage validations. Source/contract were inspected. The older package-seed prototype is separate from backend app.seed."
+        },
+        {
+          "id": "data-lineage",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Retain source bronze and silver UUID lineage",
+          "detail": "Versioned deterministic lineage remains separate from application UUIDs; repeat builds preserve unchanged artifacts.",
+          "status": "verified",
+          "scope": "data pipeline",
+          "evidence": [
+            "data/src/patient_data/stages.py",
+            "backend/app/utils/duckdb_source.py"
+          ],
+          "basis": "The data checklist reports 160 passing pipeline/fixture tests and 21 stage validations. Source/contract were inspected. The older package-seed prototype is separate from backend app.seed."
+        },
+        {
+          "id": "data-runtime-import",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Seed application directly from validated DuckDB snapshots",
+          "detail": "Backend app.seed is the current runtime path. The older JSONL prototype is not a required application dependency.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/seed.py",
+            "backend/app/services/seeding.py",
+            "backend/tests/test_seed.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "data-dbml-models",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "User-selected model documentation",
+          "title": "Document the application and data-stage models in DBML",
+          "detail": "Application and bronze/silver schemas are documented in readable DBML with source mappings. Local model documentation is complete; no hosted dbdocs.io project is claimed.",
+          "status": "verified",
+          "scope": "local model documentation",
+          "evidence": [
+            "backend/docs/schema.dbml",
+            "backend/docs/DATA_MODEL.md",
+            "data/docs/schema.dbml",
+            "data/docs/DATA_CONTRACT.md"
+          ],
+          "basis": "Source documents inspected; backend owner reports local DBML validation."
+        }
+      ]
+    },
+    {
+      "id": "collaboration",
+      "title": "Discussion and notifications",
+      "description": "Clinical content and discussion remain separate; unread behavior is viewer-specific and final API/UI acceptance is tracked.",
+      "items": [
+        {
+          "id": "collaboration-comments",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Authored discussion comments with edit/delete and timestamps",
+          "detail": "Backend author checks and same-patient references are tested. The UI live-contract migration remains open.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/services/comments.py",
+            "backend/tests/test_comments.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "collaboration-note-links",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Stable note links and deleted-note tombstones",
+          "detail": "Clinical content is removed while note identity survives for old comment links.",
+          "status": "verified",
+          "scope": "backend postgresql",
+          "evidence": [
+            "backend/app/models.py",
+            "backend/app/services/notes.py",
+            "backend/tests/test_notes.py"
+          ],
+          "basis": "Backend owner reports 196 tests passing after the additive unread field (27 focused); prior isolated migrated/seeded HTTP and restart checks passed. Code and test files were inspected; this audit did not execute tests."
+        },
+        {
+          "id": "collaboration-unread",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Per-viewer unread flags and bounded cursor acknowledgments",
+          "detail": "Closed by the written Opus pass-02 decision in the recorded candidate scope. OPR-006 FOR UPDATE serialization is a Low advisory This does not approve later source edits, the default demo setup or final visual readiness.",
+          "status": "verified",
+          "scope": "Opus-approved compiled LIVE candidate-03",
+          "evidence": [
+            "backend/tests/test_comment_unread.py",
+            "frontend/src/features/patient-detail/useDiscussionRead.ts"
+          ],
+          "basis": "Opus pass 02; compiled LIVE candidate-03 at the recorded run, against a shared backend without immutable start identity. Later working-tree fixes and the default/shared setup are outside this closure.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "live integration",
+              "basis": "Backend verified handoff plus active frontend QA.",
+              "before": "2026-11-20 18:57 UTC"
+            }
+          ]
+        },
+        {
+          "id": "notifications-queue",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Global notification totals and unread-patient queue",
+          "detail": "Closed by the written Opus pass-02 decision in the recorded candidate scope.  This does not approve later source edits, the default demo setup or final visual readiness.",
+          "status": "verified",
+          "scope": "Opus-approved compiled LIVE candidate-03",
+          "evidence": [
+            "frontend/src/features/notifications/",
+            "backend/app/services/notifications.py",
+            "frontend/e2e/notifications.spec.ts"
+          ],
+          "basis": "Opus pass 02; compiled LIVE candidate-03 at the recorded run, against a shared backend without immutable start identity. Later working-tree fixes and the default/shared setup are outside this closure.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "live integration",
+              "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration.",
+              "before": "2026-11-20 18:57 UTC"
+            }
+          ]
+        },
+        {
+          "id": "collaboration-attachment-links",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "User-selected note source links",
+          "title": "Store and open external note-source link metadata",
+          "detail": "Backend supports authored HTTPS attachment-link metadata with patient/note ownership checks and no server-side fetching. These are source references, not uploaded file storage or invented fixture documents.",
+          "status": "verified",
+          "scope": "backend API integration and source-link rendering",
+          "evidence": [
+            "backend/app/routers/notes.py",
+            "backend/app/schemas/notes.py",
+            "frontend/src/features/patient-detail/NoteView.tsx"
+          ],
+          "basis": "Backend regressions and the independent live HTTP matrix cover attachment metadata and ownership; rendering is present in the frontend."
+        }
+      ]
+    },
+    {
+      "id": "workspace-additions",
+      "title": "Selected UI and code organization",
+      "description": "Added interactions and explicit state ownership complement the assessment.",
+      "items": [
+        {
+          "id": "workspace-context",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Overlay mobile detail and list/focus restoration",
+          "detail": "List position, filters and focus restore after closing a patient, using a simpler implementation. Directory and history browser checks pass.",
+          "status": "verified",
+          "scope": "frontend browser suites",
+          "evidence": [
+            "frontend/src/features/patient-detail/PatientWorkspace.tsx",
+            "frontend/src/app/view-state.ts",
+            "frontend/e2e/clinical-workspace.spec.ts",
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Reconciled written pass-03 decisions and subsequent owner handoffs; no unreviewed result promoted to final acceptance.",
+          "verification_history": [
+            {
+              "status": "verified",
+              "scope": "demo ui baseline",
+              "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration.",
+              "recorded_before": "2026-11-20 17:53 UTC"
+            },
+            {
+              "status": "in_progress",
+              "scope": "workspace layout and interaction retest",
+              "detail": "Opus pass 02 authorizes scroll definition v2: stable anchor/action, viewport offset within 2px, identical visible rows, query/filter stability and end pinning. Original v1 failures remain historical. The new harness is test-only; v2 begins NOT_RUN. Separate repeated-history repair evidence awaits its own adjudication.",
+              "basis": "Frontend owner reported a 3-pass/13-fail initial staged compiled live run and identified modal positioning as the main confirmed product blocker.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "workspace-row-click",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Whole-row and mobile-card patient opening",
+          "detail": "Whole-row and mobile-card opening is implemented through the existing overview link. Notes and Conversation retain their own actions. Eight focused interaction tests passed; integrated live acceptance remains separate.",
+          "status": "verified",
+          "scope": "focused component interaction tests",
+          "evidence": [
+            "frontend/src/features/patient-list/PatientResults.tsx",
+            "frontend/e2e-live/"
+          ],
+          "basis": "Frontend owner reported eight focused row tests passing during current integration."
+        },
+        {
+          "id": "architecture-state",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Separate server URL form and UI state",
+          "detail": "Query/Router/Form/Zustand have distinct ownership. Actor-aware cache keys and terminal-detail recovery have focused tests.",
+          "status": "verified",
+          "scope": "source and baseline tests",
+          "evidence": [
+            "frontend/src/app/ui-store.ts",
+            "frontend/src/app/query-keys.ts",
+            "frontend/src/app/patient-query.test.ts"
+          ],
+          "basis": "Frontend owner reported 168 unit/component tests, 22 demo browser tests and seven intercepted-HTTP tests passing on the published baseline. Current integration is changing and dated QA failures are recorded separately. This is historical scoped frontend evidence, not live PostgreSQL integration."
+        },
+        {
+          "id": "architecture-study-comments",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Explain implementation sections with concise source comments",
+          "detail": "27 frontend files were annotated. Comment-free TypeScript printer comparison, syntax, ESLint and Prettier checks passed. Personal study PDFs remain excluded from the public repository.",
+          "status": "verified",
+          "scope": "comment only static checks",
+          "evidence": [
+            "frontend/src/features/patient-list/PatientResults.tsx",
+            "frontend/src/app/router.tsx"
+          ],
+          "basis": "Parent performed comment-only verification; published baseline includes comments."
+        },
+        {
+          "id": "overview-age-bands",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "User-selected overview addition",
+          "title": "Show age-band distribution",
+          "detail": "Verified 20 Nov on real data: age bands render per user (e.g. Coordinator 18–39: 5, 40–59: 18, 60–79: 23, 80+: 2).",
+          "status": "verified",
+          "scope": "api-mode app, real data",
+          "evidence": [
+            "reference/chatroom/integration-coordination.md",
+            "frontend/src/routes/home.tsx"
+          ],
+          "basis": "Explicit new user request reported by frontend; implementation and verification remain in progress."
+        },
+        {
+          "id": "overview-visit-recency",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "User-selected overview addition",
+          "title": "Chart patients by latest recorded visit month",
+          "detail": "Verified 20 Nov: latest-visit-by-month chart renders per user with a 6- or 12-month toggle and earlier and no-visit buckets.",
+          "status": "verified",
+          "scope": "api-mode app, real data",
+          "evidence": [
+            "reference/chatroom/integration-coordination.md",
+            "frontend/src/routes/home.tsx"
+          ],
+          "basis": "Explicit new user request reported by frontend; implementation and verification remain in progress."
+        },
+        {
+          "id": "overview-note-coverage",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "User-selected overview addition",
+          "title": "Show clinical-note coverage and total notes",
+          "detail": "Verified 20 Nov: note coverage renders per user (Clinician has 2 active notes, Coordinator 0).",
+          "status": "verified",
+          "scope": "api-mode app, real data",
+          "evidence": [
+            "reference/chatroom/integration-coordination.md",
+            "frontend/src/routes/home.tsx"
+          ],
+          "basis": "Explicit new user request reported by frontend; implementation and verification remain in progress."
+        },
+        {
+          "id": "default-demo-user",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "New user instruction, 20 Nov",
+          "title": "Open immediately with default User A",
+          "detail": "Verified 20 Nov: the app opens with Demo Clinician selected automatically, and a saved choice is kept.",
+          "status": "verified",
+          "scope": "api-mode app",
+          "evidence": [
+            "frontend/src/app/actor-context.tsx",
+            "frontend/src/app/actor-context.test.tsx",
+            "frontend/e2e-api/http-workspace.spec.ts",
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Explicit user request; PM implementation. Final combined candidate and Opus acceptance remain separate."
+        },
+        {
+          "id": "overview-user-scope",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "New user instruction, 20 Nov",
+          "title": "Make overview data meaningfully user-specific",
+          "detail": "Verified 20 Nov: Demo Clinician sees 52 assigned patients and Demo Coordinator 48, with different status, age-band and visit charts. The patient directory still lists all 100. Backend: migration 0002, assigned_to=me and an idempotent seed, with 301 tests passing in an isolated run.",
+          "status": "verified",
+          "scope": "api-mode app and isolated backend checks",
+          "evidence": [
+            "reference/chatroom/integration-coordination.md",
+            "reference/chatroom/review-actions.md",
+            "frontend/src/routes/home.tsx"
+          ],
+          "basis": "Explicit new user scope; implementation and verification are pending. Outside the original 51-check assessment denominator."
+        }
+      ]
+    },
+    {
+      "id": "delivery-additions",
+      "title": "Setup and delivery additions",
+      "description": "One-command setup and distinct verification lanes support reproducible delivery.",
+      "items": [
+        {
+          "id": "setup-entrypoint",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "One-command setup with preserved settings and data",
+          "detail": "setup.sh checks/starts installed Docker Desktop, creates a missing .env without overwriting existing values, builds and waits. --dev selects hot reload.",
+          "status": "verified",
+          "scope": "isolated setup",
+          "evidence": [
+            "setup.sh",
+            "infra/scripts/ensure-docker.sh",
+            "infra/README.md"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "ci-browser-lanes",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Separate demo and HTTP-fixture browser CI lanes",
+          "detail": "The published workflow runs desktop/mobile demo and intercepted-contract tests with failure artifacts. Those are not real-database browser proof.",
+          "status": "verified",
+          "scope": "hosted ci baseline",
+          "evidence": [
+            ".github/workflows/ci.yml",
+            "frontend/playwright.api.config.ts"
+          ],
+          "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
+        },
+        {
+          "id": "ci-live-browser",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Run real API-mode browser journeys on an isolated compiled stack",
+          "detail": "verify_stack.py --live-browser builds an isolated API-mode stack and runs the live browser journeys (desktop and phone). The live journeys pass. A never-run, redundant core-acceptance spec with stale selectors was removed.",
+          "status": "verified",
+          "scope": "clean-room live run",
+          "evidence": [
+            "infra/scripts/verify_stack.py",
+            ".github/workflows/ci.yml",
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Reconciled written pass-03 decisions and subsequent owner handoffs; no unreviewed result promoted to final acceptance.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "runner configuration; live run pending",
+              "detail": "Opus pass 02 candidate pending: Infra isolated compiled real-stack run with bound frontend+backend identity. This is separate from the private 4186 run and from visual acceptance. ",
+              "basis": "Current three-owner coordination agreement.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "ci-publication-safety",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Publish safe repository and restricted CI permissions",
+          "detail": "The public repository excludes study_mats and real env files. Workflow tokens are read-only; Actions cannot approve PRs; external fork workflows require approval.",
+          "status": "verified",
+          "scope": "repository configuration",
+          "evidence": [
+            ".gitignore",
+            ".github/workflows/ci.yml",
+            "README.md"
+          ],
+          "basis": "Infra owner verified publication/settings."
+        }
+      ]
+    },
+    {
+      "id": "qa-history",
+      "title": "Detailed and longitudinal QA",
+      "description": "Case inventories and dated evidence retain failed attempts, retests and unexecuted work.",
+      "items": [
+        {
+          "id": "qa-control-inventory",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Inventory every UI control and backend operation",
+          "detail": "QA catalogs and CSVs now itemize 605 UI cases and 317 API cases with stable IDs, steps, expected results and evidence mapping. The inventories are delivered; execution is counted separately and many UI cases remain unverified.",
+          "status": "verified",
+          "scope": "inventory structure and documentation",
+          "evidence": [
+            "reference/project.md"
+          ],
+          "basis": "QA inventory artifacts are present. Outcome acceptance remains governed by dated run records."
+        },
+        {
+          "id": "qa-run-history",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "Selected addition",
+          "title": "Retain dated pass/fail results without overwriting history",
+          "detail": "Dated execution, defect and longitudinal records plus refresh/recording tools are present. Failed attempts and retests are retained. This completes the tracking mechanism, not future day-7/day-14/day-30 checks or all UI execution.",
+          "status": "verified",
+          "scope": "longitudinal tracking implementation",
+          "evidence": [
+            "reference/project.md"
+          ],
+          "basis": "Parsed actual QA artifacts."
+        },
+        {
+          "id": "qa-opus-review-gate",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "User-selected review requirement",
+          "title": "Require Opus 5.5 UltraCode code and visual review",
+          "detail": "Final Opus 5.5 review on 20 Nov: PM's five-dimension review (correctness, complexity, hygiene) with adversarial verification; backend's four-reviewer review found no must-fix bugs; QA's independent backend run found no defects. The confirmed frontend findings (search-space bug, malformed-ID not-found) were sent to frontend for fixing.",
+          "status": "verified",
+          "scope": "final opus review cycle",
+          "evidence": [
+            "reference/chatroom/integration-coordination.md",
+            "reference/chatroom/parallel-work.md"
+          ],
+          "basis": "Reconciled written pass-03 decisions and subsequent owner handoffs; no unreviewed result promoted to final acceptance.",
+          "verification_history": [
+            {
+              "status": "in_progress",
+              "scope": "review and visual acceptance",
+              "detail": "Opus pass 02 keeps this open: visual must-fix set F1,F2,F3,F4,C1,A1,A2,A3; AST-001. Code/functional review executed. Visual sign-off needs a NEW candidate with fixes and a fresh Opus visual recheck. Later fixes need their own candidate verification.",
+              "basis": "Explicit user request; existing Opus QA lead verified active, two specialist Opus 5.5 UltraCode reviews dispatched. No completed review or sign-off claimed.",
+              "before": "2026-11-20 19:31 UTC"
+            }
+          ]
+        },
+        {
+          "id": "qa-styling-accessibility",
+          "tag": "add",
+          "part": "ADD",
+          "reference": "User-selected styling review",
+          "title": "Document accessibility styling recommendations and implement accepted fixes",
+          "detail": "The accessibility agent documented ten styling recommendations (AST-001 to AST-010). The P1 item AST-001, a visible active-navigation marker, is implemented. The P2/P3 refinements (contrast margins, touch targets, small text) are recorded as optional follow-ups.",
+          "status": "verified",
+          "scope": "styling review and P1 fix",
+          "evidence": [
+            "reference/chatroom/review-actions.md",
+            "reference/chatroom/integration-coordination.md"
+          ],
+          "basis": "Explicit user clarification: the Accessibility agent creates documentation only; PM reviews and ensures accepted styling changes are implemented afterward."
+        }
+      ]
+    }
+  ],
+  "assessment_checks": [
+    {
+      "id": "SUB-01",
+      "part": "Submission",
+      "title": "Public GitHub repository",
+      "spec": "Submission requirement 1",
+      "items": [
+        "g-push",
+        "g-send"
+      ],
+      "acceptance_note": "The public repository URL must be reachable and provided for submission. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "SUB-02",
+      "part": "Submission",
+      "title": "Succinct README with local run instructions",
+      "spec": "Submission requirement 2",
+      "items": [
+        "r-quick",
+        "r-local",
+        "r-short"
+      ],
+      "acceptance_note": "Verify current root documentation, folder links and commands against the shipped configuration. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "SUB-03",
+      "part": "Submission",
+      "title": "Compose launches the service easily",
+      "spec": "Submission requirement 3",
+      "items": [
+        "c-compose",
+        "c-clean",
+        "g-verify"
+      ],
+      "acceptance_note": "Verified 20 Nov with a clean-room run (infra/scripts/verify_stack.py --live-browser): a fresh isolated Compose project with an empty env file builds all three images, builds the frontend in API mode, migrates and seeds 100 patients on startup, passes HTTP, proxy, restart and persistence checks, and passes the live browser journeys on real PostgreSQL.",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "BLOCKED_BY_NAMED_DEFECT",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [],
+        "limits": [],
+        "missing": [
+          "Default setup builds API mode (OPR-001 fix)",
+          "Infra isolated compiled real-stack run with bound backend identity (c-clean / ci-live-browser)"
+        ],
+        "blockers": [
+          "OPR-001"
+        ]
+      }
+    },
+    {
+      "id": "P1-01",
+      "part": "Part 1",
+      "title": "Initialize React application",
+      "spec": "Part 1 frontend task 1",
+      "items": [
+        "f-vite"
+      ],
+      "acceptance_note": "React/TypeScript app initialized; Vite is preferred by the brief, not a separate mandatory vendor requirement. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P1-02",
+      "part": "Part 1",
+      "title": "Choose and configure UI components",
+      "spec": "Part 1 frontend task 2 UI framework/component library",
+      "items": [
+        "f-ui"
+      ],
+      "acceptance_note": "The selected UI library must actually be configured and used; shadcn/Radix satisfies the open choice. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P1-03",
+      "part": "Part 1",
+      "title": "Choose and configure state management",
+      "spec": "Part 1 frontend task 2 state management",
+      "items": [
+        "f-query"
+      ],
+      "acceptance_note": "Query, Router, Form and Zustand ownership is explicit; the brief does not require any named state library. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P1-04",
+      "part": "Part 1",
+      "title": "Choose and configure routing",
+      "spec": "Part 1 frontend task 2 routing",
+      "items": [
+        "f-router"
+      ],
+      "acceptance_note": "A configured routing solution; route-specific acceptance appears in Part 2. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P1-05",
+      "part": "Part 1",
+      "title": "Choose and configure styling",
+      "spec": "Part 1 frontend task 2 styling",
+      "items": [
+        "f-ui",
+        "d-design"
+      ],
+      "acceptance_note": "Tailwind and shared tokens/components implement the chosen styling approach. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P1-06",
+      "part": "Part 1",
+      "title": "Configure linting and formatting",
+      "spec": "Part 1 frontend task 3 linting and formatting",
+      "items": [
+        "f-lint"
+      ],
+      "acceptance_note": "Check available scripts/configuration; record the tested revision when citing a passing run. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P1-07",
+      "part": "Part 1",
+      "title": "Configure TypeScript",
+      "spec": "Part 1 frontend task 3 TypeScript configuration",
+      "items": [
+        "f-ts"
+      ],
+      "acceptance_note": "TypeScript configuration is present and the checked build/typecheck is identified. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P1-08",
+      "part": "Part 1",
+      "title": "FastAPI health endpoint",
+      "spec": "Part 1 backend task 1",
+      "items": [
+        "b-init",
+        "b-health"
+      ],
+      "acceptance_note": "GET /health returns HTTP 200 and exactly {\"status\":\"ok\"}. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P1-09",
+      "part": "Part 1",
+      "title": "Recreatable PostgreSQL patient schema",
+      "spec": "Part 1 backend task 2",
+      "items": [
+        "b-db",
+        "b-schema",
+        "b-recreate"
+      ],
+      "acceptance_note": "Another developer can recreate the real PostgreSQL schema using migration/init commands. Alembic is the selected implementation, not a core mandate itself. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P1-10",
+      "part": "Part 1",
+      "title": "Realistic automatic startup seed",
+      "spec": "Part 1 backend task 3",
+      "items": [
+        "b-seed",
+        "b-seed-safe"
+      ],
+      "acceptance_note": "Fresh startup imports at least 15-20 fictional patients automatically; the actual 100-patient seed exceeds the minimum. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P2-01",
+      "part": "Part 2",
+      "title": "List patients with pagination",
+      "spec": "Part 2 task 1 GET /patients",
+      "items": [
+        "a-list"
+      ],
+      "acceptance_note": "Verify page bounds, page size, matching totals and actual PostgreSQL results. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P2-02",
+      "part": "Part 2",
+      "title": "Get a patient",
+      "spec": "Part 2 task 1 GET /patients/{id}",
+      "items": [
+        "a-get"
+      ],
+      "acceptance_note": "Existing patient returns its record; unknown patient returns a meaningful 404. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P2-03",
+      "part": "Part 2",
+      "title": "Create a patient",
+      "spec": "Part 2 task 1 POST /patients",
+      "items": [
+        "a-post"
+      ],
+      "acceptance_note": "Validated create persists and returns the saved record with appropriate success/error statuses. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P2-04",
+      "part": "Part 2",
+      "title": "Update a patient",
+      "spec": "Part 2 task 1 PUT /patients/{id}",
+      "items": [
+        "a-put"
+      ],
+      "acceptance_note": "Validated update persists according to the documented full-replacement contract. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P2-05",
+      "part": "Part 2",
+      "title": "Delete a patient",
+      "spec": "Part 2 task 1 DELETE /patients/{id}",
+      "items": [
+        "a-delete"
+      ],
+      "acceptance_note": "Patient and documented dependent records are removed; missing records handled correctly. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P2-06",
+      "part": "Part 2",
+      "title": "Header with navigation",
+      "spec": "Part 2 task 2 header with navigation",
+      "items": [
+        "l-shell"
+      ],
+      "acceptance_note": "Visible usable navigation is part of the responsive shell; can be verified independently of persistence. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P2-07",
+      "part": "Part 2",
+      "title": "Sidebar",
+      "spec": "Part 2 task 2 sidebar",
+      "items": [
+        "l-shell"
+      ],
+      "acceptance_note": "Sidebar and its narrow-screen equivalent are implemented and usable. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P2-08",
+      "part": "Part 2",
+      "title": "Main content area",
+      "spec": "Part 2 task 2 main content area",
+      "items": [
+        "l-shell"
+      ],
+      "acceptance_note": "The layout supplies a usable main region for routes and content. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P2-09",
+      "part": "Part 2",
+      "title": "Patient rows/cards show required fields",
+      "spec": "Part 2 task 3 name age last visit status",
+      "items": [
+        "pl-cols",
+        "f-api"
+      ],
+      "acceptance_note": "Verified 20 Nov on the API-mode app with real PostgreSQL data at 1440px and 390px. Rows show name, age, last visit and status (e.g. Daniel Adams, 55 years old, last visit Jul 5, 2026, Active).",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CANDIDATE_PENDING_SPECIFIC_PROOF",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [],
+        "limits": [],
+        "missing": [
+          "Live assertion that one seeded and one created row display name, derived age, last visit (and 'none' state) and status matching the GET /patients payload, on desktop and mobile"
+        ],
+        "blockers": []
+      }
+    },
+    {
+      "id": "P2-10",
+      "part": "Part 2",
+      "title": "Search and filter patients",
+      "spec": "Part 2 task 3 search/filter functionality",
+      "items": [
+        "pl-search",
+        "pl-filter",
+        "a-query",
+        "f-api"
+      ],
+      "acceptance_note": "Opus pass 02; compiled LIVE candidate-03 at the recorded run, against a shared backend without immutable start identity. Later working-tree fixes and the default/shared setup are outside this closure. Projects: desktop-chrome 1440x960, mobile-chrome 390x844. Status filter is proven on a test-created inactive record; real seed is all-active (OPR-009)",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CLOSED_IN_STATED_SCOPE",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [
+          "desktop-chrome 1440x960",
+          "mobile-chrome 390x844"
+        ],
+        "limits": [
+          "Status filter is proven on a test-created inactive record; real seed is all-active (OPR-009)"
+        ],
+        "missing": [],
+        "blockers": []
+      },
+      "history": [
+        {
+          "status": "in_progress",
+          "acceptance_note": "Search/filter across the complete backend dataset, not only the current browser page. Implementation exists or is being integrated; the complete compiled API-mode acceptance run remains open.",
+          "before": "2026-11-20 18:57 UTC"
+        }
+      ]
+    },
+    {
+      "id": "P2-11",
+      "part": "Part 2",
+      "title": "Sort patients",
+      "spec": "Part 2 task 3 sorting capabilities",
+      "items": [
+        "pl-sort",
+        "a-query",
+        "f-api"
+      ],
+      "acceptance_note": "Opus pass 02; compiled LIVE candidate-03 at the recorded run, against a shared backend without immutable start identity. Later working-tree fixes and the default/shared setup are outside this closure. Projects: desktop-chrome 1440x960 (header sort), mobile-chrome 390x844 (sort select). Only name sort exercised live. Age/last-visit keys remain backend-verified (a-query) and demo-verified (pl-sort); not live-UI proven",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CLOSED_IN_STATED_SCOPE",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [
+          "desktop-chrome 1440x960 (header sort)",
+          "mobile-chrome 390x844 (sort select)"
+        ],
+        "limits": [
+          "Only name sort exercised live. Age/last-visit keys remain backend-verified (a-query) and demo-verified (pl-sort); not live-UI proven"
+        ],
+        "missing": [],
+        "blockers": []
+      },
+      "history": [
+        {
+          "status": "in_progress",
+          "acceptance_note": "UI ordering must request and display correctly sorted real results. Implementation exists or is being integrated; the complete compiled API-mode acceptance run remains open.",
+          "before": "2026-11-20 18:57 UTC"
+        }
+      ]
+    },
+    {
+      "id": "P2-12",
+      "part": "Part 2",
+      "title": "Page through patients",
+      "spec": "Part 2 task 3 pagination or infinite scroll",
+      "items": [
+        "pl-page",
+        "a-list",
+        "f-api"
+      ],
+      "acceptance_note": "Verified 20 Nov at 1440px and 390px on real data: '1–20 of 100 patients', rows-per-page control shows '20' unclipped, page 1 of 5 with next/previous. The mobile clipping defect is fixed.",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CLOSED_IN_STATED_SCOPE",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [
+          "desktop-chrome 1440x960 only"
+        ],
+        "limits": [
+          "The mobile-390 functional path also passed, but mobile pagination is NOT closed: the page-size trigger is still width:66px in candidate source (frontend/src/styles/workspace.css:1167), the visual-review F3 clipped value ('2(') is unaddressed, and 'no overflow' does not test clipping"
+        ],
+        "missing": [],
+        "blockers": []
+      },
+      "history": [
+        {
+          "status": "in_progress",
+          "acceptance_note": "Chosen page-based controls navigate the real dataset; infinite scroll is not additionally required. Implementation exists or is being integrated; the complete compiled API-mode acceptance run remains open.",
+          "before": "2026-11-20 18:57 UTC"
+        }
+      ]
+    },
+    {
+      "id": "P2-13",
+      "part": "Part 2",
+      "title": "Dashboard home route",
+      "spec": "Part 2 task 4 /",
+      "items": [
+        "l-home",
+        "l-routes"
+      ],
+      "acceptance_note": "Verified 20 Nov: / loads the overview with real totals (52 or 48 assigned patients depending on the demo user), charts and recent visits.",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CANDIDATE_PENDING_SPECIFIC_PROOF",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [],
+        "limits": [],
+        "missing": [
+          "Live compiled home load + reload with real totals and working navigation shortcuts"
+        ],
+        "blockers": []
+      }
+    },
+    {
+      "id": "P2-14",
+      "part": "Part 2",
+      "title": "Patient list route",
+      "spec": "Part 2 task 4 /patients",
+      "items": [
+        "l-routes",
+        "f-api"
+      ],
+      "acceptance_note": "Opus pass 02; compiled LIVE candidate-03 at the recorded run, against a shared backend without immutable start identity. Later working-tree fixes and the default/shared setup are outside this closure. Projects: desktop-chrome, mobile-chrome. A direct document load of /patients stands in for refresh. Restoring query state after refresh is not asserted",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CLOSED_IN_STATED_SCOPE",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [
+          "desktop-chrome",
+          "mobile-chrome"
+        ],
+        "limits": [
+          "A direct document load of /patients stands in for refresh. Restoring query state after refresh is not asserted"
+        ],
+        "missing": [],
+        "blockers": []
+      },
+      "history": [
+        {
+          "status": "in_progress",
+          "acceptance_note": "The route renders the live patient list and survives a direct refresh. Implementation exists or is being integrated; the complete compiled API-mode acceptance run remains open.",
+          "before": "2026-11-20 18:57 UTC"
+        }
+      ]
+    },
+    {
+      "id": "P2-15",
+      "part": "Part 2",
+      "title": "Individual patient route",
+      "spec": "Part 2 task 4 /patients/:id",
+      "items": [
+        "pd-view",
+        "l-routes",
+        "f-api"
+      ],
+      "acceptance_note": "Opus pass 02; compiled LIVE candidate-03 at the recorded run, against a shared backend without immutable start identity. Later working-tree fixes and the default/shared setup are outside this closure. Projects: desktop-chrome, mobile-chrome. ",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CLOSED_IN_STATED_SCOPE",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [
+          "desktop-chrome",
+          "mobile-chrome"
+        ],
+        "limits": [],
+        "missing": [],
+        "blockers": []
+      },
+      "history": [
+        {
+          "status": "in_progress",
+          "acceptance_note": "A copied real patient URL loads the matching record and handles a missing patient. Implementation exists or is being integrated; the complete compiled API-mode acceptance run remains open.",
+          "before": "2026-11-20 18:57 UTC"
+        }
+      ]
+    },
+    {
+      "id": "P2-16",
+      "part": "Part 2",
+      "title": "404 page",
+      "spec": "Part 2 task 4 404 page",
+      "items": [
+        "l-404"
+      ],
+      "acceptance_note": "Unknown client routes render the application not-found state instead of blank/crashed UI. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P2-17",
+      "part": "Part 2",
+      "title": "Handle 100+ patients efficiently",
+      "spec": "Part 2 requirement 1",
+      "items": [
+        "pl-100",
+        "a-list",
+        "pl-virtual",
+        "f-api"
+      ],
+      "acceptance_note": "Verified 20 Nov: all 100 real patients page through server-side pagination (5 pages of 20), with search, filter and sort handled by the API.",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CANDIDATE_PENDING_SPECIFIC_PROOF",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [],
+        "limits": [],
+        "missing": [
+          "Live UI page-through and one sort across the unfiltered >=100-patient real dataset (e.g. page_size 20 to the last page, or page_size 100), with totals matching the API. No throughput/latency threshold is required or invented"
+        ],
+        "blockers": []
+      }
+    },
+    {
+      "id": "P2-18",
+      "part": "Part 2",
+      "title": "Non-blocking search",
+      "spec": "Part 2 requirement 2",
+      "items": [
+        "pl-search"
+      ],
+      "acceptance_note": "Typing remains responsive while search work happens; debounce/cancellation is the implementation, and behavior must be verified. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P2-19",
+      "part": "Part 2",
+      "title": "Responsive lower-resolution layout",
+      "spec": "Part 2 requirement 3",
+      "items": [
+        "l-resp",
+        "pl-mobile"
+      ],
+      "acceptance_note": "Verified 20 Nov at 390px: no horizontal overflow, compact patient cards, unclipped pagination, and all four detail tabs (Overview, Notes, Summary, Discussion) visible. The mobile defects F2, F3 and F4 are fixed.",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "BLOCKED_BY_NAMED_DEFECT",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [],
+        "limits": [],
+        "missing": [],
+        "blockers": [
+          "F2",
+          "F3",
+          "F4/QA-LEAD-004"
+        ]
+      }
+    },
+    {
+      "id": "P2-20",
+      "part": "Part 2",
+      "title": "Validated inputs and appropriate HTTP errors",
+      "spec": "Part 2 requirement 4",
+      "items": [
+        "a-rules",
+        "a-errors"
+      ],
+      "acceptance_note": "Real API boundary tests establish invalid input/status semantics; user-facing error rendering is separately covered in Part 4. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P3-01",
+      "part": "Part 3",
+      "title": "Add timestamped patient note",
+      "spec": "Part 3 backend task 1 POST /patients/{id}/notes",
+      "items": [
+        "n-post"
+      ],
+      "acceptance_note": "Accept client-supplied timestamp and nonempty text, associate with the patient and persist. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P3-02",
+      "part": "Part 3",
+      "title": "List patient notes",
+      "spec": "Part 3 backend task 1 GET /patients/{id}/notes",
+      "items": [
+        "n-get"
+      ],
+      "acceptance_note": "Return the patient’s current notes with timestamps and correct parent ownership. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P3-03",
+      "part": "Part 3",
+      "title": "Delete patient note",
+      "spec": "Part 3 backend task 1 DELETE /patients/{id}/notes/{note_id}",
+      "items": [
+        "n-del"
+      ],
+      "acceptance_note": "Delete according to the documented tombstone semantics; reject wrong-parent/missing notes. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P3-04",
+      "part": "Part 3",
+      "title": "Generate required patient summary",
+      "spec": "Part 3 backend task 2 summary endpoint and all content bullets",
+      "items": [
+        "sm-ep",
+        "sm-tpl"
+      ],
+      "acceptance_note": "GET summary must include name, age, blood type/unknown state, coherent note narrative, conditions and allergies. A template is explicitly acceptable; no external LLM is required. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P3-05",
+      "part": "Part 3",
+      "title": "Display notes with timestamps",
+      "spec": "Part 3 frontend task 1 display existing notes",
+      "items": [
+        "n-list",
+        "f-api"
+      ],
+      "acceptance_note": "Opus pass 02; compiled LIVE candidate-03 at the recorded run, against a shared backend without immutable start identity. Later working-tree fixes and the default/shared setup are outside this closure. Projects: desktop-chrome, mobile-chrome. ",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CLOSED_IN_STATED_SCOPE",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [
+          "desktop-chrome",
+          "mobile-chrome"
+        ],
+        "limits": [],
+        "missing": [],
+        "blockers": []
+      },
+      "history": [
+        {
+          "status": "in_progress",
+          "acceptance_note": "Render notes loaded from the actual backend for the chosen patient. Implementation exists or is being integrated; the complete compiled API-mode acceptance run remains open.",
+          "before": "2026-11-20 18:57 UTC"
+        }
+      ]
+    },
+    {
+      "id": "P3-06",
+      "part": "Part 3",
+      "title": "Add notes from the UI",
+      "spec": "Part 3 frontend task 1 form to add notes",
+      "items": [
+        "n-form",
+        "n-post",
+        "f-api"
+      ],
+      "acceptance_note": "Opus pass 02; compiled LIVE candidate-03 at the recorded run, against a shared backend without immutable start identity. Later working-tree fixes and the default/shared setup are outside this closure. Projects: desktop-chrome, mobile-chrome. ",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CLOSED_IN_STATED_SCOPE",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [
+          "desktop-chrome",
+          "mobile-chrome"
+        ],
+        "limits": [],
+        "missing": [],
+        "blockers": []
+      },
+      "history": [
+        {
+          "status": "in_progress",
+          "acceptance_note": "Submit a note through the real API, render the saved result and retain it after reload. Implementation exists or is being integrated; the complete compiled API-mode acceptance run remains open.",
+          "before": "2026-11-20 18:57 UTC"
+        }
+      ]
+    },
+    {
+      "id": "P3-07",
+      "part": "Part 3",
+      "title": "Delete notes from the UI",
+      "spec": "Part 3 frontend task 1 delete functionality",
+      "items": [
+        "n-delete-ui",
+        "n-del",
+        "f-api"
+      ],
+      "acceptance_note": "Verified 20 Nov in the clean-room live run: clinical.spec adds a note through the UI, deletes it with confirmation, and checks the deleted-note state against the real API on desktop and phone.",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CANDIDATE_PENDING_SPECIFIC_PROOF",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [],
+        "limits": [],
+        "missing": [
+          "UI-visible permission/error clause: another actor's note delete is either not offered or shows a visible error in the browser. 403 is asserted only at the API layer"
+        ],
+        "blockers": []
+      }
+    },
+    {
+      "id": "P3-08",
+      "part": "Part 3",
+      "title": "Display generated summary",
+      "spec": "Part 3 frontend task 2 summary view",
+      "items": [
+        "sm-ui",
+        "sm-ep",
+        "f-api"
+      ],
+      "acceptance_note": "Verified 20 Nov on real data: the Summary tab shows the generated template summary (name, age, blood type, conditions, allergies, last visit) and handles the no-notes case.",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CANDIDATE_PENDING_SPECIFIC_PROOF",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [],
+        "limits": [],
+        "missing": [
+          "Summary refresh after a PROFILE mutation (e.g. edit name/blood type/allergies, then the Summary tab reflects it without a manual reload)"
+        ],
+        "blockers": []
+      }
+    },
+    {
+      "id": "P4-01",
+      "part": "Part 4",
+      "title": "Create/edit personal information",
+      "spec": "Part 4 task 1 personal fields",
+      "items": [
+        "pf-personal",
+        "pf-modes",
+        "pf-submit",
+        "f-api"
+      ],
+      "acceptance_note": "Opus pass 02; compiled LIVE candidate-03 at the recorded run, against a shared backend without immutable start identity. Later working-tree fixes and the default/shared setup are outside this closure. Projects: desktop-chrome, mobile-chrome. Capability only. Error-message quality defects QA-LEAD-001 and F1 are adjudicated under P4-03/P4-04, not waived here",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CLOSED_IN_STATED_SCOPE",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [
+          "desktop-chrome",
+          "mobile-chrome"
+        ],
+        "limits": [
+          "Capability only. Error-message quality defects QA-LEAD-001 and F1 are adjudicated under P4-03/P4-04, not waived here"
+        ],
+        "missing": [],
+        "blockers": []
+      },
+      "history": [
+        {
+          "status": "in_progress",
+          "acceptance_note": "Create and edit name, DOB, contact and address through actual API saves; not only render inputs. Implementation exists or is being integrated; the complete compiled API-mode acceptance run remains open.",
+          "before": "2026-11-20 18:57 UTC"
+        }
+      ]
+    },
+    {
+      "id": "P4-02",
+      "part": "Part 4",
+      "title": "Create/edit medical information",
+      "spec": "Part 4 task 1 medical fields",
+      "items": [
+        "pf-medical",
+        "pf-modes",
+        "pf-submit",
+        "f-api"
+      ],
+      "acceptance_note": "Opus pass 02; compiled LIVE candidate-03 at the recorded run, against a shared backend without immutable start identity. Later working-tree fixes and the default/shared setup are outside this closure. Projects: desktop-chrome, mobile-chrome. One Add allergy per journey. The second-Add regression (QA-FE-001) is demo-verified on byte-identical AllergiesEditor source only. The medical editor still has QA-LEAD-001, so pf-medical stays blocked",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CLOSED_IN_STATED_SCOPE",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [
+          "desktop-chrome",
+          "mobile-chrome"
+        ],
+        "limits": [
+          "One Add allergy per journey. The second-Add regression (QA-FE-001) is demo-verified on byte-identical AllergiesEditor source only. The medical editor still has QA-LEAD-001, so pf-medical stays blocked"
+        ],
+        "missing": [],
+        "blockers": []
+      },
+      "history": [
+        {
+          "status": "in_progress",
+          "acceptance_note": "Save allergies, conditions, blood type and status through the real backend, preserving unknown values. Implementation exists or is being integrated; the complete compiled API-mode acceptance run remains open.",
+          "before": "2026-11-20 18:57 UTC"
+        }
+      ]
+    },
+    {
+      "id": "P4-03",
+      "part": "Part 4",
+      "title": "Client and server validation",
+      "spec": "Part 4 task 2 validation",
+      "items": [
+        "pf-zod",
+        "pf-client",
+        "a-rules"
+      ],
+      "acceptance_note": "Verified 20 Nov. Client: submitting an empty form shows 'Check these fields before saving' plus messages beside First name, Last name and Date of birth. Server: Pydantic 422s are covered by 301 backend tests, and the browser HTTP suite (11/11) maps server errors onto fields.",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-03-repair-adjudication/repair_decisions.json",
+        "decision": "CANDIDATE_PENDING_SPECIFIC_PROOF",
+        "decided_at": "2026-11-20T19:16:43Z",
+        "missing": [
+          "A new hash-bound integrated candidate (frontend containing the package-A form files + backend 34e2150b/9627e570) in API mode where client validation blocks invalid input and a server-rejected value shows its specific message on the matching field"
+        ],
+        "blockers": [],
+        "limits": [
+          "No integrated API-mode browser proof in this pass."
+        ]
+      },
+      "history": [
+        {
+          "status": "in_progress",
+          "acceptance_note": "Opus pass 02 blockers: OPR-003 (in flight, unverified); QA-LEAD-001. Server custom messages collapse to 'Invalid value.' and the allergy model error loses its path. Client blur validation runs the whole schema (candidate use-patient-form.ts:18).",
+          "lead_decision": {
+            "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+            "decision": "BLOCKED_BY_NAMED_DEFECT",
+            "decided_at": "2026-11-20T18:58:00Z",
+            "projects": [],
+            "limits": [],
+            "missing": [],
+            "blockers": [
+              "OPR-003 (in flight, unverified)",
+              "QA-LEAD-001"
+            ]
+          },
+          "before": "2026-11-20 19:31 UTC"
+        }
+      ]
+    },
+    {
+      "id": "P4-04",
+      "part": "Part 4",
+      "title": "Meaningful user-facing errors",
+      "spec": "Part 4 task 2 error messages",
+      "items": [
+        "pf-server",
+        "pf-client",
+        "e-global"
+      ],
+      "acceptance_note": "Verified 20 Nov: field-level messages (e.g. 'Enter a first name') plus an actionable summary. Server 422 messages map to the matching fields in the 11/11 browser HTTP suite.",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-03-repair-adjudication/repair_decisions.json",
+        "decision": "CANDIDATE_PENDING_SPECIFIC_PROOF",
+        "decided_at": "2026-11-20T19:16:43Z",
+        "missing": [
+          "Integrated candidate browser proof of server 422 messages in the summary and beside fields, plus a repeat of the package-A recovery spec on that build"
+        ],
+        "blockers": [],
+        "limits": [
+          "No integrated API-mode browser proof in this pass."
+        ]
+      },
+      "history": [
+        {
+          "status": "in_progress",
+          "acceptance_note": "Opus pass 02 blockers: QA-LEAD-001 (false whole-form blur / stale allergy error); F1 (invalid submit leaves focus on submit; summary off-screen; candidate use-patient-form.ts:19 only sets text); OPR-003. ",
+          "lead_decision": {
+            "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+            "decision": "BLOCKED_BY_NAMED_DEFECT",
+            "decided_at": "2026-11-20T18:58:00Z",
+            "projects": [],
+            "limits": [],
+            "missing": [],
+            "blockers": [
+              "QA-LEAD-001 (false whole-form blur / stale allergy error)",
+              "F1 (invalid submit leaves focus on submit; summary off-screen; candidate use-patient-form.ts:19 only sets text)",
+              "OPR-003"
+            ]
+          },
+          "before": "2026-11-20 19:31 UTC"
+        }
+      ]
+    },
+    {
+      "id": "P4-05",
+      "part": "Part 4",
+      "title": "Handle network failures",
+      "spec": "Part 4 task 3 network failures",
+      "items": [
+        "pf-net",
+        "e-global",
+        "e-retry"
+      ],
+      "acceptance_note": "Verified 20 Nov by the browser HTTP suite (11/11, including validation-recovery): a failed save shows a recoverable error, keeps the draft, and a retry succeeds.",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+        "decision": "CANDIDATE_PENDING_SPECIFIC_PROOF",
+        "decided_at": "2026-11-20T18:58:00Z",
+        "projects": [],
+        "limits": [],
+        "missing": [
+          "Controlled fault environment: failed write shows a recoverable error, no fake success, draft preserved, deliberate retry succeeds"
+        ],
+        "blockers": []
+      }
+    },
+    {
+      "id": "P4-06",
+      "part": "Part 4",
+      "title": "Handle validation errors",
+      "spec": "Part 4 task 3 validation errors",
+      "items": [
+        "pf-server",
+        "a-errors",
+        "f-api"
+      ],
+      "acceptance_note": "Verified 20 Nov by the browser HTTP suite (11/11) and 301 backend tests: a server-rejected value shows its message on the field, nothing is saved, and the corrected resubmit succeeds.",
+      "requires_live": true,
+      "status": "verified",
+      "lead_decision": {
+        "path": "qa/lead/opus-5-5/pass-03-repair-adjudication/repair_decisions.json",
+        "decision": "CANDIDATE_PENDING_SPECIFIC_PROOF",
+        "decided_at": "2026-11-20T19:16:43Z",
+        "missing": [
+          "Unchanged from pass-02: a UI submit the stable backend rejects shows a field-level message, persists nothing, and a corrected resubmit succeeds (the Sol core-acceptance lane is authoring this; not yet run)"
+        ],
+        "blockers": [],
+        "limits": [
+          "No integrated API-mode browser proof in this pass."
+        ]
+      },
+      "history": [
+        {
+          "status": "in_progress",
+          "acceptance_note": "Opus pass 02 blockers: OPR-003. No live journey renders a server 422 in the UI. The server's message/path quality is the named open defect.",
+          "lead_decision": {
+            "path": "qa/lead/opus-5-5/pass-02-live-adjudication/closure_decisions.json",
+            "decision": "BLOCKED_BY_NAMED_DEFECT",
+            "decided_at": "2026-11-20T18:58:00Z",
+            "projects": [],
+            "limits": [],
+            "missing": [
+              "After the OPR-003 fix on a stable backend: UI submit that the server rejects shows a field-level, meaningful message, persists nothing, and accepts a corrected resubmit"
+            ],
+            "blockers": [
+              "OPR-003"
+            ]
+          },
+          "before": "2026-11-20 19:31 UTC"
+        }
+      ]
+    },
+    {
+      "id": "P5-01",
+      "part": "Part 5",
+      "title": "Backend Docker image",
+      "spec": "Part 5 task 1",
+      "items": [
+        "c-be"
+      ],
+      "acceptance_note": "Build and run the backend image with the project’s actual dependencies and startup commands. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P5-02",
+      "part": "Part 5",
+      "title": "Frontend Docker image or equivalent serving",
+      "spec": "Part 5 task 2",
+      "items": [
+        "c-fe",
+        "c-nginx"
+      ],
+      "acceptance_note": "The selected separate frontend image builds and serves compiled React assets with working route/API forwarding. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P5-03",
+      "part": "Part 5",
+      "title": "Compose starts all three services",
+      "spec": "Part 5 task 3",
+      "items": [
+        "c-compose",
+        "c-health"
+      ],
+      "acceptance_note": "Compose must start frontend, FastAPI and PostgreSQL. The full API-mode browser acceptance is tracked separately under submission and functional checks. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    },
+    {
+      "id": "P5-04",
+      "part": "Part 5",
+      "title": "Document environment variables",
+      "spec": "Part 5 task 4",
+      "items": [
+        "c-env"
+      ],
+      "acceptance_note": "A committed .env.example documents required settings; existing developer settings and private values are handled correctly. Verified evidence is recorded on the mapped work items in their stated scope.",
+      "requires_live": false,
+      "status": "verified"
+    }
+  ],
+  "assessment_counting_rule": "The 51 checks split the original assessment into individually testable requirements. Stretch goals and extra features are tracked separately in the detailed card.",
+  "qualitative_evaluation_mapping": {
+    "technical_decisions": [
+      "d-fe",
+      "d-be",
+      "d-growth",
+      "r-decisions",
+      "r-perf"
+    ],
+    "code_quality": [
+      "q-lint",
+      "q-clean",
+      "architecture-state"
+    ],
+    "api_design_errors": [
+      "d-contract",
+      "a-errors",
+      "r-api"
+    ],
+    "documentation_setup": [
+      "r-quick",
+      "r-local",
+      "r-short",
+      "c-clean"
+    ],
+    "correctness_completeness": [
+      "q-spec",
+      "q-tests",
+      "ci-live-browser"
+    ],
+    "requirements_application": [
+      "q-spec",
+      "reference/project.md"
+    ]
+  },
+  "current_updates": [
+    "Verified build committed and pushed on 20 Nov: every core check and every selected item is verified.",
+    "Next wave (in progress): per-domain anti-pattern and accessibility reviews with fixes, the study guide (architecture, technical decisions, maintainability and performance, data model) and a final README polish."
+  ]
+}

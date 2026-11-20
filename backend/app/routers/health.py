@@ -6,11 +6,12 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import Engine
 
 from app.db import get_engine
+from app.errors import error_responses
 from app.schemas.common import ErrorResponse
 from app.schemas.health import HealthResponse, ReadyResponse
 from app.services.readiness import ensure_database_available
 
-router = APIRouter(tags=["Health"])
+router = APIRouter(tags=["Health"], responses=error_responses(500))
 
 
 @router.get("/health", response_model=HealthResponse)

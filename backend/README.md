@@ -1,6 +1,10 @@
 # Patient backend
 
+[Project overview](../README.md) · [Project punch card](../reference/PROGRESS.md)
+
 FastAPI, Pydantic, SQLAlchemy, PostgreSQL, and Alembic power the patient dashboard. The API includes patient CRUD, notes, discussion, source-file links, per-user unread counts, summaries, and dashboard totals. The reviewed model uses eight tables and accounts for all 76 fields in the 100-patient dataset.
+
+FastAPI handles HTTP and publishes OpenAPI; Pydantic validates requests and responses; SQLAlchemy and psycopg handle database operations; Alembic versions the schema. Small routers call named services, while shared utilities handle dates, pagination and source-data checks.
 
 ## Run
 
@@ -10,20 +14,24 @@ From the repository root, Docker Compose runs migrations and the seed command be
 MIGRATE_ON_STARTUP=true SEED_ON_STARTUP=true docker compose up --build
 ```
 
-The API is available at `http://127.0.0.1:8000`, with interactive documentation at `/docs` and the generated contract at `/openapi.json`. `/health` returns exactly `{"status":"ok"}`. `/ready` checks database connectivity; migration and seed failures prevent automatic startup from reaching that point.
+The API is available at `http://127.0.0.1:10051` (the sample `BACKEND_PORT`), with interactive documentation at `/docs` and the generated contract at `/openapi.json`. `/health` returns exactly `{"status":"ok"}`. `/ready` checks database connectivity; migration and seed failures prevent automatic startup from reaching that point.
 
 For native development, use Python 3.12 and uv. From `backend/`, point `DATABASE_URL` at the intended PostgreSQL database, using its actual credentials:
 
 ```sh
 uv sync --frozen
-export DATABASE_URL='postgresql+psycopg://sample_user:sample_password@127.0.0.1:5432/sample_db'
+export DATABASE_URL='postgresql+psycopg://sample_user:sample_password@127.0.0.1:10052/sample_db'
 uv run --frozen alembic upgrade head
 uv run --frozen python -m app.seed --check-only
 uv run --frozen python -m app.seed
 uv run --frozen uvicorn app.main:create_app --factory --reload --no-access-log
 ```
 
-The sample URL matches the fresh Compose template; an existing database may use different credentials. The optional [environment example](.env.example) documents backend settings. `DEMO_MODE=true` enables the synthetic user selector. It is not authentication; a real authentication dependency is outside this demo's scope.
+The sample URL matches the fresh Compose template, whose database listens on host port `10052`; an existing `.env` may use different credentials or ports. The native API listens on `http://127.0.0.1:8000`. The optional [environment example](.env.example) documents backend settings. `DEMO_MODE=true` enables the synthetic user selector. It is not authentication; a real authentication dependency is outside this demo's scope.
+
+## Assigned workload
+
+The selected demo user has a persisted patient workload: use `assigned_to=me` on the patient list and `scope=assigned` on the overview. The directory stays shared, and the selector remains a demonstration identity rather than authentication. The pristine 100-patient seed assigns 52 to Demo Clinician and 48 to Demo Coordinator without altering clinical data. See [ASSIGNMENTS.md](docs/ASSIGNMENTS.md) for exact behavior and the migration/seed upgrade.
 
 ## Data and seeding
 
@@ -37,12 +45,13 @@ The container build uses the data package to reproduce the validated snapshots f
 
 ## API behavior
 
-[API_CONTRACT.md](API_CONTRACT.md) maps the implemented endpoints to the UI mocks and explains pagination, identity, counts, and read acknowledgment.
+[API_CONTRACT.md](docs/API_CONTRACT.md) maps the implemented endpoints to the UI mocks and explains pagination, identity, counts, and read acknowledgment.
 
 - Patient search/filter/sort runs across the complete dataset before pagination. Search includes names, MRN, source ID, application UUID, and email. Lists expose active-note, comment, and per-viewer unread counts.
 - Patient PUT replaces all editable fields and preserves source provenance. Patient deletion cascades owned records.
 - Notes have titles, authors, clinical timestamps, and application audit timestamps. Deletion keeps a content-free tombstone so existing comment links remain identifiable.
 - Comments are separate from clinical notes. Only their author may edit/delete them. Linked notes must belong to the same patient.
+- Every comment response includes viewer-specific `is_unread`. It is true only for another author's comment created after that viewer's patient read watermark. Own comments and anonymous reads return false; editing a comment does not reset its read state.
 - Discussion cursors keep pagination stable when comments are deleted. Explicit acknowledgments advance a per-user read watermark; normal GETs do not mark discussion read.
 - Summaries use current profiles and active notes, with no external model key. Comments and deleted notes never become summary input.
 - Attachments are HTTPS URL metadata. The backend neither uploads files nor downloads external URLs.
@@ -62,6 +71,7 @@ app/
   utils/                     # Dates, pagination, database checks, DuckDB reader, logging
 alembic/versions/             # Reviewed schema revisions
 tests/                      # Unit and PostgreSQL regressions
+docs/                       # Contracts, data model, DBML, and implementation guides
 ```
 
 API services own their commits/rollbacks. `services/seeding.py` owns the seed transaction. Utilities never commit application data. Source documents are retained for provenance and excluded from ordinary API responses. Unexpected errors use standard framework handling; server logging keeps exception types and stack locations while omitting exception values and source-line text. The documented launch commands disable raw access logs so patient identifiers and search terms are not written into request URLs in logs.
@@ -71,7 +81,7 @@ API services own their commits/rollbacks. `services/seeding.py` owns the seed tr
 Use a dedicated, migrated PostgreSQL database whose name ends in `_tests`. Integration tests skip when `TEST_DATABASE_URL` is absent; set it to run the full suite.
 
 ```sh
-export TEST_DATABASE_URL='postgresql+psycopg://sample_user:sample_password@127.0.0.1:5432/ascertain_tests'
+export TEST_DATABASE_URL='postgresql+psycopg://sample_user:sample_password@127.0.0.1:10052/ascertain_tests'
 DATABASE_URL="$TEST_DATABASE_URL" uv run --frozen alembic upgrade head
 uv run --frozen ruff check .
 uv run --frozen ruff format --check .
@@ -79,12 +89,14 @@ uv run --frozen mypy app
 uv run --frozen pytest
 ```
 
-Verification on 2026-11-20: **194 tests passed**, including real PostgreSQL API, migration, seed rollback/idempotence, ownership, same-patient links, and unread concurrency checks. Ruff and strict mypy passed. A fresh isolated Docker stack migrated and seeded automatically; an HTTP journey exercised the endpoints. Recreating its API preserved an edited patient and a deliberately deleted seed patient without duplicates. Hosted CI has not been claimed as run.
+Backend verification on 2026-11-20: **301 tests passed** against a disposable PostgreSQL database, including API, migration, seed rollback/idempotence, ownership, same-patient links, unread concurrency, safe validation messages, OpenAPI error contracts, assigned workload filtering, and repeat-safe assignment backfills. Ruff lint/format checks and strict mypy also passed. These are backend checks; integrated browser acceptance remains a separate gate.
+
+The clean-room check (`python3 infra/scripts/verify_stack.py --live-browser`) builds a fresh isolated stack, migrates and seeds it, exercises the API over HTTP, checks restart persistence, and runs the live browser journeys against it.
 
 ## Model and implementation references
 
-- [DATA_MODEL.md](DATA_MODEL.md): design choices and complete source mapping.
-- [MODEL_CONTRACT.md](MODEL_CONTRACT.md): exact ORM names and constraints.
-- [schema.dbml](schema.dbml): dbdocs-compatible model, validated locally; no hosted project published.
-- [IMPLEMENTATION.md](IMPLEMENTATION.md): implementation conventions and extension boundaries.
-- [HOLEPUNCH.md](HOLEPUNCH.md): requirement tracking.
+- [DATA_MODEL.md](docs/DATA_MODEL.md): design choices and complete source mapping.
+- [MODEL_CONTRACT.md](docs/MODEL_CONTRACT.md): exact ORM names and constraints.
+- [schema.dbml](docs/schema.dbml): dbdocs-compatible model, validated locally; no hosted project published.
+- [IMPLEMENTATION.md](docs/IMPLEMENTATION.md): implementation conventions and extension boundaries.
+- [HOLEPUNCH.md](docs/HOLEPUNCH.md): requirement tracking.

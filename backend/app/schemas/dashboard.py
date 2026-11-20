@@ -1,11 +1,15 @@
-"""Whole-dataset overview totals and two bounded patient previews for the mock UI."""
+"""Global or assigned overview totals and two bounded patient previews for the mock UI."""
 
 from datetime import date
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 from app.schemas.patient_details import PatientStatus
+from app.schemas.users import UserResponse
+
+DashboardScope = Literal["global", "assigned"]
 
 
 class DashboardTotals(BaseModel):
@@ -18,6 +22,9 @@ class DashboardTotals(BaseModel):
 
 class DashboardPatient(BaseModel):
     id: UUID
+    assigned_user_id: UUID | None = Field(
+        description="Read-only, server-owned workload assignment; null when unassigned."
+    )
     source_patient_id: str | None
     mrn: str | None
     first_name: str
@@ -30,13 +37,17 @@ class DashboardPatient(BaseModel):
 
 
 class DashboardOverview(BaseModel):
-    """Totals span all rows. Previews contain at most six distinct patients each.
+    """Totals span the selected cohort; previews contain at most six patients each.
 
     Recent visits exclude missing dates and sort newest first, then UUID. Patients
     without a visit sort by last name, first name, then UUID. Status is never inferred
-    from visit dates. The active/inactive totals can supply global status chips.
+    from visit dates. Global scope includes assigned and unassigned patients.
     """
 
+    scope: DashboardScope = Field(description="The cohort every total and preview describes.")
+    assigned_user: UserResponse | None = Field(
+        description="The selected actor whose assignments form the cohort; null for global."
+    )
     totals: DashboardTotals
     recent_visits: list[DashboardPatient] = Field(max_length=6)
     no_visit_patients: list[DashboardPatient] = Field(max_length=6)

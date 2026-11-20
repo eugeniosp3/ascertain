@@ -33,6 +33,7 @@ packages = ["app"]
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+force-exclude = true
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
@@ -48,6 +49,7 @@ files = ["app"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+norecursedirs = [".*", "build", "dist", "node_modules", "artifacts"]
 addopts = "-ra"
 filterwarnings = ["error"]
 

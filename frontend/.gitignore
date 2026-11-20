@@ -4,6 +4,7 @@ coverage/
 playwright-report/
 test-results/
 e2e-api/results/
+e2e-live/results/
 blob-report/
 *.tsbuildinfo
 .env

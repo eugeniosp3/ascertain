@@ -1,0 +1,733 @@
+/*
+ * Overview population charts. Layout follows the population section's own width (container
+ * queries), so an expanded or collapsed sidebar picks the right grid without viewport guesses.
+ */
+.ac-population {
+  container: population / inline-size;
+  min-width: 0;
+  font-size: 14px;
+}
+
+.ac-population-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin-bottom: 10px;
+}
+
+.ac-population-heading h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.ac-population-heading p {
+  margin: 0;
+  color: var(--ac-text-secondary);
+}
+
+.ac-chart-updated {
+  margin-left: auto !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Grid: one column → status|notes over full-width ages → three metrics; the line is always wide. */
+.ac-chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@container population (width >= 34rem) {
+  .ac-chart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ac-chart-ages,
+  .ac-visits {
+    grid-column: 1 / -1;
+  }
+}
+
+@container population (width >= 54rem) {
+  .ac-chart-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ac-chart-ages {
+    grid-column: auto;
+  }
+}
+
+.ac-chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--ac-hairline);
+  border-radius: var(--ac-radius-surface);
+  background: var(--ac-surface);
+}
+
+.ac-chart-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-height: 24px;
+}
+
+.ac-chart-card h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ac-chart-meta {
+  margin: 0;
+  color: var(--ac-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ac-chart-actions {
+  margin-left: auto;
+}
+
+.ac-chart-card figcaption {
+  padding-top: 8px;
+  border-top: 1px solid var(--ac-hairline);
+  color: var(--ac-text-secondary);
+  line-height: 1.45;
+}
+
+/* Headline value */
+.ac-metric {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+  margin: 0;
+}
+
+.ac-metric strong {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ac-metric span {
+  color: var(--ac-text-secondary);
+}
+
+/* Part-to-whole bar */
+.ac-proportion {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--ac-grey-bg);
+}
+
+.ac-proportion > span {
+  flex-basis: 0;
+  min-width: 3px;
+}
+
+/* Legend rows: label left, count and share right in aligned numeric columns */
+.ac-chart-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ac-chart-status .ac-chart-legend,
+.ac-chart-notes .ac-chart-legend {
+  margin-top: auto;
+}
+
+.ac-chart-legend li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 12px;
+}
+
+.ac-chart-legend-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ac-chart-swatch {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--ac-grey-fg);
+}
+
+.ac-chart-values {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ac-chart-values strong {
+  min-width: 2ch;
+  color: var(--ac-ink);
+  font-weight: 600;
+  text-align: right;
+}
+
+.ac-chart-values > span:not(.sr-only) {
+  min-width: 3.4em;
+  color: var(--ac-text-secondary);
+  text-align: right;
+}
+
+.ac-chart-legend[data-inline] {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 2px 20px;
+}
+
+.ac-chart-legend[data-inline] li {
+  justify-content: flex-start;
+}
+
+.ac-chart-legend[data-inline] .ac-chart-values > span:not(.sr-only) {
+  min-width: 0;
+}
+
+.ac-chart-legend[data-palette='visits'] .ac-chart-swatch {
+  display: none;
+}
+
+/* Palettes: brand hue for presence, neutral grey for absence, lighter grey for unavailable */
+[data-palette='status'] .ac-chart-color-0 {
+  background: var(--ac-mint-fg);
+}
+
+[data-palette='notes'] .ac-chart-color-0 {
+  background: var(--ac-violet-marker);
+}
+
+/* Neutral buckets recede behind the data colour but stay >= 3:1 against the card
+   (Light #8a8580 on #fff 3.6:1; Dark #8a837b on #282624 3.9:1). */
+:is([data-palette='status'], [data-palette='notes']) .ac-chart-color-1 {
+  background: var(--ac-chart-neutral, #8a8580);
+}
+
+.dark :is([data-palette='status'], [data-palette='notes']) .ac-chart-color-1 {
+  --ac-chart-neutral: #8a837b;
+}
+
+:is([data-palette='status'], [data-palette='notes']) .ac-chart-color-2 {
+  background: var(--ac-control-border);
+}
+
+/* Age bands: label | bar | count + share, columns aligned across rows through subgrid */
+.ac-chart-bars {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  gap: 4px 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ac-chart-bars li {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+
+.ac-chart-bar-track {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--ac-grey-bg);
+}
+
+.ac-chart-bar-track > span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--ac-violet-marker);
+}
+
+.ac-chart-bars li[data-unknown] .ac-chart-bar-track > span {
+  background: var(--ac-grey-fg);
+}
+
+/* Latest-visit line */
+.ac-visits {
+  container: visits / inline-size;
+  --tip-band: 30px;
+  --area-h: 112px;
+}
+
+.ac-chart-range {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--ac-control-border);
+  border-radius: 9px;
+}
+
+.ac-chart-range button {
+  min-height: 28px;
+  padding: 2px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ac-text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ac-chart-range button:hover {
+  color: var(--ac-ink);
+}
+
+.ac-chart-range button[aria-pressed='true'] {
+  background: var(--ac-lilac);
+  color: var(--ac-lilac-ink);
+  font-weight: 600;
+}
+
+.ac-visits-chart {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 6px;
+}
+
+.ac-visits-y {
+  position: relative;
+  height: var(--area-h);
+  margin-top: var(--tip-band);
+  color: var(--ac-text-secondary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.ac-visits-y span {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+.ac-visits-plot {
+  position: relative;
+  padding: var(--tip-band) 10px 0;
+  border-radius: 6px;
+  touch-action: pan-y;
+}
+
+.ac-visits-plot:focus-within {
+  outline: 2px solid var(--ac-ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--ac-violet);
+}
+
+.ac-visits-area {
+  position: relative;
+  height: var(--area-h);
+}
+
+.ac-visits-area svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.ac-visits-grid {
+  position: absolute;
+  right: -10px;
+  left: -10px;
+  border-top: 1px dashed var(--ac-hairline);
+}
+
+.ac-visits-baseline {
+  border-top-style: solid;
+  border-top-color: var(--ac-line);
+}
+
+.ac-visits-fill {
+  fill: var(--ac-violet-marker);
+  opacity: 0.1;
+}
+
+.ac-visits-line {
+  fill: none;
+  stroke: var(--ac-violet-marker);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The running month: same hue, dashed, so it reads as provisional rather than a drop. */
+.ac-visits-partial {
+  stroke-dasharray: 4 4;
+  stroke-linecap: butt;
+}
+
+/* Opaque guide (no alpha) so the composited mark stays >= 3:1 over both card and area fill. */
+.ac-visits-guide {
+  position: absolute;
+  top: calc(var(--tip-band) * -1 + 24px);
+  bottom: 0;
+  border-left: 1px dashed var(--ac-control-border);
+}
+
+/* Complete months are solid dots; the partial month alone is hollow. */
+.ac-visits-point {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border: 2px solid var(--ac-violet-marker);
+  border-radius: 50%;
+  background: var(--ac-violet-marker);
+  transform: translate(-50%, -50%);
+}
+
+.ac-visits-point[data-active] {
+  width: 11px;
+  height: 11px;
+  box-shadow: 0 0 0 2px var(--ac-surface);
+}
+
+.ac-visits-point[data-partial] {
+  background: var(--ac-surface);
+}
+
+.ac-visits-x li[data-partial] {
+  font-style: italic;
+}
+
+.ac-visits-partial-key {
+  display: inline-block;
+  width: 14px;
+  margin: 0 6px 0 0;
+  vertical-align: middle;
+  border-top: 2px dashed var(--ac-violet-marker);
+}
+
+.ac-visits-tip {
+  position: absolute;
+  top: calc(var(--tip-band) * -1);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--ac-toast-border);
+  border-radius: 8px;
+  background: var(--ac-toast-bg);
+  color: var(--ac-toast-fg);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.ac-visits-tip strong {
+  font-weight: 600;
+}
+
+.ac-visits-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: 0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--ac-surface);
+  color: var(--ac-text-secondary);
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.ac-visits-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ac-visits-x {
+  position: relative;
+  grid-column: 2;
+  height: 1.45em;
+  margin: 6px 10px 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ac-text-secondary);
+}
+
+.ac-visits-x li {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}
+
+.ac-visits-x li[data-active] {
+  color: var(--ac-ink);
+  font-weight: 600;
+}
+
+.ac-visits-x [data-year='sparse'] {
+  display: none;
+}
+
+@container visits (width < 46rem) {
+  .ac-visits-x li[data-sparse-hidden] {
+    display: none;
+  }
+
+  .ac-visits-x [data-year='dense'] {
+    display: none;
+  }
+
+  .ac-visits-x [data-year='sparse'] {
+    display: inline;
+  }
+}
+
+/* Narrow cards (e.g. 320px, or enlarged/spaced text): the tooltip stacks month over values inside a
+   taller band, so it never overflows the card and nothing is hidden or shrunk (AST-008). */
+@container visits (width < 22rem) {
+  .ac-visits-chart {
+    --tip-band: 52px;
+  }
+
+  /* Intrinsic width (not the 0px left at x = 100%), capped at the plot; month on its own row. */
+  .ac-visits-tip {
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    gap: 0 6px;
+    width: max-content;
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .ac-visits-tip > span:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Footer: values outside the window, plus the count-table toggle */
+.ac-visits-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.ac-chart-data-toggle {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--ac-ink);
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--ac-control-border);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ac-chart-data-toggle:hover {
+  text-decoration-color: currentColor;
+}
+
+.ac-chart-data-toggle::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  margin: -3px 2px 0 8px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.ac-chart-data-toggle[aria-expanded='true']::after {
+  margin-top: 3px;
+  transform: rotate(-135deg);
+}
+
+.ac-chart-data[hidden] {
+  display: none;
+}
+
+.ac-chart-data table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.ac-chart-data caption {
+  padding-bottom: 6px;
+  color: var(--ac-text-secondary);
+  text-align: left;
+}
+
+.ac-chart-data :is(th, td) {
+  padding: 6px 4px;
+  border-top: 1px solid var(--ac-hairline);
+  text-align: right;
+  font-weight: 400;
+}
+
+.ac-chart-data th:first-child {
+  text-align: left;
+}
+
+.ac-chart-data thead th {
+  font-weight: 600;
+}
+
+/* States */
+.ac-chart-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--ac-control-border);
+  border-radius: var(--ac-radius-control);
+  background: var(--ac-surface);
+}
+
+.ac-chart-notice p,
+.ac-chart-query-status {
+  margin: 0;
+}
+
+.ac-chart-query-status:not(:empty) {
+  margin-bottom: 10px;
+  color: var(--ac-text-secondary);
+}
+
+.ac-chart-loading {
+  min-height: 148px;
+}
+
+.ac-chart-loading.ac-visits {
+  min-height: 240px;
+}
+
+.ac-chart-loading > div {
+  height: 12px;
+  border-radius: 4px;
+  background: var(--ac-grey-bg);
+}
+
+.ac-chart-loading > div:last-child {
+  width: 60%;
+}
+
+/* Phones: 16px body, 44px touch targets; chart tick labels stay at 14px */
+@media (width < 48rem) {
+  .ac-population {
+    font-size: 16px;
+  }
+
+  .ac-population-heading h2 {
+    font-size: 18px;
+  }
+
+  .ac-chart-updated {
+    margin-left: 0 !important;
+  }
+
+  .ac-chart-card h3 {
+    font-size: 16px;
+  }
+
+  .ac-metric strong {
+    font-size: 26px;
+  }
+
+  .ac-visits {
+    --area-h: 120px;
+  }
+
+  .ac-visits-y,
+  .ac-visits-x,
+  .ac-visits-tip {
+    font-size: 14px;
+  }
+
+  .ac-chart-range button {
+    min-height: 44px;
+    padding: 2px 12px;
+  }
+
+  .ac-chart-data-toggle {
+    min-height: 44px;
+  }
+
+  .ac-overview .ac-recent-visits time,
+  .ac-overview .ac-shortcuts :is(small, strong) {
+    font-size: 16px;
+  }
+
+  .ac-overview .ac-recent-visits li {
+    flex-wrap: wrap;
+  }
+}
+
+@media (forced-colors: active) {
+  .ac-visits-line {
+    stroke: CanvasText;
+  }
+
+  .ac-visits-point,
+  .ac-proportion > span,
+  .ac-chart-bar-track > span,
+  .ac-chart-swatch {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+  }
+}
+
+/* Touch targets on coarse pointers at any width (e.g. 1024 tablets); fine pointers keep 28px. */
+@media (pointer: coarse) {
+  .ac-chart-range button,
+  .ac-chart-data-toggle {
+    min-height: 44px;
+  }
+
+  .ac-chart-range button {
+    min-width: 44px;
+  }
+}

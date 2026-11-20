@@ -9,11 +9,13 @@ import {
 import type { CSSProperties } from 'react'
 import { Toaster as Sonner, type ToasterProps } from 'sonner'
 import { cn } from '@/utils/cn'
+import { useTheme } from '@/app/theme-provider'
 
 const Toaster = ({ className, style, ...props }: ToasterProps) => {
+  const { resolvedTheme } = useTheme()
   return (
     <Sonner
-      theme="light"
+      theme={resolvedTheme}
       className={cn('toaster group', className)}
       position="bottom-right"
       closeButton
@@ -27,9 +29,9 @@ const Toaster = ({ className, style, ...props }: ToasterProps) => {
       }}
       style={
         {
-          '--normal-bg': 'var(--ac-ink)',
-          '--normal-text': 'var(--ac-surface)',
-          '--normal-border': 'var(--ac-ink)',
+          '--normal-bg': 'var(--ac-toast-bg)',
+          '--normal-text': 'var(--ac-toast-fg)',
+          '--normal-border': 'var(--ac-toast-border)',
           '--border-radius': 'var(--ac-radius-surface)',
           ...style,
         } as CSSProperties

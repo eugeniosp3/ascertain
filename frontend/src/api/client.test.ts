@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { ApiError, createHttpApi } from './client'
+import { createDemoData } from '../fixtures/demo-data'
+import { patientToFormValues, toPatientWrite } from '../features/patient-form/mapping'
+import type { PatientDetail } from './types'
 
 function stubResponse(status: number, body?: unknown) {
   return new Response(body === undefined ? null : JSON.stringify(body), {
@@ -22,10 +25,26 @@ describe('HTTP API', () => {
     expect(String(url)).toMatch(/^\/api\/patients\?/)
     const search = new URL(String(url), 'https://example.test').searchParams
     expect(search.get('q')).toBe('A & B')
-    expect(search.get('has_unread_comments')).toBe('false')
+    expect(search.has('has_unread_comments')).toBe(false)
+    expect(search.has('unread_only')).toBe(false)
     expect(search.get('sort_by')).toBe('comments_count')
     expect(init?.signal).toBe(controller.signal)
     expect(init?.headers).toMatchObject({ 'X-Demo-User-ID': 'viewer-1' })
+  })
+
+  it('sends assigned_to=me only for the assigned cohort; the directory stays unfiltered', async () => {
+    const row = { ...createDemoData().patients[0]!, name: 'A', age: 1 }
+    const payload = { items: [row], total: 1, page: 1, page_size: 100 }
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => stubResponse(200, payload))
+    const api = createHttpApi('/api', fetcher)
+    const page = await api.listPatients({ assigned_to: 'me', page_size: 100 }, { actorId: 'v' })
+    expect(page.items[0]!.assigned_user_id).toBe(row.assigned_user_id)
+    await api.listPatients({ page_size: 100 }, { actorId: 'v' })
+    const [assigned, directory] = fetcher.mock.calls.map(
+      ([url]) => new URL(String(url), 'https://example.test').searchParams,
+    )
+    expect(Object.fromEntries(assigned!)).toEqual({ page_size: '100', assigned_to: 'me' })
+    expect(directory!.has('assigned_to')).toBe(false)
   })
 
   it('does not parse a successful empty 204', async () => {
@@ -143,7 +162,7 @@ describe('HTTP API', () => {
     const api = createHttpApi('/api', fetcher)
     const input = { body: 'Hello', note_ids: ['note'], author_id: 'forged' }
     await api.createComment('patient', input, { actorId: 'real-viewer' })
-    await api.markCommentsRead('patient', ['observed'])
+    await api.markCommentsRead('patient', { through: '2026-11-20T15:00:00.123456+00:00' })
     expect(fetcher.mock.calls[0]?.[0]).toBe('/api/patients/patient/comments')
     expect(JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body))).toEqual({
       body: 'Hello',
@@ -151,7 +170,124 @@ describe('HTTP API', () => {
     })
     expect(fetcher.mock.calls[1]?.[0]).toBe('/api/patients/patient/comments/read')
     expect(JSON.parse(String(fetcher.mock.calls[1]?.[1]?.body))).toEqual({
-      comment_ids: ['observed'],
+      through: '2026-11-20T15:00:00.123456+00:00',
+    })
+  })
+
+  it('normalizes actual patient wire fields while preserving names and typed source context', async () => {
+    const seed = createDemoData().patients[0]!
+    const { middle_initial, ...wireRow } = {
+      ...seed,
+      name: 'Server display name',
+      age: 86,
+      notes_count: 4,
+      comments_count: 3,
+      unread_comments_count: 1,
+    }
+    const source_lineage = {
+      bronze_id: seed.id,
+      silver_id: seed.id,
+      source_row_number: 1,
+      export_id: null,
+      source_file_id: null,
+      transformation_version: 'v1',
+    }
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        stubResponse(200, { items: [wireRow], total: 1, page: 1, page_size: 20 }),
+      )
+      .mockResolvedValueOnce(
+        stubResponse(200, { ...wireRow, middle_initial, profile_details: null, source_lineage }),
+      )
+      .mockResolvedValueOnce(stubResponse(200, { ...wireRow, middle_initial, source_lineage }))
+    const api = createHttpApi('/api', fetcher)
+    const page = await api.listPatients({ has_unread_comments: true })
+    expect(page.items[0]).toMatchObject({ middle_initial: null, name: 'Server display name' })
+    expect(
+      new URL(String(fetcher.mock.calls[0]![0]), 'https://example.test').searchParams.get(
+        'unread_only',
+      ),
+    ).toBe('true')
+    const patient = await api.getPatient(seed.id)
+    expect(patient).not.toHaveProperty('profile_details')
+    expect(patient.source_lineage).toEqual(source_lineage)
+    const withContext = await api.getPatient(seed.id)
+    expect(withContext.profile_details).toEqual(seed.profile_details)
+  })
+
+  it('maps actual notification names once and rejects missing, legacy, or invalid counts', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(stubResponse(200, { unread_comments: 12, patients_with_unread: 4 }))
+    const api = createHttpApi('/api', fetcher)
+    await expect(api.getNotificationSummary()).resolves.toEqual({
+      unread_comments_count: 12,
+      patients_with_unread_comments: 4,
+    })
+    for (const payload of [
+      null,
+      {},
+      { unread_comments_count: 1, patients_with_unread_comments: 1 },
+      { unread_comments: -1, patients_with_unread: 1 },
+      { unread_comments: '1', patients_with_unread: 1 },
+      { unread_comments: 1.5, patients_with_unread: 1 },
+      { unread_comments: 1, patients_with_unread: -1 },
+      { unread_comments: 1, patients_with_unread: Number.MAX_SAFE_INTEGER + 1 },
+    ]) {
+      fetcher.mockResolvedValueOnce(stubResponse(200, payload))
+      await expect(api.getNotificationSummary()).rejects.toMatchObject({ code: 'invalid_response' })
+    }
+    fetcher.mockResolvedValueOnce(
+      stubResponse(200, { unread_comments: 0, patients_with_unread: 0 }),
+    )
+    await expect(api.getNotificationSummary()).resolves.toEqual({
+      unread_comments_count: 0,
+      patients_with_unread_comments: 0,
+    })
+  })
+
+  it('forwards an opaque cursor and returns the server page sequence and exact watermark', async () => {
+    const payload = {
+      items: [],
+      total: 4,
+      page: 3,
+      page_size: 2,
+      read_through: '2026-11-20T10:00:00.123456Z',
+      next_cursor: 'opaque-next',
+    }
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(stubResponse(200, payload))
+    const result = await createHttpApi('/api', fetcher).listComments('patient', {
+      cursor: 'opaque+/= token',
+      page: 99,
+      page_size: 2,
+    })
+    expect(result).toEqual(payload)
+    const query = new URL(String(fetcher.mock.calls[0]![0]), 'https://example.test').searchParams
+    expect(Object.fromEntries(query)).toEqual({ cursor: 'opaque+/= token', page_size: '2' })
+  })
+
+  it('sends complete editable patient PUT bodies and never sends readonly or nested source fields', async () => {
+    const seed = createDemoData().patients[0]!
+    const patient: PatientDetail = {
+      ...seed,
+      name: 'Source Name',
+      age: 86,
+      notes_count: 4,
+      comments_count: 3,
+      unread_comments_count: 1,
+    }
+    const write = toPatientWrite(patientToFormValues(patient))
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(stubResponse(200, patient))
+    const input = {
+      ...patient,
+      ...write,
+      conditions: [{ code: 'I10', label: 'Updated label', source_record: 'private' }],
+    }
+    await createHttpApi('/api', fetcher).updatePatient(patient.id, input)
+    expect(JSON.parse(String(fetcher.mock.calls[0]![1]?.body))).toEqual({
+      ...write,
+      conditions: [{ code: 'I10', label: 'Updated label' }],
     })
   })
 

@@ -60,6 +60,16 @@ const conditions = [
   { code: null, label: 'Seasonal allergies' },
 ]
 
+/**
+ * Synthetic workload: the roster index (0 = first demo user, 1 = second) of PT-0001…PT-0100, one
+ * character per patient. Same rule as the backend `demo-assignments-v1` seed: SHA-256 of the exact
+ * `source_patient_id` UTF-8 bytes, first eight bytes as an unsigned big-endian integer, modulo two
+ * (`digest[7] & 1`). Precomputed because fixtures are built synchronously; demo-data.test.ts
+ * recomputes every entry. Assignment never changes clinical, status or visit values.
+ */
+const demoAssignmentRoster =
+  '0101000011111110110101011010111000010100010011000001001111001011000110000111010010010110110001100110'
+
 /** Fictional application fixtures only: no source CSV, imported notes, or clinical files. */
 export function createDemoData() {
   const users = demoUsers.map((user) => ({ ...user }))
@@ -68,8 +78,8 @@ export function createDemoData() {
   const patients: DemoPatient[] = []
   const notes: DemoNote[] = []
   const comments: DemoComment[] = []
-  const readByActor = new Map<string, Set<string>>(
-    users.map((user) => [user.id, new Set<string>()]),
+  const lastReadByActor = new Map<string, Map<string, string>>(
+    users.map((user) => [user.id, new Map<string, string>()]),
   )
 
   for (let index = 0; index < 100; index++) {
@@ -81,6 +91,7 @@ export function createDemoData() {
     const allergy_status = index % 3 === 0 ? 'unknown' : index % 3 === 1 ? 'no_known' : 'reported'
     patients.push({
       id,
+      assigned_user_id: users[Number(demoAssignmentRoster[index])]!.id,
       source_patient_id: `PT-${String(n).padStart(4, '0')}`,
       mrn: String(1000000 + n).padStart(8, '0'),
       first_name,
@@ -149,10 +160,14 @@ export function createDemoData() {
         updated_at: j === 1 ? '2026-11-02T17:00:00.000Z' : timestamp,
         note_ids: noteCount && j === 2 ? [demoId('note', n * 10)] : [],
       })
-      // Only selected recent messages are unread; historical messages are already read.
-      if (!(n <= 12 && author.id !== firstUser.id)) readByActor.get(firstUser.id)!.add(commentId)
-      if (!(n % 11 === 0 && j === 1)) readByActor.get(secondUser.id)!.add(commentId)
     }
+    // Seed chronological prefixes, excluding own comments from unread activity.
+    lastReadByActor
+      .get(firstUser.id)!
+      .set(id, n <= 12 ? '2026-11-02T16:00:00.000Z' : '2026-11-03T16:00:00.000Z')
+    lastReadByActor
+      .get(secondUser.id)!
+      .set(id, n % 11 === 0 ? '2026-11-01T16:00:00.000Z' : '2026-11-03T16:00:00.000Z')
   }
-  return { users, patients, notes, comments, readByActor }
+  return { users, patients, notes, comments, lastReadByActor }
 }

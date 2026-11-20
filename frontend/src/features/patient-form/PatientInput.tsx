@@ -42,7 +42,16 @@ export function PatientInput({
   const id = useId()
   const { form, serverFields, clearServerField } = binding
   return (
-    <form.Field name={name}>
+    <form.Field
+      name={name}
+      listeners={{
+        onMount: () => {
+          // Array edits validate before the new input registers. After a submit
+          // attempt, refresh its error once registration has completed.
+          if (form.state.submissionAttempts > 0) void form.validate('change')
+        },
+      }}
+    >
       {(field) => {
         const error = serverFields[name] ?? fieldMessage(field.state.meta.errors)
         return (
@@ -107,6 +116,7 @@ export function PatientSelect({
             >
               <SelectTrigger
                 id={id}
+                data-patient-field={name}
                 onBlur={field.handleBlur}
                 aria-invalid={!!error}
                 aria-describedby={fieldDescription(id, undefined, error)}

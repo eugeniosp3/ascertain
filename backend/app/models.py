@@ -161,6 +161,12 @@ class Patient(Base):
             name="patients_seed_run_id_fkey",
             ondelete="RESTRICT",
         ),
+        ForeignKeyConstraint(
+            ["assigned_user_id"],
+            ["users.id"],
+            name="patients_assigned_user_id_fkey",
+            ondelete="SET NULL",
+        ),
         CheckConstraint(
             f"{_not_blank('first_name')} AND {_not_blank('last_name')}", name="patients_names"
         ),
@@ -192,9 +198,13 @@ class Patient(Base):
         Index("ix_patients_status", "status", "id"),
         Index("ix_patients_last_visit", "last_visit", "id"),
         Index("ix_patients_date_of_birth", "date_of_birth", "id"),
+        Index("ix_patients_assigned_user_id", "assigned_user_id", "id"),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
+
+    # Workload membership only. The directory and CRUD access remain shared.
+    assigned_user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
 
     # Editable profile.
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)

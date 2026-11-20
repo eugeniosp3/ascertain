@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_session
 from app.dependencies import get_current_user, get_optional_user
+from app.errors import error_responses
 from app.models import User
 from app.schemas.common import ErrorResponse
 from app.schemas.patients import (
@@ -22,7 +23,7 @@ from app.services import patients
 router = APIRouter(
     prefix="/patients",
     tags=["Patients"],
-    responses={422: {"model": ErrorResponse, "description": "Invalid request"}},
+    responses=error_responses(401, 422, 500, 503),
 )
 Database = Annotated[Session, Depends(get_session)]
 OptionalActor = Annotated[User | None, Depends(get_optional_user)]
@@ -39,7 +40,10 @@ _write_errors: dict[int | str, dict[str, Any]] = {
     "",
     response_model=PatientPage,
     responses={
-        401: {"model": ErrorResponse, "description": "Demo user required for unread filter"}
+        401: {
+            "model": ErrorResponse,
+            "description": "Demo user required for assigned or unread filters",
+        }
     },
 )
 def list_patients(
@@ -49,9 +53,11 @@ def list_patients(
 
     Notes/comments aliases sort the total active-note/comment counts. Null values
     always sort last and UUID breaks ties. An optional X-Demo-User-ID enables unread
-    counts; unread_only=true requires it. Reading this list never marks comments read.
+    counts; unread_only=true and assigned_to=me require it. assigned_to accepts only
+    `me`; omitting it keeps the shared global directory. Reading this list never
+    marks comments read.
     """
-    if query.unread_only:
+    if query.unread_only or query.assigned_to == "me":
         actor = get_current_user(actor)
     return patients.list_patients(session, query, actor)
 
@@ -69,10 +75,10 @@ def get_patient(patient_id: UUID, session: Database, actor: OptionalActor) -> Pa
     responses={409: {"model": ErrorResponse, "description": "Patient data conflict"}},
 )
 def create_patient(
-    payload: PatientCreate, response: Response, session: Database, _actor: OptionalActor
+    payload: PatientCreate, response: Response, session: Database, actor: OptionalActor
 ) -> PatientDetail:
-    """Create a profile; omitted nullable fields default to null and medical lists to []."""
-    patient = patients.create_patient(session, payload)
+    """Create a profile assigned to the selected actor, or unassigned without an actor."""
+    patient = patients.create_patient(session, payload, actor)
     response.headers["Location"] = f"/patients/{patient.id}"
     return patient
 
@@ -81,7 +87,10 @@ def create_patient(
 def replace_patient(
     patient_id: UUID, payload: PatientReplace, session: Database, actor: OptionalActor
 ) -> PatientDetail:
-    """Replace all editable fields; every field is required, with explicit nulls allowed."""
+    """Replace all editable fields; every field is required, with explicit nulls allowed.
+
+    Assignment is not writable and is preserved, whoever edits the profile.
+    """
     return patients.replace_patient(session, patient_id, payload, actor)
 
 

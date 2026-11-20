@@ -1,4 +1,11 @@
-import type { DashboardApi, PatientListParams, PatientWrite, RequestContext } from './types'
+import type { DashboardApi, Page, PatientListParams, PatientWrite, RequestContext } from './types'
+import {
+  notificationSummaryFromDto,
+  patientDetailFromDto,
+  patientListItemFromDto,
+  type PatientDetailDto,
+  type PatientListItemDto,
+} from './dto'
 
 export type ApiErrorKind =
   | 'network'
@@ -140,7 +147,7 @@ function patientBody(input: PatientWrite): PatientWrite {
     blood_type,
     status,
     last_visit,
-    conditions,
+    conditions: conditions.map(({ code, label }) => ({ code, label })),
     allergies,
     allergy_status,
   }
@@ -210,7 +217,7 @@ export function createHttpApi(
 
   return {
     listUsers: (ctx) => request('/users', 'GET', ctx),
-    listPatients: (params, ctx) => {
+    listPatients: async (params, ctx) => {
       const query = new URLSearchParams()
       const keys: Array<keyof PatientListParams> = [
         'q',
@@ -219,16 +226,29 @@ export function createHttpApi(
         'order',
         'page',
         'page_size',
-        'has_unread_comments',
+        'assigned_to',
       ]
       for (const key of keys) {
         if (params[key] !== undefined) query.set(key, String(params[key]))
       }
-      return request(`/patients${query.size ? `?${query}` : ''}`, 'GET', ctx)
+      if (params.has_unread_comments === true) query.set('unread_only', 'true')
+      const page = await request<Page<PatientListItemDto>>(
+        `/patients${query.size ? `?${query}` : ''}`,
+        'GET',
+        ctx,
+      )
+      return { ...page, items: page.items.map(patientListItemFromDto) }
     },
-    getPatient: (id, ctx) => request(patientPath(id), 'GET', ctx),
-    createPatient: (input, ctx) => request('/patients', 'POST', ctx, patientBody(input)),
-    updatePatient: (id, input, ctx) => request(patientPath(id), 'PUT', ctx, patientBody(input)),
+    getPatient: async (id, ctx) =>
+      patientDetailFromDto(await request<PatientDetailDto>(patientPath(id), 'GET', ctx)),
+    createPatient: async (input, ctx) =>
+      patientDetailFromDto(
+        await request<PatientDetailDto>('/patients', 'POST', ctx, patientBody(input)),
+      ),
+    updatePatient: async (id, input, ctx) =>
+      patientDetailFromDto(
+        await request<PatientDetailDto>(patientPath(id), 'PUT', ctx, patientBody(input)),
+      ),
     deletePatient: (id, ctx) => request(patientPath(id), 'DELETE', ctx),
     listNotes: (id, ctx) => request(`${patientPath(id)}/notes`, 'GET', ctx),
     getNote: (id, noteId, ctx) => request(notePath(id, noteId), 'GET', ctx),
@@ -241,7 +261,8 @@ export function createHttpApi(
     getSummary: (id, ctx) => request(`${patientPath(id)}/summary`, 'GET', ctx),
     listComments: (id, params, ctx) => {
       const query = new URLSearchParams()
-      if (params.page !== undefined) query.set('page', String(params.page))
+      if (params.cursor !== undefined) query.set('cursor', params.cursor)
+      else if (params.page !== undefined) query.set('page', String(params.page))
       if (params.page_size !== undefined) query.set('page_size', String(params.page_size))
       return request(`${patientPath(id)}/comments${query.size ? `?${query}` : ''}`, 'GET', ctx)
     },
@@ -256,10 +277,11 @@ export function createHttpApi(
         note_ids: input.note_ids,
       }),
     deleteComment: (id, commentId, ctx) => request(commentPath(id, commentId), 'DELETE', ctx),
-    markCommentsRead: (id, commentIds, ctx) =>
+    markCommentsRead: (id, input, ctx) =>
       request(`${patientPath(id)}/comments/read`, 'POST', ctx, {
-        comment_ids: commentIds,
+        through: input.through,
       }),
-    getNotificationSummary: (ctx) => request('/notifications/summary', 'GET', ctx),
+    getNotificationSummary: async (ctx) =>
+      notificationSummaryFromDto(await request('/notifications/summary', 'GET', ctx)),
   }
 }

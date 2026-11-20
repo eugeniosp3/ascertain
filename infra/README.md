@@ -1,5 +1,7 @@
 # Local setup
 
+[Back to the project overview](../README.md)
+
 ## TLDR
 
 1. Make sure [Docker Desktop](https://docs.docker.com/get-docker/) is installed and its initial setup has been completed.
@@ -17,7 +19,7 @@ The setup script starts Docker Desktop if necessary, waits for the engine, creat
 
 Docker Compose runs the React frontend, FastAPI backend, and PostgreSQL. There are two setups: a compiled frontend for the interviewer, and a development override with hot reload.
 
-The frontend currently defaults to **demo mode**. Demo edits use in-memory fixtures and do not persist to PostgreSQL. The sample configuration enables database migrations and seeding automatically. An existing `.env` is preserved, including any disabled initialization flags.
+The default is **API mode with automatic database migration and seeding**. Frontend changes persist through FastAPI to PostgreSQL. Demo mode is an explicit opt-in using in-memory fixtures. An existing `.env` is preserved, including any older mode or disabled initialization flags; see configuration below to update those settings.
 
 ### 1. Install Docker
 
@@ -60,13 +62,15 @@ The first run downloads images and dependencies, compiles the frontend, and wait
 
 | Service | Default address |
 | --- | --- |
-| React frontend | [http://localhost:8080](http://localhost:8080) |
-| API documentation | [http://localhost:8000/docs](http://localhost:8000/docs) |
-| API liveness | [http://localhost:8000/health](http://localhost:8000/health) |
-| Database connectivity | [http://localhost:8000/ready](http://localhost:8000/ready) |
-| PostgreSQL | `localhost:5432` |
+| React frontend | [http://localhost:10050](http://localhost:10050) |
+| API documentation | [http://localhost:10051/docs](http://localhost:10051/docs) |
+| API liveness | [http://localhost:10051/health](http://localhost:10051/health) |
+| Database connectivity | [http://localhost:10051/ready](http://localhost:10051/ready) |
+| PostgreSQL | `localhost:10052` |
 
 nginx serves the built frontend, supports refreshed deep links, and forwards `/api/...` to the backend with `/api` removed. Backend errors remain API responses. `/ready` checks database connectivity, not successful patient seeding.
+
+The compiled nginx configuration marks entry HTML and SPA fallbacks `no-cache`, while fingerprinted assets receive long-lived immutable caching. Request summaries contain method, status, byte count and duration, without request URLs, query strings or patient identifiers. API upstream error detail is suppressed to avoid reintroducing raw URLs; backend errors retain their existing redacted diagnostics.
 
 ### 4. Develop with hot reload
 
@@ -76,7 +80,7 @@ Use the development override instead of the normal startup command:
 docker compose -f infra/docker-compose.dev.yml up -d --build --wait
 ```
 
-The frontend remains at [http://localhost:8080](http://localhost:8080).
+The frontend remains at [http://localhost:10050](http://localhost:10050) with the sample configuration. Existing `.env` port settings still apply.
 
 - Your `frontend/` source is mounted into the frontend container. Vite watches edits and updates the browser. File polling helps detect changes across host/container file mounts.
 - Your backend application and data-package Python source are mounted into the API container. Uvicorn's `--reload` restarts its worker when Python files change.
@@ -87,7 +91,7 @@ To return to the compiled interviewer setup, run `docker compose up -d --build -
 
 ### 5. Connect to PostgreSQL
 
-For the sample `.env`, use database `sample_db`, username `sample_user`, password `sample_password`, and host `localhost:5432`. If you already have an `.env`, use its values instead. These are local demo credentials; host ports bind only to localhost.
+For the sample `.env`, use database `sample_db`, username `sample_user`, password `sample_password`, and host `localhost:10052`. If you already have an `.env`, use its values instead. These are local demo credentials; host ports bind only to localhost.
 
 Open the PostgreSQL client inside its container:
 
@@ -95,7 +99,7 @@ Open the PostgreSQL client inside its container:
 docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 ```
 
-Run `SELECT current_database(), current_user;` and type `\q` to exit. A native backend uses `postgresql+psycopg://sample_user:sample_password@localhost:5432/sample_db`; a container uses host `db` and port `5432`. URL-encode credentials when constructing a URL manually.
+Run `SELECT current_database(), current_user;` and type `\q` to exit. A native backend uses `postgresql+psycopg://sample_user:sample_password@localhost:10052/sample_db`; a container uses host `db` and port `5432`. URL-encode credentials when constructing a URL manually.
 
 For database-only work:
 
@@ -125,13 +129,15 @@ docker compose -f infra/docker-compose.dev.yml --profile '*' down --volumes
 
 ### 7. Configuration and live data
 
-Change `FRONTEND_PORT`, `BACKEND_PORT`, or `POSTGRES_PORT` in the root `.env` if a host port is occupied, then repeat your startup command. Internal service ports do not change.
+The sample host ports are `FRONTEND_PORT=10050`, `BACKEND_PORT=10051`, and `POSTGRES_PORT=10052`. These can still conflict with another application: change the occupied port in the root `.env`, then repeat your startup command. Internal service ports remain `8080`, `8000`, and `5432`, so container-to-container connections do not change. Setup preserves existing `.env` port choices and prints the actual addresses.
 
 `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` initialize an empty volume. Changing them later does not rename an existing database or reset its password. Preserve existing values unless you are deliberately replacing a disposable database.
 
-`VITE_DATA_MODE=demo` selects the frontend's fixture adapter. `VITE_DATA_MODE=api` selects HTTP requests without falling back to fixtures. Keep `VITE_API_BASE=/api` for this setup. These two settings are public and are embedded in compiled browser assets; never put secrets in `VITE_*` values. Rebuild the frontend after changing them. Vite's development proxy forwards the same `/api` paths to `backend:8000`.
+`VITE_DATA_MODE=api` is the default and selects HTTP requests without falling back to fixtures. To opt into the in-memory fixture adapter, set `VITE_DATA_MODE=demo` in `.env` and rerun setup. Demo edits do not persist to PostgreSQL. Keep `VITE_API_BASE=/api` for either mode. These two settings are public and are embedded in compiled browser assets; never put secrets in `VITE_*` values. Rebuild the frontend after changing them. Vite's development proxy forwards the same `/api` paths to `backend:8000`.
 
 The sample configuration sets `MIGRATE_ON_STARTUP=true` and `SEED_ON_STARTUP=true`. The entrypoint runs Alembic, then the backend's `python -m app.seed`, then starts FastAPI. A failure stops startup. The image prepares bronze/silver DuckDB snapshots from committed patient source for this command; it does not rely on host-generated database files. The older JSONL `patient_data.seed` command is not part of this runtime sequence. Existing environment files may still have initialization disabled; the setup script intentionally preserves them.
+
+If you already have an `.env` from an earlier setup, change only `VITE_DATA_MODE=api`, `MIGRATE_ON_STARTUP=true`, and `SEED_ON_STARTUP=true` to adopt the defaults, then rerun `./setup.sh` (or `./setup.sh --dev`). Keep your database credentials, ports and other settings. Do not replace the file or remove the database volume.
 
 ### 8. Run checks
 
@@ -152,9 +158,39 @@ With Python 3 available, run the compiled-stack HTTP and persistence checks in a
 python3 infra/scripts/verify_stack.py
 ```
 
-That command builds the compiled frontend, checks assets, deep links and API forwarding, recreates containers, and verifies database persistence. It uses its own temporary ports and database volume, then removes them. Add `--database-only` to check PostgreSQL alone. These infrastructure checks do not replace the frontend's browser tests or prove a patient workflow against live API data.
+That command builds the compiled frontend, checks assets, cache headers, deep links, API forwarding and request-log privacy, recreates containers, and verifies database persistence. Its privacy probe also stops/restarts only the isolated API to exercise upstream-failure logging. It uses its own temporary ports and database volume, then removes them. Add `--database-only` to check PostgreSQL alone. These infrastructure checks do not replace the frontend's browser tests or prove a patient workflow against live API data.
 
-[CI](../.github/workflows/ci.yml) runs the containerized checks and isolated verification. Hosted CI requires a published repository. [checklist.md](checklist.md) tracks remaining integration work.
+[CI](../.github/workflows/ci.yml) keeps three kinds of coverage distinct:
+
+- **Application checks and seeded startup:** linting, formatting, typing, unit/PostgreSQL tests, compiled assets, proxy/deep links, migrations, seed markers, and preservation of edits/deletions across restarts.
+- **Demo and intercepted-contract regressions:** desktop/mobile demo journeys and controlled HTTP-response fixtures. These do not prove that the browser works with the real backend.
+- **Real API browser integration:** an isolated compiled API-mode frontend, FastAPI and PostgreSQL, with no HTTP interception. A previous staged functional candidate passed 16 cases; the current assignment, default-user and restoration changes still need the final integration run. The new lane has not yet run on hosted CI.
+
+The published [baseline CI run](https://github.com/eugeniosp3/ascertain/actions/runs/44781809472) passed on commit `611bda5`. Its passing demo/fixture results are separate from the pending real API integration milestone. [checklist.md](docs/checklist.md) records completed and pending work.
+
+An independent isolated Docker check of backend source `34e2150b…` passed 236 backend tests and 160 data tests, plus Ruff and mypy. It verified that fault evidence was absent from the checks image while the 30 approved harness source files remained. That snapshot predates the assigned-workload migration and is historical evidence, not verification of the new assignment implementation.
+
+#### Live browser handoff
+
+The frontend-owned interface is `e2e:live`, `playwright.live.config.ts`, and `e2e-live/`. After the owners confirm a stable candidate, install the browser-test dependencies with the frontend's locked Node/npm versions and Chrome. From the repository root, run:
+
+```sh
+python3 infra/scripts/verify_stack.py --live-browser
+```
+
+The runner builds the frontend with `VITE_DATA_MODE=api`, starts a fresh isolated seeded stack on temporary ports, and supplies its frontend address as `PLAYWRIGHT_LIVE_BASE_URL` to:
+
+```sh
+npm run e2e:live -- --workers=1
+```
+
+The frontend configuration must use that existing server and same-origin `/api`, with no Playwright web server or intercepted responses. It runs desktop Chrome and 390px touch-mobile Chrome. Tests discover `/users`, create run-unique disposable patients, and clean up only the IDs they created. They must not edit seed patients or reset existing read state. Browser artifacts and the default JSON report go to the ignored `frontend/e2e-live/results/` directory.
+
+CI retains live browser results for seven days on both success and failure. Demo and intercepted-contract artifacts remain separate. Local evidence under `infra/artifacts/` and raw backend fault artifacts stay ignored.
+
+Browser tests run while all 100 seeded patients are intact. The runner checks patient/seed preservation afterward, then performs its own deliberate edit/deletion and restart checks. It stops browser processes on interruption or timeout and removes only its own Compose project and volumes.
+
+The verification runner uses a separate Compose project and does not change the shared development stack or its `.env`. Shared migration and restart timing is coordinated separately while application changes land.
 
 ### 9. Where the Docker files live
 

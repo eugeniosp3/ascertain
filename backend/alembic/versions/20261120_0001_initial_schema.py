@@ -3,7 +3,7 @@
 Revision ID: 20261120_0001
 Revises:
 
-Mirrors app/models.py (see backend/MODEL_CONTRACT.md). Constraint names are explicit; CHECK
+Mirrors app/models.py (see backend/docs/MODEL_CONTRACT.md). Constraint names are explicit; CHECK
 expressions are frozen literals here even though the models derive them from constants.
 """
 

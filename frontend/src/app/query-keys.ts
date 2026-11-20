@@ -10,6 +10,10 @@ export const patientKeys = {
       : (['patients', 'list', actorId] as const),
   list: (actorId: string | null, params: PatientListParams) =>
     ['patients', 'list', actorId, params] as const,
+  // One cohort projection per viewer and scope, under the list prefix so every patient/note
+  // mutation that invalidates lists also refreshes the overview.
+  overview: (actorId: string | null, scope: 'assigned') =>
+    ['patients', 'list', actorId, 'overview-projection', scope] as const,
   detail: (id: string, actorId?: string | null) =>
     actorId === undefined
       ? (['patients', 'detail', id] as const)

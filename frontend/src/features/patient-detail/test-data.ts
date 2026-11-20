@@ -1,4 +1,4 @@
-import type { Comment, Note, PatientDetail } from '@/api'
+import type { Comment, CommentPage, Note, PatientDetail } from '@/api'
 
 export const actorId = '40000000-0000-4000-8000-000000000001'
 export const otherActor = '40000000-0000-4000-8000-000000000002'
@@ -20,6 +20,7 @@ export const patient: PatientDetail = {
   notes_count: 1,
   comments_count: 2,
   unread_comments_count: 1,
+  assigned_user_id: actorId,
   phone: null,
   email: null,
   address_line1: '123 Main Street',
@@ -58,6 +59,21 @@ export function makeComment(id = 'comment-1', overrides: Partial<Comment> = {}):
     updated_at: stamp,
     is_unread: true,
     note_links: [],
+    ...overrides,
+  }
+}
+
+export function makeCommentPage(
+  items: Comment[] = [],
+  overrides: Partial<CommentPage> = {},
+): CommentPage {
+  return {
+    items,
+    total: items.length,
+    page: 1,
+    page_size: 10,
+    read_through: '2026-11-01T14:30:01.123456+00:00',
+    next_cursor: null,
     ...overrides,
   }
 }

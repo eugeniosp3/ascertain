@@ -91,6 +91,7 @@ test('create the 101st patient, preserve an invalid draft, edit the full profile
   await test.step('Deletion requires confirmation and removes the record from the directory', async () => {
     await page.getByRole('button', { name: 'Delete patient', exact: true }).click()
     await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel', exact: true }).click()
+    await expect(page.getByRole('alertdialog')).toHaveCount(0)
     await expect(page.getByRole('dialog', { name: 'Zelda Q Updated', exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Delete patient', exact: true }).click()
     await confirmDeletion(page, 'Delete patient')

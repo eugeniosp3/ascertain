@@ -1,3 +1,4 @@
+import { PATIENT_FIELD_LIMITS as limits } from '@/api/constraints'
 import { PatientInput, PatientSelect } from './PatientInput'
 import type { PatientFormBinding } from './use-patient-form'
 
@@ -9,7 +10,7 @@ export function PersonalFields({ binding }: { binding: PatientFormBinding }) {
         name="first_name"
         label="First name"
         autoComplete="given-name"
-        maxLength={60}
+        maxLength={limits.name}
         required
       />
       <PatientInput
@@ -17,7 +18,7 @@ export function PersonalFields({ binding }: { binding: PatientFormBinding }) {
         name="last_name"
         label="Last name"
         autoComplete="family-name"
-        maxLength={60}
+        maxLength={limits.name}
         required
       />
       <PatientInput
@@ -25,7 +26,7 @@ export function PersonalFields({ binding }: { binding: PatientFormBinding }) {
         name="middle_initial"
         label="Middle initial"
         autoComplete="additional-name"
-        maxLength={1}
+        maxLength={limits.middle_initial}
       />
       <PatientInput
         binding={binding}

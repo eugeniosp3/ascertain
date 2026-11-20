@@ -2,7 +2,7 @@
 
 The Vite/React patient workspace implements the reviewed design with themed shadcn components, TanStack Router/Query/Table/Virtual/Form, and a small Zustand UI store. It includes patient creation/editing/deletion, clinical notes, summaries, authored discussion, unread notifications and responsive patient overlays.
 
-**Integration status:** the frontend is runnable with its explicit demo adapter. The HTTP adapter is implemented and tested against intercepted contract responses; live PostgreSQL/backend integration remains open because several backend contracts differ. See the [data and endpoint handoff](../chatroom/frontend-data-contract.md) and [project-manager update](../chatroom/frontend-updates.md).
+**Integration:** API mode is the default. The app automatically uses the first active demo user returned by `/users`, preserving a valid saved choice. Overview shows that user's assigned workload; the patient directory stays shared. See the [data contract](../reference/chatroom/frontend-data-contract.md), [frontend updates](../reference/chatroom/frontend-updates.md), and [root setup guide](../README.md).
 
 ## Run locally
 
@@ -14,7 +14,7 @@ npm ci
 npm run dev
 ```
 
-Open the local URL printed by Vite. Demo mode selects a valid synthetic user initially; the header lets you switch between the two demo users. All patient, note and comment changes are held in browser memory and **reset on reload**. Zustand persists only sidebar and demo-user preferences, not clinical records or drafts.
+Open the local URL printed by Vite. The app defaults to User A (the first actual `/users` result), preserving a valid saved choice. Use the demo-user picker to switch identities. API mode uses FastAPI/PostgreSQL; `VITE_DATA_MODE=demo` is the explicit temporary-memory option whose edits reset on reload. Zustand persists sidebar, actor and theme preferences, not clinical records or drafts.
 
 To use the real API transport, configure [.env.example](.env.example) values in an ignored `.env.local`, or run:
 
@@ -22,7 +22,7 @@ To use the real API transport, configure [.env.example](.env.example) values in 
 VITE_DATA_MODE=api npm run dev
 ```
 
-API mode requires a deliberate user selection and never falls back to fixtures on failure. Browser calls use `/api`; the dev proxy forwards them to `API_PROXY_TARGET` (default `http://127.0.0.1:8000`) with the prefix removed. `VITE_DATA_MODE` and `VITE_API_BASE` are build-time public settings. The backend alignment table currently identifies unread-filter naming, notification fields, comment ordering/read markers, and read-acknowledgment differences that must be resolved before claiming live integration.
+Identity discovery validates the saved user against `/users`; absent or stale choices fall back to its first actual result. Failed discovery does not fabricate an identity or fall back to fixture data. Browser calls use `/api`; the dev proxy forwards them to `API_PROXY_TARGET` (default `http://127.0.0.1:8000`) with the prefix removed. `VITE_DATA_MODE` and `VITE_API_BASE` are build-time public settings. The adapter maps backend notification/list fields, follows chronological comment cursors, and acknowledges exact displayed-prefix boundaries.
 
 ## Verify and build
 
@@ -30,10 +30,11 @@ API mode requires a deliberate user selection and never falls back to fixtures o
 npm run lint
 npm run format:check
 npm run typecheck
-npm run test
-npm run build
+npm test
 npm run e2e -- --workers=2
 npm run e2e:api -- --workers=2
+# Build for deployment when needed:
+npm run build
 ```
 
 The production build is in `dist/`. Playwright uses installed Chrome and isolated browser contexts. The demo suite starts Vite on port 4174; the API suite starts API mode on 4175 and intercepts HTTP responses. `PLAYWRIGHT_BASE_URL` and `PLAYWRIGHT_API_BASE_URL` can instead point at existing frontend servers. These HTTP fixtures do not prove database persistence. Test results and review fixes are recorded in the project-manager update.
@@ -50,8 +51,8 @@ Infra can use `npm ci` and `npm run build`, serve `dist/` with SPA fallback, and
 
 ## Open the mockups
 
-- [Patient workspace](UI_mocks/index.html): collapsible vertical navigation, a searchable and paginated patient table, clickable clinical-note counts, and the two-panel patient overlay. On phones, the overlay becomes full-screen detail with Back.
-- [Component gallery](UI_mocks/components.html): theme colors, buttons, fields, navigation, tables, identity headers, feedback and dialog specimens.
+- [Patient workspace](docs/ui-mocks/index.html): collapsible vertical navigation, a searchable and paginated patient table, clickable clinical-note counts, and the two-panel patient overlay. On phones, the overlay becomes full-screen detail with Back.
+- [Component gallery](docs/ui-mocks/components.html): theme colors, buttons, fields, navigation, tables, identity headers, feedback and dialog specimens.
 
 Double-click either HTML file to open it in a browser. Both files contain their own styles, scripts and synthetic data; no install, server or database is required. Patient/note/comment changes stay in memory and reset on reload; view preferences may persist in the browser.
 
@@ -82,9 +83,9 @@ This stack replaces the Mantine, React Router and React Hook Form suggestions in
 
 - Brief: [project.md](../reference/project.md). Master checklist: [holepunch.html](../reference/holepunch.html).
 - Design reference: [design-system/README.md](../reference/design-system/README.md), [tokens.css](../reference/design-system/tokens.css), [components](../reference/design-system/02_components.md) and [accessibility](../reference/design-system/05_accessibility_and_responsive.md).
-- Companion plans: [backend checklist](../backend/HOLEPUNCH.md), [API implementation plan](../backend/IMPLEMENTATION.md), [data-model proposal](../backend/DATA_MODEL.md), [schema](../backend/schema.dbml), [infra plan](../infra/README.md) and [infra checklist](../infra/checklist.md).
+- Companion plans: [backend checklist](../backend/docs/HOLEPUNCH.md), [API implementation plan](../backend/docs/IMPLEMENTATION.md), [data-model proposal](../backend/docs/DATA_MODEL.md), [schema](../backend/docs/schema.dbml), [infra plan](../infra/README.md) and [infra checklist](../infra/docs/checklist.md).
 - Fixture context: [prior-auth-pack/README.md](../reference/prior-auth-pack/README.md). It supplies realistic data, not a mandate to build prior-auth screens.
-- How to build it: [IMPLEMENTATION.md](IMPLEMENTATION.md).
+- How to build it: [IMPLEMENTATION.md](docs/IMPLEMENTATION.md).
 
 ## Ownership
 
@@ -95,15 +96,15 @@ This stack replaces the Mantine, React Router and React Hook Form suggestions in
 
 ## Checklist
 
-Checked items record frontend implementation verified with the demo adapter or HTTP contract fixtures. They do not certify live backend/database behavior. Contract alignment and integrated-stack checks remain open below; the project manager's final application-acceptance list is in the shared update. Items marked *(addition)* are selected features beyond the original brief.
+Checked items record implementation with scoped evidence; they do not certify every interaction or the final integrated candidate. The dated handoff distinguishes demo, HTTP-contract and live results. Known review failures below remain open, and master acceptance belongs to PM/Opus QA. Items marked *(addition)* are selected features beyond the original brief.
 
 ### 1. Agree on the API contract
 
-- [ ] Confirm the list envelope `{items, total, page, page_size}` and the query params `q`, `status`, `sort_by`, `order`, `page` and `page_size` with the backend.
-- [ ] Agree a `notes_count` field on patient list rows, counting active clinical notes without a separate notes request for each patient.
-- [ ] Confirm the patient field shapes: ID format, status values, blood type values, conditions and allergies, contact and address fields.
+- [x] Adopt the backend list envelope `{items, total, page, page_size}` and query params `q`, `status`, `sort_by`, `order`, `page` and `page_size`; candidate 03 exercised real queries.
+- [x] Consume backend `notes_count`, counting active notes without a separate child request per patient.
+- [x] Align patient IDs, status/blood values, conditions/allergies and flat contact/address fields with the live contract.
 - [ ] Confirm the error envelope and how 422 field paths are reported, so server errors can be attached to the right form fields.
-- [ ] Use the note-detail, summary, comment, demo-user and note-link contracts in the backend plan, then check them against OpenAPI before API integration.
+- [x] Adopt live note/summary/comment/user/link endpoints and cursor/read-through semantics; candidate 03 exercised their real HTTP behavior.
 
 ### 2. Tooling and project setup
 
@@ -148,14 +149,14 @@ Checked items record frontend implementation verified with the demo adapter or H
 - [x] Keep search, filter, sort and page in Zod-validated URL params, so refresh, the back button and shared links all keep the view.
 - [x] Show a loading skeleton, an empty state that tells "no patients" apart from "no matches", and an error state with a retry.
 - [ ] Check against the backend's 100+ seeded patients that search, sort and paging stay fast.
-- [x] Virtualize offscreen rows in the production table and preserve keyboard access, scroll position and focused-row restoration.
+- [ ] Virtualize offscreen rows and preserve keyboard access, scroll and origin focus. Implementation exists; repeated-history focus and the original scroll proof remain under review.
 
 ### 7. Patient detail and summary
 
 - [x] Show the full profile in personal, contact, address and medical sections, distinguishing unknown blood type or allergies from explicitly recorded no known allergies.
 - [x] On wider screens, show patient details in a two-panel modal workspace over a blurred structural backdrop; remove the underlying patient rows from the DOM and disable background interaction while it is open.
 - [x] Compact the patient identity header during detail scrolling while keeping name, DOB, age and patient number readable; expand it again at the top.
-- [x] On phones, use full-screen detail with a Back control; closing restores the list's filters, page, scroll and focus, with the last-viewed patient highlighted in lilac.
+- [ ] Verify full-screen phone detail and complete return-state restoration after the fixes. Candidate 03 verifies modal bounds and first returns; repeated history/scroll adjudication remain open.
 - [x] A missing or deleted patient shows a not-found state, not a crash or a generic error.
 - [x] Show the summary panel: identifiers (name, age, blood type), the narrative, conditions and allergies, with loading and error states.
 - [x] Refresh the summary after a note is added or deleted and after the patient is edited.
@@ -191,8 +192,8 @@ Checked items record frontend implementation verified with the demo adapter or H
 ### 11. Errors, accessibility and responsive layout
 
 - [x] A failed query shows an inline error with a retry, failed mutations show visible feedback beside the affected action, and a 5xx gets a friendly message. Nothing fails silently.
-- [x] Every input has a label, everything works from the keyboard, focus is visible, status is never shown by color alone, mobile body text is at least 16 px, and touch targets are at least 44 px.
-- [x] Check every screen at 1280, 1024, 768 and 375 px: no horizontal scrolling and a clean browser console.
+- [ ] Complete control-level keyboard/focus/touch acceptance, including visible invalid-submit recovery and singular announced counts. Existing labels/focus/status treatments do not close the outstanding findings.
+- [ ] Recheck every screen at 1280, 1024, 768 and 375 px after mobile-density and clipped-tab/pagination fixes; preserve clean console and page reflow.
 - [x] Respect the reduced-motion setting.
 
 ### 12. Tests and verification
@@ -201,22 +202,27 @@ Checked items record frontend implementation verified with the demo adapter or H
 - [x] Component-test the list states and debounced search, form errors from client and server, adding and deleting notes, and comment authorship and links.
 - [x] Test behavior, not snapshots or token values.
 - [ ] Run the main journey in a real browser against the running stack at desktop width and at 375 px: list, search, open, add a note, comment with a note link, edit, delete.
-- [x] Before hand-off, run `lint`, `typecheck`, `format:check`, `test` and `build`, and record which checks actually ran.
+- [ ] Before final hand-off, run `lint`, `typecheck`, `format:check`, `test` and `build` on the working tree and record exact evidence.
 
 ### 13. Containers, CI and hand-off
 
 - [x] Give infra the install and build commands, the `dist/` output folder, the Node version and any build-time variables.
 - [ ] In the Compose build, check deep-link refresh, that `/api` reaches the backend, and that API errors are not replaced by the HTML page.
-- [ ] Write the frontend sections of the root README: dev commands, stack choices with reasons, how 100+ patients and non-blocking search are handled, and known limits.
+- [ ] Supply final frontend evidence/limitations to PM for the root README; PM owns that file.
 - [x] Update this checklist as items are verified. Never check another role's items.
+
+## Selected additions awaiting final review
+
+- [ ] Default to the first actual demo user after discovery; preserve a valid saved second user and replace stale IDs. Automatic selection and saved-user preservation are implemented.
+- [ ] Personalize Overview from stored backend assignments for the selected user, with an explicit cohort/denominator label. The all-patient directory remains shared. The backend contract is implemented; assignment seeding supplies the per-user cohorts. Global directory access is unchanged.
+- [ ] Light/Dark/System with default Dark only without a saved choice, lightbulb icons, readable native controls/dialogs and pointerless tooltips. Implemented; retain final candidate evidence.
+- [ ] Four compact charts from one complete projection, including keyboard/touch inspection and distinct partial-current-month treatment. Implemented; Opus visual fixes/acceptance remain open.
 
 ## Optional stretch and deferred work
 
 Nothing here is promised. Pick items only after the required work passes.
 
 - [x] Stretch: lazy-loaded routes (code splitting).
-- [ ] Stretch: switching between dark and light themes.
 - [ ] Stretch: advanced filters (blood type, condition, age range, last-visit range), if the backend supports them.
-- [ ] Stretch: a patient status chart on the dashboard.
 - [ ] Stretch: adding external file links to notes from the UI, if the backend's attachment endpoint ships.
 - [ ] Deferred: real authentication and roles, file upload and storage, rich-text notes, real-time updates, LLM summary controls, and prior-authorization request screens.

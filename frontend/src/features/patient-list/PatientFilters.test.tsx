@@ -44,6 +44,31 @@ describe('patient search controls', () => {
     act(() => vi.advanceTimersByTime(1000))
     expect(onChange).not.toHaveBeenCalled()
   })
+  it('keeps a just-typed space when its trimmed query commits, without recommitting', () => {
+    vi.useFakeTimers()
+    const onChange = vi.fn()
+    const { rerender } = render(
+      <PatientFilters search={defaultListSearch} navigationKey="one" onChange={onChange} />,
+    )
+    const input = screen.getByRole('searchbox', { name: 'Search patients' })
+    fireEvent.change(input, { target: { value: 'John ' } })
+    act(() => vi.advanceTimersByTime(250))
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ q: 'John', page: 1 }, true)
+    // The replace navigation lands with a new history key and the trimmed query.
+    rerender(
+      <PatientFilters
+        search={{ ...defaultListSearch, q: 'John' }}
+        navigationKey="two"
+        onChange={onChange}
+      />,
+    )
+    expect(input).toHaveValue('John ')
+    act(() => vi.advanceTimersByTime(1000))
+    expect(onChange).toHaveBeenCalledOnce()
+    fireEvent.change(input, { target: { value: 'John S' } })
+    act(() => vi.advanceTimersByTime(250))
+    expect(onChange).toHaveBeenLastCalledWith({ q: 'John S', page: 1 }, true)
+  })
   it('commits the current draft when a status filter is chosen', () => {
     const onChange = vi.fn()
     render(<PatientFilters search={defaultListSearch} navigationKey="one" onChange={onChange} />)

@@ -5,7 +5,7 @@ services:
       target: development
     init: true
     environment:
-      VITE_DATA_MODE: ${VITE_DATA_MODE:-demo}
+      VITE_DATA_MODE: ${VITE_DATA_MODE:-api}
       VITE_API_BASE: ${VITE_API_BASE:-/api}
       API_PROXY_TARGET: http://backend:8000
       DEV_SERVER_HOST: 0.0.0.0

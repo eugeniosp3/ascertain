@@ -44,10 +44,12 @@ jobs:
           docker compose --profile checks config --quiet
 
       - name: Build images and run application checks
+        env:
+          VITE_DATA_MODE: demo
         run: |
           docker compose --profile checks build
           docker compose --profile checks run --rm checks
-          docker compose --profile checks run --rm frontend-checks
+          docker compose --profile checks run --rm -e VITE_DATA_MODE=demo frontend-checks
 
       - name: Verify application startup, HTTP routing, and database persistence
         run: python3 infra/scripts/verify_stack.py
@@ -63,7 +65,7 @@ jobs:
         run: docker compose --profile checks down --volumes --remove-orphans
 
   browser:
-    name: Frontend browser journeys
+    name: Demo and intercepted-contract regressions
     if: >-
       github.event_name != 'push' ||
       github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
@@ -93,9 +95,13 @@ jobs:
           npx playwright install --with-deps chrome
 
       - name: Test desktop and mobile demo journeys
+        env:
+          VITE_DATA_MODE: demo
         run: npm run e2e
 
       - name: Test the browser HTTP adapter with contract fixtures
+        env:
+          VITE_DATA_MODE: api
         run: npx playwright test --config playwright.api.config.ts
 
       - name: Upload browser failure artifacts
@@ -107,5 +113,44 @@ jobs:
             frontend/playwright-report/
             frontend/test-results/
             frontend/e2e-api/results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  live:
+    name: Real API browser integration
+    if: >-
+      github.event_name != 'push' ||
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install locked browser dependencies and Chrome
+        working-directory: frontend
+        run: |
+          npm install --global npm@11.19.0 --no-audit --no-fund
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chrome
+
+      - name: Test the compiled frontend against seeded FastAPI and PostgreSQL
+        run: python3 infra/scripts/verify_stack.py --live-browser
+
+      - name: Preserve live browser results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: live-api-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: frontend/e2e-live/results/
           if-no-files-found: ignore
           retention-days: 7

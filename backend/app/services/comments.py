@@ -22,10 +22,23 @@ from app.schemas.users import UserResponse
 from app.services.notes import require_patient
 
 
-def comment_responses(session: Session, comments: Sequence[Comment]) -> list[CommentResponse]:
-    """Read authors and linked notes in batches, including stable tombstone links."""
+def comment_responses(
+    session: Session, comments: Sequence[Comment], *, viewer: User | None = None
+) -> list[CommentResponse]:
+    """Batch-read authors, links, and viewer watermarks without changing read state."""
     if not comments:
         return []
+    watermarks: dict[UUID, datetime] = {}
+    if viewer is not None:
+        watermarks = {
+            patient_id: last_read_at
+            for patient_id, last_read_at in session.execute(
+                select(DiscussionRead.patient_id, DiscussionRead.last_read_at).where(
+                    DiscussionRead.user_id == viewer.id,
+                    DiscussionRead.patient_id.in_({comment.patient_id for comment in comments}),
+                )
+            )
+        }
     authors = {
         user.id: UserResponse.model_validate(user)
         for user in session.scalars(
@@ -60,6 +73,14 @@ def comment_responses(session: Session, comments: Sequence[Comment]) -> list[Com
             author=authors[comment.author_id],
             created_at=comment.created_at,
             updated_at=comment.updated_at,
+            is_unread=(
+                viewer is not None
+                and comment.author_id != viewer.id
+                and (
+                    comment.patient_id not in watermarks
+                    or comment.created_at > watermarks[comment.patient_id]
+                )
+            ),
             note_links=links[comment.id],
         )
         for comment in comments
@@ -67,7 +88,13 @@ def comment_responses(session: Session, comments: Sequence[Comment]) -> list[Com
 
 
 def list_comments(
-    session: Session, patient_id: UUID, *, page: int, page_size: int, cursor: str | None = None
+    session: Session,
+    patient_id: UUID,
+    *,
+    page: int,
+    page_size: int,
+    cursor: str | None = None,
+    viewer: User | None = None,
 ) -> CommentPage:
     """Read a chronological prefix using a stable cursor; take no read-state action.
 
@@ -132,7 +159,7 @@ def list_comments(
             page=page + 1,
         ).encode()
     return CommentPage(
-        items=comment_responses(session, comments),
+        items=comment_responses(session, comments, viewer=viewer),
         total=total,
         page=page,
         page_size=page_size,
@@ -198,7 +225,7 @@ def create_comment(
             for note_id in values.note_ids
         )
         session.flush()
-        result = comment_responses(session, [comment])[0]
+        result = comment_responses(session, [comment], viewer=actor)[0]
         session.commit()
         return result
     except Exception:
@@ -229,7 +256,7 @@ def update_comment(
             for note_id in values.note_ids
         )
         session.flush()
-        result = comment_responses(session, [comment])[0]
+        result = comment_responses(session, [comment], viewer=actor)[0]
         session.commit()
         return result
     except Exception:

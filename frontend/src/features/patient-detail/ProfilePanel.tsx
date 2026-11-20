@@ -1,11 +1,10 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Check, Copy } from 'lucide-react'
 import { api, type PatientDetail, type ProfileDetails } from '@/api'
 import { patientKeys } from '@/app/query-keys'
 import { Button } from '@/components/ui/button'
-import { StatusPill } from '@/components/ui/status-pill'
 import { formatDate, formatDateTime } from '@/utils/dates'
-import { getPatientName } from '@/utils/patient'
 import { ConfirmDelete } from './ConfirmDelete'
 
 function DetailSection({ title, children }: { title: string; children: ReactNode }) {
@@ -51,7 +50,7 @@ export function SourceDetails({ details }: { details: ProfileDetails }) {
           Read-only information from the source snapshot.
         </p>
       </div>
-      <div className="pw-profile-grid">
+      <div className="pw-source-grid">
         {i && (
           <DetailSection title="Source demographics">
             <Value label="Age at source snapshot">{i.age_years} years</Value>
@@ -180,13 +179,11 @@ export function ProfilePanel({
   ]
     .filter(Boolean)
     .join('\n')
+  // Identity (name, DOB, age, MRN, status) is shown once, in the workspace header.
   return (
     <div className="pw-panel">
       <div className="pw-panel-head">
-        <div>
-          <h3 className="text-lg font-semibold">Profile</h3>
-          <p className="text-sm text-muted-foreground">Personal, contact and medical details.</p>
-        </div>
+        <h3 className="text-lg font-semibold">Profile</h3>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={onEdit}>
             Edit patient
@@ -201,17 +198,6 @@ export function ProfilePanel({
         </div>
       </div>
       <div className="pw-profile-grid">
-        <DetailSection title="Personal">
-          <Value label="Full name">{getPatientName(patient)}</Value>
-          <Value label="Date of birth">{formatDate(patient.date_of_birth)}</Value>
-          <Value label="Age">{patient.age} years</Value>
-          <Value label="Patient ID">{patient.id}</Value>
-          <Value label="Source patient ID">{patient.source_patient_id}</Value>
-          <Value label="MRN">{patient.mrn}</Value>
-          <Value label="Status">
-            <StatusPill status={patient.status} />
-          </Value>
-        </DetailSection>
         <DetailSection title="Contact">
           <Value label="Phone">{patient.phone}</Value>
           <Value label="Email">{patient.email}</Value>
@@ -248,18 +234,84 @@ export function ProfilePanel({
             {patient.last_visit ? formatDate(patient.last_visit) : 'No visit recorded'}
           </Value>
         </DetailSection>
-        <DetailSection title="Record history">
-          <Value label="Created">{formatDateTime(patient.created_at)}</Value>
-          <Value label="Updated">{formatDateTime(patient.updated_at)}</Value>
-          {patient.source_created_at && (
-            <Value label="Source created">{formatDateTime(patient.source_created_at)}</Value>
-          )}
-          {patient.source_updated_at && (
-            <Value label="Source updated">{formatDateTime(patient.source_updated_at)}</Value>
-          )}
-        </DetailSection>
       </div>
       {patient.profile_details && <SourceDetails details={patient.profile_details} />}
+      {/* Record history and technical identifiers: one quiet footer line, not a card. */}
+      <footer className="pw-record-meta">
+        <h4 className="sr-only">Record details</h4>
+        <dl>
+          <div>
+            <dt>Patient ID</dt>
+            <dd>
+              <code>{patient.id}</code>
+              <CopyValue value={patient.id} label="Copy patient ID" />
+            </dd>
+          </div>
+          <div>
+            <dt>Source ID</dt>
+            <dd>
+              {patient.source_patient_id ? (
+                <code>{patient.source_patient_id}</code>
+              ) : (
+                'Not recorded'
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>Created</dt>
+            <dd>{formatDateTime(patient.created_at)}</dd>
+          </div>
+          <div>
+            <dt>Updated</dt>
+            <dd>{formatDateTime(patient.updated_at)}</dd>
+          </div>
+          {patient.source_created_at && (
+            <div>
+              <dt>Source created</dt>
+              <dd>{formatDateTime(patient.source_created_at)}</dd>
+            </div>
+          )}
+          {patient.source_updated_at && (
+            <div>
+              <dt>Source updated</dt>
+              <dd>{formatDateTime(patient.source_updated_at)}</dd>
+            </div>
+          )}
+        </dl>
+      </footer>
     </div>
+  )
+}
+
+/** Copies a technical identifier; the status text confirms the copy for assistive technology. */
+function CopyValue({ value, label }: { value: string; label: string }) {
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    if (!copied) return
+    const timer = window.setTimeout(() => setCopied(false), 2000)
+    return () => window.clearTimeout(timer)
+  }, [copied])
+  return (
+    <>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="pw-copy"
+        aria-label={label}
+        onClick={() => {
+          void navigator.clipboard?.writeText(value).then(
+            () => setCopied(true),
+            () => setCopied(false),
+          )
+        }}
+      >
+        {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+      </Button>
+      {/* aria-live without role="status", so page-level status queries stay unambiguous. */}
+      <span className="sr-only" aria-live="polite">
+        {copied ? 'Copied' : ''}
+      </span>
+    </>
   )
 }

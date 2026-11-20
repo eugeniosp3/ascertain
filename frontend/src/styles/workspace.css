@@ -73,12 +73,25 @@
   white-space: nowrap;
 }
 .ac-nav-item:hover {
-  background: rgb(18 18 18 / 5%);
+  background: var(--ac-hover);
 }
 .ac-nav-item[aria-current='page'] {
   background: var(--ac-selected);
   color: var(--ac-ink);
   font-weight: 550;
+}
+/* Persistent selection marker (AST-001): an ink bar on the rail edge, >=3:1 against the paper,
+   the selected fill and hover in both themes. It sits outside the item, so it never overlaps the
+   icon or count and stays distinct from the focus ring drawn around the item itself. */
+.ac-nav-item[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  left: -12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--ac-ink);
 }
 .ac-nav-item svg,
 .ac-sidebar-toggle svg {
@@ -88,7 +101,41 @@
   stroke-width: 1.75;
 }
 .ac-sidebar-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   margin-top: auto;
+}
+.ac-theme-control {
+  width: 100%;
+  height: 40px;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 0 11px;
+  font-weight: 400;
+}
+.ac-theme-control > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.75;
+}
+.ac-theme-value {
+  margin-left: auto;
+  color: var(--ac-text-secondary);
+  font-size: 12px;
+}
+.ac-theme-menu {
+  min-width: 160px;
+}
+.ac-mobile-menu-foot {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid var(--ac-hairline);
+}
+.ac-mobile-menu-foot .ac-theme-control {
+  min-height: 48px;
+  font-size: 16px;
 }
 .ac-sidebar-toggle {
   width: 100%;
@@ -114,8 +161,8 @@
   margin-left: auto;
   padding: 0 6px;
   border-radius: 999px;
-  background: var(--ac-lilac-ink);
-  color: white;
+  background: var(--ac-unread-bg);
+  color: var(--ac-unread-fg);
   font-size: 11px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -175,7 +222,9 @@
   white-space: nowrap;
 }
 .ac-actor-trigger {
-  width: 180px;
+  width: auto;
+  min-width: 180px;
+  max-width: 280px;
 }
 .ac-demo-banner {
   display: flex;
@@ -224,7 +273,7 @@
   transform: translateY(-200%);
   border-radius: 10px;
   padding: 10px 14px;
-  color: white;
+  color: var(--primary-foreground);
   background: var(--ac-ink);
 }
 .ac-skip-link:focus {
@@ -315,7 +364,7 @@
 }
 .ac-status-filters [aria-pressed='true'] {
   border-color: var(--ac-hairline);
-  background: white;
+  background: var(--ac-surface);
   font-weight: 550;
 }
 .ac-results-status {
@@ -356,6 +405,10 @@
 .ac-list-scroll [data-slot='table-container'] {
   overflow: visible;
 }
+.ac-clickable-patient {
+  cursor: pointer;
+}
+
 .ac-patient-table {
   width: 100%;
   min-width: 640px;
@@ -377,7 +430,7 @@
 .ac-patient-table td {
   height: 64px;
   padding: 8px 14px;
-  border-bottom: 1px solid rgb(18 18 18 / 7%);
+  border-bottom: 1px solid var(--ac-row-line);
   vertical-align: middle;
 }
 .ac-patient-table .ac-col-name {
@@ -466,10 +519,10 @@
   background: var(--ac-mint-bg);
 }
 .ac-avatar-2 {
-  background: #e2ebf2;
+  background: var(--ac-avatar-blue);
 }
 .ac-avatar-3 {
-  background: #f0e8d8;
+  background: var(--ac-avatar-sand);
 }
 .ac-patient-text {
   min-width: 0;
@@ -495,7 +548,7 @@
   min-width: 0;
   margin-top: 2px;
   color: var(--ac-text-secondary);
-  font-size: 11.5px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -554,9 +607,9 @@
   height: 18px;
   padding: 0 6px;
   border-radius: 999px;
-  background: var(--ac-violet);
-  color: var(--ac-lilac-ink);
-  font-size: 11px;
+  background: var(--ac-new-bg);
+  color: var(--ac-new-fg);
+  font-size: 12px;
   font-weight: 600;
 }
 .ac-patient-table .ac-last-visited,
@@ -607,7 +660,8 @@
   font-weight: 400;
 }
 .ac-page-size [data-slot='select-trigger'] {
-  width: 70px;
+  width: auto;
+  min-width: 76px;
   height: 32px;
 }
 .ac-page-nav {
@@ -658,7 +712,7 @@
   flex: none;
   gap: 10px 14px;
   padding: 10px 14px;
-  border: 1px solid #cdbcf6;
+  border: 1px solid var(--ac-lilac-border);
   border-radius: 12px;
   background: var(--ac-lilac);
 }
@@ -712,39 +766,44 @@
   height: 14px;
 }
 .ac-overview {
+  container: overview / inline-size;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
-.ac-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1px;
-  overflow: hidden;
-  margin: 0;
-  border: 1px solid var(--ac-hairline);
-  border-radius: 12px;
-  background: var(--ac-line);
-}
-.ac-stats > div {
-  padding: 17px 18px;
-  background: white;
-}
-.ac-stats dt {
-  color: var(--ac-text-secondary);
-  font-size: 12.5px;
-}
-.ac-stats dd {
-  margin: 5px 0 0;
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+.ac-overview-summary {
   font-variant-numeric: tabular-nums;
 }
+.ac-overview > .ac-page-heading {
+  flex-wrap: nowrap;
+}
+.ac-overview > .ac-page-heading > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* Lower row shares the chart grid's tracks and gutter (see overview.css .ac-chart-grid),
+   so card edges line up down the page: 1 → 2 → 3 columns, Recent visits spanning two. */
 .ac-overview-columns {
   display: grid;
-  grid-template-columns: 1.25fr 1fr;
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+@container overview (width >= 34rem) {
+  .ac-overview-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container overview (width >= 54rem) {
+  .ac-overview-columns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .ac-recent-visits {
+    grid-column: span 2;
+  }
+}
+.ac-shortcuts strong [data-slot='count-pill'] {
+  margin-left: 8px;
+  vertical-align: 1px;
 }
 .ac-card-header {
   display: flex;
@@ -858,7 +917,7 @@
   padding: 16px;
   border: 1px solid var(--ac-hairline);
   border-radius: 12px;
-  background: white;
+  background: var(--ac-surface);
   margin: 48px 0 14px;
 }
 .ac-backdrop-toolbar > span {
@@ -870,7 +929,7 @@
   overflow: hidden;
   border: 1px solid var(--ac-hairline);
   border-radius: 12px;
-  background: white;
+  background: var(--ac-surface);
 }
 .ac-backdrop-table > div {
   display: flex;
@@ -928,7 +987,7 @@
     display: none;
   }
   .ac-patient-meta {
-    font-size: 10.5px;
+    font-size: 12px;
   }
   .ac-sort-button {
     gap: 2px;
@@ -942,10 +1001,12 @@
   .ac-app {
     grid-template-columns: minmax(0, 1fr);
   }
+  /* One header bar on phones: menu, brand, demo-user chip, bell. */
   .ac-topbar {
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 8px 12px;
+    flex-wrap: nowrap;
+    gap: 4px;
+    min-height: 56px;
+    padding: 6px 8px 6px 6px;
   }
   .ac-mobile-brand {
     display: flex;
@@ -961,9 +1022,9 @@
     position: relative;
     display: grid;
     place-items: center;
+    flex: none;
     width: 44px;
     height: 44px;
-    margin-left: auto;
     border-radius: 8px;
   }
   .ac-mobile-bell > svg {
@@ -975,19 +1036,51 @@
     top: 1px;
     right: 0;
   }
+  .ac-mobile-brand {
+    flex: none;
+  }
   .ac-header-actions {
+    min-width: 0;
+    margin-left: auto;
+  }
+  /* Header chip: the label stays for assistive technology; the trigger keeps the full display
+     name in its text while the "Demo User n ·" prefix is visually clipped. */
+  .ac-topbar .ac-actor-selector > label,
+  .ac-topbar .ac-actor-role {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ac-topbar .ac-actor-trigger {
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+    padding-inline: 10px 8px;
+    border-color: transparent;
+    background: var(--ac-hover);
+  }
+  /* Menu sheet: the same selector, labelled and full width with a 48px touch target. */
+  .ac-mobile-menu-foot {
+    display: grid;
+    gap: 12px;
+  }
+  .ac-mobile-menu .ac-actor-selector {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .ac-mobile-menu .ac-actor-selector > label {
+    font-size: 14px;
+  }
+  .ac-mobile-menu .ac-actor-trigger {
     width: 100%;
-    margin: 0;
-    padding: 2px 3px 4px;
-  }
-  .ac-actor-selector {
-    justify-content: space-between;
-  }
-  .ac-actor-selector > label {
-    font-size: 13px;
-  }
-  .ac-actor-trigger {
-    width: min(72%, 260px);
+    min-width: 0;
+    max-width: none;
+    min-height: 48px;
+    font-size: 16px;
   }
   .ac-mobile-menu {
     width: min(85%, 300px);
@@ -999,22 +1092,24 @@
     height: 48px;
     font-size: 16px;
   }
+  /* One line on phones; the reset reminder moves to the navigation sheet description. */
   .ac-demo-banner {
-    flex-wrap: wrap;
-    gap: 3px 6px;
-    padding: 7px 16px;
-    font-size: 12px;
+    min-height: 26px;
+    padding: 4px 16px;
   }
-  .ac-demo-banner > span:last-child {
-    flex-basis: calc(100% - 14px);
-    margin-left: 12px;
+  .ac-demo-reset {
+    display: none;
   }
   .ac-main {
-    padding: 16px 12px 12px;
+    padding: 12px 12px 10px;
+  }
+  .ac-patient-list {
+    gap: 10px;
   }
   .ac-page-heading {
-    align-items: flex-start;
+    align-items: center;
     gap: 10px;
+    margin-bottom: 0;
   }
   .ac-page-heading h1 {
     font-size: 22px;
@@ -1026,32 +1121,46 @@
   .ac-page-heading > [data-slot='button'] {
     padding: 0 12px;
   }
+  /* Filters drop their card on phones: search, then status and sort on one row. */
   .ac-filters {
-    gap: 10px;
-    padding: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
   }
   .ac-search {
     flex-basis: 100%;
     max-width: none;
   }
   .ac-status-filters {
-    width: 100%;
+    flex: none;
   }
   .ac-status-filters [data-slot='button'] {
-    flex: 1;
+    padding-inline: 8px;
     font-size: 14px;
   }
+  .ac-status-suffix {
+    display: none;
+  }
+  /* Shares the status row while it has room; wraps to its own row (never clips) when text is
+     enlarged or spaced. */
   .ac-mobile-sort {
     display: flex;
     align-items: center;
-    gap: 10px;
-    width: 100%;
+    flex: 1 1 140px;
+    min-width: 140px;
+    gap: 6px;
   }
   .ac-mobile-sort > svg {
     flex: none;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     color: var(--ac-text-secondary);
+  }
+  .ac-mobile-sort [data-slot='select-trigger'] {
+    flex: 1;
+    min-width: 0;
   }
   .ac-table-surface {
     min-height: 260px;
@@ -1061,12 +1170,12 @@
     padding: 0;
     margin: 0;
   }
+  /* Compact card (~120px): identity + status, then facts beside the two shortcuts. */
   .ac-patient-card {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    min-height: 198px;
-    padding: 16px;
+    gap: 8px;
+    padding: 12px 14px;
     border-bottom: 1px solid var(--ac-hairline);
   }
   .ac-card-heading {
@@ -1092,19 +1201,29 @@
   }
   .ac-patient-meta {
     flex-wrap: wrap;
-    gap: 2px 4px;
-    font-size: 12px;
+    gap: 0 4px;
+    font-size: 14px;
     white-space: normal;
   }
   .ac-patient-meta span:last-child {
     overflow-wrap: anywhere;
   }
+  .ac-card-foot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
   .ac-card-meta {
     display: flex;
-    flex-wrap: wrap;
-    gap: 5px 14px;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
     color: var(--ac-text-secondary);
     font-size: 14px;
+    line-height: 1.35;
+  }
+  .ac-card-meta b {
+    white-space: nowrap;
   }
   .ac-card-meta b {
     color: var(--ac-ink-soft);
@@ -1112,12 +1231,12 @@
   }
   .ac-card-actions {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex: none;
+    gap: 6px;
   }
   .ac-card-actions .ac-activity-button {
     min-height: 44px;
-    min-width: 72px;
+    min-width: 56px;
     font-size: 15px;
   }
   .ac-card-actions .ac-activity-button svg {
@@ -1129,25 +1248,24 @@
     font-size: 12px;
   }
   .ac-pagination {
-    gap: 10px;
-    padding: 10px;
-    font-size: 12px;
+    gap: 2px 10px;
+    padding: 4px 8px 4px 12px;
+    font-size: 13px;
   }
   .ac-page-size {
     margin-left: auto;
-    gap: 5px;
+    gap: 6px;
   }
   .ac-page-size > label {
-    font-size: 11px;
+    font-size: 13px;
   }
   .ac-page-size [data-slot='select-trigger'] {
-    width: 66px;
+    width: auto;
+    min-width: 76px;
   }
   .ac-page-nav {
     justify-content: space-between;
     width: 100%;
-    border-top: 1px solid var(--ac-hairline);
-    padding-top: 5px;
   }
   .ac-page-nav > span {
     font-size: 14px;
@@ -1163,12 +1281,6 @@
   .ac-notification-notice > svg {
     margin-top: 2px;
   }
-  .ac-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .ac-stats > div {
-    padding: 14px;
-  }
   .ac-overview-columns {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1183,6 +1295,25 @@
   }
   .ac-workspace-backdrop {
     inset: 16px 12px;
+  }
+}
+/* Coarse pointers on tablet/desktop widths (AST-007): 44px rail targets inside the same 64px
+   rail, by trading 2px of side padding. Fine pointers keep the 40px desktop rhythm. */
+@media (pointer: coarse) and (min-width: 768px) {
+  .ac-sidebar {
+    padding-inline: 10px;
+  }
+  .ac-nav-item,
+  .ac-brand,
+  .ac-sidebar-toggle,
+  .ac-theme-control {
+    min-height: 44px;
+  }
+  .ac-nav-item {
+    min-width: 44px;
+  }
+  .ac-nav-item[aria-current='page']::before {
+    left: -10px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -83,7 +83,7 @@ describe('clinical note forms', () => {
 })
 
 describe('canonical note view', () => {
-  it.each([404, 410])('explains a %s note and offers the collection route', async (status) => {
+  it.each([404, 410, 422])('explains a %s note and offers the collection route', async (status) => {
     vi.spyOn(api, 'getNote').mockRejectedValue(
       new ApiError(status, status === 410 ? 'gone' : 'not_found', 'Unavailable'),
     )

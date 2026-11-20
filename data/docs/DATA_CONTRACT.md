@@ -60,7 +60,7 @@ Produce only `patients.jsonl` and `manifest.json`. The JSONL file has 100 record
 
 Use ISO dates, UTC timestamps ending in `Z`, JSON booleans/nulls, and exact decimal strings. Do not route decimals through binary floating point or export processing times as application audit times.
 
-The current patient projection follows the early patient section of [backend/DATA_MODEL.md](../../backend/DATA_MODEL.md). That backend sketch is explicitly deferred, so the manifest labels this projection `provisional`; final application agreement is still required. Its current rules are:
+The current patient projection follows the early patient section of [backend/docs/DATA_MODEL.md](../../backend/docs/DATA_MODEL.md). That backend sketch is explicitly deferred, so the manifest labels this projection `provisional`; final application agreement is still required. Its current rules are:
 
 | Source | Patient export |
 | --- | --- |

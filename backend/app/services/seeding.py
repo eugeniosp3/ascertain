@@ -2,8 +2,9 @@
 
 ``run_seed`` owns the connection and transaction. Preflight is read-only; only after
 every check passes does a new transaction take the shared, bounded patient-import
-lock, recheck state, and insert both markers and all fixtures atomically. There are
-no ORM sessions, implicit commits, schema repairs, or calls to the JSONL prototype.
+lock, recheck state, and commit fixtures and versioned markers atomically. Completed
+legacy imports can receive the assignment extension without reimporting patients.
+There are no ORM sessions, implicit commits, schema repairs, or prototype calls.
 """
 
 import hashlib
@@ -64,6 +65,7 @@ PATIENT_IMPORT_LOCK_KEY = int.from_bytes(
     hashlib.sha256(b"ascertain:patient-import:v1").digest()[:8], "big", signed=True
 )
 DEMO_DATASET_KEY = "demo-fixtures-v1"
+DEMO_ASSIGNMENTS_DATASET_KEY = "demo-assignments-v1"
 DEMO_NAMESPACE = uuid5(NAMESPACE_URL, "ascertain:backend:demo:v1")
 DEMO_USER_IDS = (uuid5(DEMO_NAMESPACE, "user:clinician"), uuid5(DEMO_NAMESPACE, "user:coordinator"))
 DEMO_NOTE_IDS = (uuid5(DEMO_NAMESPACE, "note:one"), uuid5(DEMO_NAMESPACE, "note:two"))
@@ -74,7 +76,7 @@ _SUPPLIED_COLUMNS = {
     "seed_runs": frozenset(
         {"id", "dataset_key", "dataset_date", "source_hashes", "export_manifest", "row_counts"}
     ),
-    "patients": frozenset({"id", "seed_run_id", *ImportedPatient.model_fields}),
+    "patients": frozenset({"id", "seed_run_id", "assigned_user_id", *ImportedPatient.model_fields}),
     "users": frozenset({"id", "display_name", "display_role", "is_active"}),
     "notes": frozenset(
         {"id", "patient_id", "author_id", "title", "timestamp", "content", "source_type"}
@@ -83,7 +85,7 @@ _SUPPLIED_COLUMNS = {
     "comment_note_links": frozenset({"comment_id", "note_id", "patient_id"}),
 }
 _ALEMBIC_DIR = Path(__file__).resolve().parents[2] / "alembic"
-ImportState = Literal["absent", "complete", "conflict"]
+ImportState = Literal["absent", "assignments_pending", "complete", "conflict"]
 
 
 @dataclass(frozen=True)
@@ -141,7 +143,7 @@ def _load_target(report: CheckReport) -> _Target | None:
                 ),
                 privileges=(
                     frozenset({"SELECT", "INSERT", "UPDATE"})
-                    if table.name == "seed_runs"
+                    if table.name in {"seed_runs", "patients"}
                     else frozenset({"SELECT", "INSERT"})
                     if table.name in _WRITTEN_TABLES
                     else frozenset({"SELECT"})
@@ -244,6 +246,69 @@ def _demo_manifest(source: DuckDBSnapshot) -> dict[str, object]:
     }
 
 
+def _assignment_user_id(source_patient_id: str) -> UUID:
+    """Synthetic cohort membership depends only on the exact, validated source key.
+
+    SHA-256 of the UTF-8 bytes; the first eight digest bytes as an unsigned big-endian
+    integer, modulo two, index the fixed roster (equivalently ``digest[7] & 1``).
+    """
+    digest = hashlib.sha256(source_patient_id.encode("utf-8")).digest()
+    return DEMO_USER_IDS[int.from_bytes(digest[:8], "big") % 2]
+
+
+def _assignment_manifest(source: DuckDBSnapshot) -> dict[str, object]:
+    return {
+        "fixture_version": DEMO_ASSIGNMENTS_DATASET_KEY,
+        "patient_dataset_key": source.dataset_key,
+        "assignment_algorithm": "sha256-utf8-first8-big-endian-modulo2",
+        "roster_user_ids": [str(user_id) for user_id in DEMO_USER_IDS],
+        "synthetic": True,
+    }
+
+
+def _assignment_marker(marker_id: UUID, source: DuckDBSnapshot) -> dict[str, object]:
+    return {
+        "id": marker_id,
+        "dataset_key": DEMO_ASSIGNMENTS_DATASET_KEY,
+        "dataset_date": source.dataset_date,
+        "source_hashes": source.source_hashes,
+        "export_manifest": _assignment_manifest(source),
+        "row_counts": {},
+    }
+
+
+def _assignment_roster_ready(connection: Connection, target: _Target, report: CheckReport) -> bool:
+    users = target.tables["users"]
+    active_ids: set[UUID] = set(
+        connection.execute(
+            select(users.c.id).where(users.c.id.in_(DEMO_USER_IDS), users.c.is_active.is_(True))
+        ).scalars()
+    )
+    ready = active_ids == set(DEMO_USER_IDS)
+    report.add(
+        "assignments.roster",
+        "passed" if ready else "failed",
+        "Both existing demo assignment users are active"
+        if ready
+        else "Assignment backfill requires both existing, active demo users",
+    )
+    return ready
+
+
+def _assignment_marker_matches(marker: Any, source: DuckDBSnapshot) -> bool:
+    counts = marker["row_counts"]
+    return bool(
+        marker["dataset_date"] == source.dataset_date
+        and marker["source_hashes"] == source.source_hashes
+        and marker["export_manifest"] == _assignment_manifest(source)
+        and marker["completed_at"] is not None
+        and isinstance(counts, dict)
+        and set(counts) == {"patients"}
+        and type(counts["patients"]) is int
+        and 0 <= counts["patients"] <= len(source.patients)
+    )
+
+
 def _import_state(
     connection: Connection, target: _Target, source: DuckDBSnapshot, report: CheckReport
 ) -> tuple[ImportState, UUID | None]:
@@ -254,6 +319,7 @@ def _import_state(
                 or_(
                     runs.c.dataset_key.like("patients-%"),
                     runs.c.dataset_key.like("demo-fixtures-%"),
+                    runs.c.dataset_key.like("demo-assignments-%"),
                 )
             )
         )
@@ -265,7 +331,7 @@ def _import_state(
         patient_run, demo_run = by_key.get(source.dataset_key), by_key.get(DEMO_DATASET_KEY)
         expected_keys = {source.dataset_key, DEMO_DATASET_KEY}
         same = (
-            set(by_key) == expected_keys
+            set(by_key) in (expected_keys, expected_keys | {DEMO_ASSIGNMENTS_DATASET_KEY})
             and patient_run is not None
             and demo_run is not None
             and patient_run["source_hashes"] == source.source_hashes
@@ -278,17 +344,31 @@ def _import_state(
             and demo_run["completed_at"] is not None
         )
         if same:
+            assert patient_run is not None
+            run_id = cast(UUID, patient_run["id"])
+            assignment_run = by_key.get(DEMO_ASSIGNMENTS_DATASET_KEY)
+            if assignment_run is None:
+                if not _assignment_roster_ready(connection, target, report):
+                    return "conflict", None
+                report.add(
+                    "import.state",
+                    "passed",
+                    "Completed legacy markers match; only synthetic assignments are pending",
+                )
+                return "assignments_pending", run_id
+            if not _assignment_marker_matches(assignment_run, source):
+                report.add("assignments.state", "failed", "Assignment seed marker is invalid")
+                return "conflict", None
             report.add(
                 "import.state",
                 "passed",
-                "Completed markers match; preserve all application edits and deletions",
+                "All completed markers match; preserve application edits and deletions",
             )
-            assert patient_run is not None
-            return "complete", cast(UUID, patient_run["id"])
+            return "complete", run_id
         report.add(
             "import.state",
             "failed",
-            "Partial or different patient/demo seed markers exist; refusing to overwrite",
+            "Partial or different patient/demo/assignment markers exist; refusing to overwrite",
         )
         return "conflict", None
     patients = target.tables["patients"]
@@ -462,6 +542,132 @@ def _verify_written(
         raise ValueError("Inserted demo link counts did not match expectations")
 
 
+def _write_import(connection: Connection, target: _Target, source: DuckDBSnapshot) -> UUID:
+    """Write the original release's import: both markers, patients, and demo fixtures."""
+    run_id, demo_run_id = uuid4(), uuid4()
+    runs = target.tables["seed_runs"]
+    # Markers precede the FK-bearing patient inserts but remain invisible until
+    # the same transaction has verified and finalized every count.
+    connection.execute(
+        insert(runs),
+        [
+            {
+                "id": run_id,
+                "dataset_key": source.dataset_key,
+                "dataset_date": source.dataset_date,
+                "source_hashes": source.source_hashes,
+                "export_manifest": source.manifest,
+                "row_counts": {},
+            },
+            {
+                "id": demo_run_id,
+                "dataset_key": DEMO_DATASET_KEY,
+                "dataset_date": source.dataset_date,
+                "source_hashes": source.source_hashes,
+                "export_manifest": _demo_manifest(source),
+                "row_counts": {},
+            },
+        ],
+    )
+    rows = _patient_rows(source, target, run_id)
+    connection.execute(insert(target.tables["patients"]), rows)
+    _write_demo(connection, target, cast(UUID, rows[0]["id"]))
+    _verify_written(connection, target, rows, run_id)
+    for marker_id, counts in ((run_id, {"patients": len(rows)}), (demo_run_id, DEMO_COUNTS)):
+        connection.execute(
+            update(runs)
+            .where(runs.c.id == marker_id)
+            .values(row_counts=counts, completed_at=func.now())
+        )
+    return run_id
+
+
+def _assign_surviving_patients(
+    connection: Connection, target: _Target, source: DuckDBSnapshot, run_id: UUID
+) -> tuple[int, int]:
+    """Assign this import's surviving, unassigned patients; return (assigned, preserved).
+
+    The roster is share-locked and this import's patient rows are locked in id order
+    before any decision, so concurrent API writes either commit first (and are
+    preserved) or wait for this transaction. API-created patients never match
+    ``seed_run_id`` and deleted patients are absent, so neither is assigned or
+    recreated. Only ``assigned_user_id`` changes: Core would otherwise apply the
+    ``updated_at`` onupdate, but server-owned workload membership is not a profile edit.
+    """
+    users, patients = target.tables["users"], target.tables["patients"]
+    roster: set[UUID] = set(
+        connection.execute(
+            select(users.c.id)
+            .where(users.c.id.in_(DEMO_USER_IDS), users.c.is_active.is_(True))
+            .with_for_update(read=True)
+        ).scalars()
+    )
+    if roster != set(DEMO_USER_IDS):
+        raise ValueError("Synthetic assignment roster is not both existing, active demo users")
+    cohorts = {
+        target.patient_id(patient.source_patient_id): (
+            patient.source_patient_id,
+            _assignment_user_id(patient.source_patient_id),
+        )
+        for patient in source.patients
+    }
+    locked = connection.execute(
+        select(patients.c.id, patients.c.source_patient_id, patients.c.assigned_user_id)
+        .where(patients.c.seed_run_id == run_id)
+        .order_by(patients.c.id)
+        .with_for_update(key_share=True)
+    ).all()
+    if any(row.id not in cohorts or cohorts[row.id][0] != row.source_patient_id for row in locked):
+        raise ValueError("Imported patient identities did not match the validated source")
+    expected = {
+        row.id: cohorts[row.id][1] if row.assigned_user_id is None else row.assigned_user_id
+        for row in locked
+    }
+    pending = [row.id for row in locked if row.assigned_user_id is None]
+    for user_id in DEMO_USER_IDS:
+        ids = [patient_id for patient_id in pending if cohorts[patient_id][1] == user_id]
+        if not ids:
+            continue
+        updated = connection.execute(
+            update(patients)
+            .where(
+                patients.c.id.in_(ids),
+                patients.c.seed_run_id == run_id,
+                patients.c.assigned_user_id.is_(None),
+            )
+            .values(assigned_user_id=user_id, updated_at=patients.c.updated_at)
+        ).rowcount
+        if updated != len(ids):
+            raise ValueError("Synthetic assignments did not update every locked patient")
+    actual: dict[UUID, UUID | None] = {
+        row.id: row.assigned_user_id
+        for row in connection.execute(
+            select(patients.c.id, patients.c.assigned_user_id).where(
+                patients.c.seed_run_id == run_id
+            )
+        )
+    }
+    if actual != expected:
+        raise ValueError("Synthetic assignments did not match the deterministic cohorts")
+    return len(pending), len(locked) - len(pending)
+
+
+def _write_assignments(
+    connection: Connection, target: _Target, source: DuckDBSnapshot, run_id: UUID
+) -> tuple[int, int]:
+    """Claim the unique assignment marker, assign cohorts, then finalize its count."""
+    runs = target.tables["seed_runs"]
+    marker_id = uuid4()
+    connection.execute(insert(runs), _assignment_marker(marker_id, source))
+    assigned, preserved = _assign_surviving_patients(connection, target, source, run_id)
+    connection.execute(
+        update(runs)
+        .where(runs.c.id == marker_id)
+        .values(row_counts={"patients": assigned}, completed_at=func.now())
+    )
+    return assigned, preserved
+
+
 def _write(
     connection: Connection,
     target: _Target,
@@ -471,6 +677,7 @@ def _write(
     lock_timeout_ms: int,
     statement_timeout_ms: int,
 ) -> tuple[SeedStatus, UUID | None]:
+    """Under the bounded lock: fresh import plus assignments, or assignments only."""
     with connection.begin():
         _transaction_settings(
             connection, schema, lock_timeout_ms, statement_timeout_ms, read_only=False
@@ -478,46 +685,26 @@ def _write(
         connection.execute(
             text("SELECT pg_advisory_xact_lock(:key)"), {"key": PATIENT_IMPORT_LOCK_KEY}
         )
-        state, existing_id = _import_state(connection, target, source, report)
-        if state != "absent":
-            return ("already_complete" if state == "complete" else "failed"), existing_id
-        run_id, demo_run_id = uuid4(), uuid4()
-        runs = target.tables["seed_runs"]
-        # Markers precede the FK-bearing patient inserts but remain invisible until
-        # the same transaction has verified and finalized every count.
-        connection.execute(
-            insert(runs),
-            [
-                {
-                    "id": run_id,
-                    "dataset_key": source.dataset_key,
-                    "dataset_date": source.dataset_date,
-                    "source_hashes": source.source_hashes,
-                    "export_manifest": source.manifest,
-                    "row_counts": {},
-                },
-                {
-                    "id": demo_run_id,
-                    "dataset_key": DEMO_DATASET_KEY,
-                    "dataset_date": source.dataset_date,
-                    "source_hashes": source.source_hashes,
-                    "export_manifest": _demo_manifest(source),
-                    "row_counts": {},
-                },
-            ],
-        )
-        rows = _patient_rows(source, target, run_id)
-        connection.execute(insert(target.tables["patients"]), rows)
-        _write_demo(connection, target, cast(UUID, rows[0]["id"]))
-        _verify_written(connection, target, rows, run_id)
-        for marker_id, counts in ((run_id, {"patients": len(rows)}), (demo_run_id, DEMO_COUNTS)):
-            connection.execute(
-                update(runs)
-                .where(runs.c.id == marker_id)
-                .values(row_counts=counts, completed_at=func.now())
-            )
+        state, run_id = _import_state(connection, target, source, report)
+        if state == "complete":
+            return "already_complete", run_id
+        if state == "absent":
+            run_id = _write_import(connection, target, source)
+        elif state != "assignments_pending" or run_id is None:
+            return "failed", None
+        assigned, preserved = _write_assignments(connection, target, source, run_id)
     report.add(
-        "seed.write", "passed", "Patients, synthetic fixtures and both markers committed atomically"
+        "seed.write",
+        "passed",
+        "Patients, synthetic fixtures, assignments and all three markers committed atomically"
+        if state == "absent"
+        else "Completed import kept; synthetic assignments and their marker committed atomically",
+    )
+    report.add(
+        "seed.assignments",
+        "passed",
+        f"{assigned} surviving imported patients assigned; "
+        f"{preserved} existing assignments preserved",
     )
     return "seeded", run_id
 

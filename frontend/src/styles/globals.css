@@ -1,7 +1,7 @@
 @import 'tailwindcss' source('../');
 @import 'tw-animate-css';
 
-/* This product is light-only. Never inherit dark variants from the OS setting. */
+/* shadcn/Vite convention: the provider resolves the preference onto the root class. */
 @custom-variant dark (&:is(.dark *));
 
 /*
@@ -33,6 +33,20 @@
   --ac-danger: #b3203a; /* tokens.css --status-denied-fg [video] */
   --ac-danger-bg: #fbeef0; /* UI_mocks/index.html --ac-rose-bg [new] */
   --ac-danger-hover: #951a30; /* UI_mocks/index.html .btn-danger:hover [new] */
+  /* Roles that need distinct foreground/background pairs in both themes. */
+  --ac-hover: rgb(18 18 18 / 5%);
+  --ac-row-line: rgb(18 18 18 / 7%);
+  --ac-lilac-border: #cdbcf6;
+  --ac-unread-bg: #4f3a9e;
+  --ac-unread-fg: #ffffff;
+  --ac-new-bg: var(--ac-violet);
+  --ac-new-fg: var(--ac-lilac-ink);
+  --ac-on-violet: #121212;
+  --ac-avatar-blue: #e2ebf2;
+  --ac-avatar-sand: #f0e8d8;
+  --ac-toast-bg: var(--ac-ink);
+  --ac-toast-fg: var(--ac-surface);
+  --ac-toast-border: var(--ac-ink);
   --ac-radius-tag: 8px; /* tokens.css --radius-s [site] */
   --ac-radius-control: 10px; /* tokens.css --radius-btn [site] */
   --ac-radius-surface: 12px; /* tokens.css --radius-m [site] */
@@ -65,6 +79,46 @@
   --radius: var(--ac-radius-control);
 }
 
+/* Warm charcoal surfaces, flat hairlines and the same lilac brand accent. */
+.dark {
+  color-scheme: dark;
+  --ac-paper: #1e1d1c;
+  --ac-surface: #282624;
+  --ac-surface-warm: #302d2a;
+  --ac-ink: #f4f0e9;
+  --ac-ink-soft: #ded8d0;
+  --ac-text-secondary: #c0bab3;
+  --ac-text-disabled: #89837c;
+  --ac-selected: #3c3834;
+  --ac-hairline: rgb(244 240 233 / 14%);
+  --ac-line: #45403b;
+  --ac-control-border: #92897f;
+  --ac-violet: #d4c1ff;
+  --ac-violet-marker: #b69ae9;
+  --ac-lilac: #383041;
+  --ac-lilac-ink: #dac6ff;
+  --ac-mint-bg: #203d34;
+  --ac-mint-fg: #94d9bc;
+  --ac-grey-bg: #3b3834;
+  --ac-grey-fg: #c7c1ba;
+  --ac-danger: #ff9ca9;
+  --ac-danger-bg: #45292f;
+  --ac-danger-hover: #f7bbc4;
+  --ac-hover: rgb(244 240 233 / 7%);
+  --ac-row-line: rgb(244 240 233 / 9%);
+  --ac-lilac-border: #7b659b;
+  --ac-unread-bg: #d4c1ff;
+  --ac-unread-fg: #302438;
+  --ac-new-fg: #302438;
+  --ac-on-violet: #302438;
+  --ac-avatar-blue: #2e3c47;
+  --ac-avatar-sand: #433a2b;
+  --ac-toast-bg: #302d2a;
+  --ac-toast-fg: #f4f0e9;
+  --ac-toast-border: #686057;
+  --destructive-foreground: #321b20;
+}
+
 @theme inline {
   --font-sans: var(--ac-font-sans);
   --font-mono: var(--ac-font-mono);
@@ -94,6 +148,8 @@
   --color-violet-marker: var(--ac-violet-marker);
   --color-lilac: var(--ac-lilac);
   --color-lilac-ink: var(--ac-lilac-ink);
+  --color-unread: var(--ac-unread-bg);
+  --color-unread-foreground: var(--ac-unread-fg);
   --color-status-active: var(--ac-mint-bg);
   --color-status-active-foreground: var(--ac-mint-fg);
   --color-status-inactive: var(--ac-grey-bg);
@@ -160,7 +216,7 @@
 
   ::selection {
     background: var(--ac-violet);
-    color: var(--ac-ink);
+    color: var(--ac-on-violet);
   }
 }
 
@@ -179,11 +235,59 @@
 }
 
 .toaster [data-sonner-toast] [data-description] {
-  color: var(--ac-surface);
+  color: var(--ac-toast-fg);
 }
 
 .toaster [data-sonner-toast] :focus-visible {
-  outline-color: var(--ac-surface);
+  outline-color: var(--ac-toast-fg);
+}
+
+/* Foreground is light in dark mode; lilac fills still require dark ink. */
+.dark :is(button, a)[data-variant='default']:hover {
+  color: var(--ac-on-violet);
+}
+
+/* Scrims darken the workspace in both themes, including nested confirmations. */
+.dark
+  :is(
+    [data-slot='dialog-overlay'],
+    [data-slot='alert-dialog-overlay'],
+    [data-slot='sheet-overlay']
+  ) {
+  background: rgb(0 0 0 / 55%);
+}
+
+.dark [data-slot='tooltip-content'] {
+  background: var(--ac-selected);
+  color: var(--ac-ink);
+  border: 1px solid var(--ac-control-border);
+}
+
+.dark [data-slot='tooltip-content'] > svg {
+  background: var(--ac-selected);
+  fill: var(--ac-selected);
+}
+
+/* Native pickers and autofill use the same resolved color scheme as custom controls. */
+.dark :is(input, select, textarea) {
+  color-scheme: dark;
+}
+
+.dark select,
+.dark option {
+  background-color: var(--ac-surface);
+  color: var(--ac-ink);
+}
+
+.dark input:autofill {
+  -webkit-text-fill-color: var(--ac-ink);
+  box-shadow: inset 0 0 0 1000px var(--ac-surface);
+}
+
+.dark input:autofill:focus-visible {
+  box-shadow:
+    inset 0 0 0 1000px var(--ac-surface),
+    0 0 0 4px var(--ac-violet);
 }
 
 @media (width < 48rem) {

@@ -49,18 +49,18 @@ test('unread queue spans the dataset, reads only Discussion and preserves the Pa
     await openNotifications(page, 12)
     await page.getByRole('link', { name: 'Ana J Silva', exact: true }).click()
     await expect(
-      page.getByRole('tab', { name: /^Discussion.*3 comments.*1 unread comments/ }),
+      page.getByRole('tab', { name: /^Discussion.*3 comments.*1 unread comment/ }),
     ).toBeVisible()
     await page.getByRole('tab', { name: /^Notes/ }).click()
     await expect(page.getByRole('heading', { name: 'Clinical notes', exact: true })).toBeVisible()
-    await expect(page.getByRole('tab', { name: /^Discussion.*1 unread comments/ })).toBeVisible()
+    await expect(page.getByRole('tab', { name: /^Discussion.*1 unread comment/ })).toBeVisible()
     await closeWorkspace(page)
     await expect(
       page.getByText('12 unread comments across 12 patients', { exact: true }),
     ).toBeVisible()
     await page
       .getByRole('link', {
-        name: 'Ana J Silva, 3 comments, 1 unread comments, open Discussion',
+        name: 'Ana J Silva, 3 comments, 1 unread comment, open Discussion',
         exact: true,
       })
       .click()
@@ -163,7 +163,7 @@ test('clearing the full queue reaches zero, clamps invalid pages and isolates de
   await test.step('Read all twelve affected patients through the visible queue', async () => {
     for (let remaining = 12; remaining > 0; remaining--) {
       const activity = page
-        .getByRole('link', { name: /, 3 comments, 1 unread comments, open Discussion$/ })
+        .getByRole('link', { name: /, 3 comments, 1 unread comment, open Discussion$/ })
         .first()
       await activity.click()
       await expect(
@@ -249,7 +249,17 @@ test('paged discussions acknowledge only displayed comments and queue removal cl
       await composer.getByRole('button', { name: 'Post comment', exact: true }).click()
       await expect(page.getByText(body, { exact: true })).toBeVisible()
     }
-    await expect(page.getByText('Page 1 of 2 · 11 comments', { exact: true })).toBeVisible()
+    await expect(page.getByText('Page 1 · 11 comments', { exact: true })).toBeVisible()
+    await expect(composer.getByText('Comment posted.', { exact: true })).toBeVisible()
+    const snapshot = page.getByRole('list', { name: 'Comments', exact: true })
+    await expect(snapshot.getByRole('listitem')).toHaveCount(10)
+    await expect(snapshot.getByRole('listitem').first()).toContainText(
+      'E2E queue-boundary conversation 13',
+    )
+    await expect(snapshot.getByRole('listitem').last()).toContainText('E2E observed-page comment 9')
+    await expect(page.getByRole('complementary', { name: 'Just posted comment' })).toContainText(
+      'E2E observed-page comment 10',
+    )
     await closeWorkspace(page)
     await selectActor(page, alex)
     await openNotifications(page, 31)
@@ -262,7 +272,7 @@ test('paged discussions acknowledge only displayed comments and queue removal cl
     await page.getByRole('button', { name: 'Next page', exact: true }).click()
     await expect(page.getByText('Page 2 of 2', { exact: true })).toBeVisible()
     await page
-      .getByRole('link', { name: /, 3 comments, 1 unread comments, open Discussion$/ })
+      .getByRole('link', { name: /, 3 comments, 1 unread comment, open Discussion$/ })
       .click()
     await expect(
       page.getByText('Comments that were unread during this visit keep their New label.', {
@@ -282,14 +292,19 @@ test('paged discussions acknowledge only displayed comments and queue removal cl
       .toBe(true)
   })
 
-  await test.step('The first ten displayed comments leave the unobserved second page unread', async () => {
+  await test.step('The oldest ten displayed comments leave the cursor continuation unread', async () => {
     await page.getByRole('link', { name: 'All patients', exact: true }).click()
     await searchPatient(page, 'PT-0013')
     await page
       .getByRole('link', { name: /, 11 comments, 11 unread comments, open Discussion$/ })
       .click()
     const comments = page.getByRole('list', { name: 'Comments', exact: true })
+    await expect(page.getByText('Comments are shown oldest first.', { exact: false })).toBeVisible()
     await expect(comments.getByRole('listitem')).toHaveCount(10)
+    await expect(comments.getByRole('listitem').first()).toContainText(
+      'E2E queue-boundary conversation 13',
+    )
+    await expect(comments.getByRole('listitem').last()).toContainText('E2E observed-page comment 9')
     await expect(comments.getByText('New comment during this visit', { exact: true })).toHaveCount(
       10,
     )
@@ -299,14 +314,31 @@ test('paged discussions acknowledge only displayed comments and queue removal cl
       }),
     ).toBeVisible()
     await expect(page.getByRole('tab', { name: /^Discussion/ })).toHaveAccessibleName(
-      'Discussion 11 comments 1 unread comments',
+      'Discussion 11 comments 1 unread comment',
     )
+    const draft = page
+      .getByRole('form', { name: 'Add a comment', exact: true })
+      .getByLabel('Comment', { exact: false })
+    await draft.fill('Unsent draft while reading the next chronological page')
     await page.getByRole('button', { name: 'Next', exact: true }).click()
-    await expect(page.getByText('Page 2 of 2 · 11 comments', { exact: true })).toBeVisible()
+    await expect(page.getByText('Page 2 · 11 comments', { exact: true })).toBeVisible()
     await expect(comments.getByRole('listitem')).toHaveCount(1)
+    await expect(comments.getByRole('listitem')).toContainText('E2E observed-page comment 10')
+    await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled()
     await expect(comments.getByText('New comment during this visit', { exact: true })).toHaveCount(
       1,
     )
+    await expect(page.getByRole('tab', { name: /^Discussion/ })).toHaveAccessibleName(
+      'Discussion 11 comments',
+    )
+    await page.getByRole('button', { name: 'Previous', exact: true }).click()
+    await expect(page.getByText('Page 1 · 11 comments', { exact: true })).toBeVisible()
+    await expect(comments.getByText('New comment during this visit', { exact: true })).toHaveCount(
+      10,
+    )
+    await page.getByRole('button', { name: 'Refresh discussion', exact: true }).click()
+    await expect(draft).toHaveValue('Unsent draft while reading the next chronological page')
+    await expect(page.getByRole('button', { name: 'Previous', exact: true })).toBeDisabled()
     await expect(page.getByRole('tab', { name: /^Discussion/ })).toHaveAccessibleName(
       'Discussion 11 comments',
     )

@@ -1,8 +1,16 @@
-import { formatDate } from '../utils/dates'
+import { formatDate, timestampMicros } from '../utils/dates'
 import { ApiError } from './client'
+import {
+  COMMENT_BODY_MAX,
+  isValidPhone,
+  MAX_COMMENT_NOTE_IDS,
+  NOTE_CONTENT_MAX,
+  PATIENT_FIELD_LIMITS as limits,
+} from './constraints'
 import type {
   CommentPageParams,
   CommentWrite,
+  DiscussionReadInput,
   NoteWrite,
   PatientListParams,
   PatientWrite,
@@ -36,10 +44,9 @@ function text(value: unknown, field: string, max: number, nullable = false): str
   if (typeof value !== 'string') invalid({ [field]: 'Expected text.' })
   const trimmed = value.trim()
   if (!trimmed) {
-    if (nullable) return null
     invalid({ [field]: 'Text must not be blank.' })
   }
-  if (trimmed.length > max) invalid({ [field]: `Use at most ${max} characters.` })
+  if ([...trimmed].length > max) invalid({ [field]: `Use at most ${max} characters.` })
   return trimmed
 }
 
@@ -90,15 +97,12 @@ export function validatePatient(input: PatientWrite): PatientWrite {
       invalid({ [key]: 'Field is required.' })
   }
   const middle_initial = text(value.middle_initial, 'middle_initial', 1, true)
-  if (middle_initial !== null && !/^\p{L}$/u.test(middle_initial)) {
-    invalid({ middle_initial: 'Use one letter or null.' })
-  }
   const email = text(value.email, 'email', 254, true)
   if (email !== null && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     invalid({ email: 'Enter a valid email address.' })
   }
   const phone = text(value.phone, 'phone', 40, true)
-  if (phone !== null && !/^(?=.*\d)[+\d\s().#xext-]{3,40}$/i.test(phone)) {
+  if (phone !== null && !isValidPhone(phone)) {
     invalid({ phone: 'Enter a valid phone number.' })
   }
   const blood_type =
@@ -118,15 +122,15 @@ export function validatePatient(input: PatientWrite): PatientWrite {
         invalid({ [`conditions[${index}].${key}`]: 'Unexpected field.' })
     }
     return {
-      code: text(condition.code, `conditions[${index}].code`, 40, true),
-      label: text(condition.label, `conditions[${index}].label`, 200)!,
+      code: text(condition.code ?? null, `conditions[${index}].code`, limits.condition_code, true),
+      label: text(condition.label, `conditions[${index}].label`, limits.condition_label)!,
     }
   })
   if (!Array.isArray(value.allergies) || value.allergies.length > 100) {
     invalid({ allergies: 'Use an array of at most 100 allergies.' })
   }
   const allergies = value.allergies.map((item: unknown, index: number) =>
-    text(item, `allergies[${index}]`, 200)!,
+    text(item, `allergies[${index}]`, limits.allergy)!,
   )
   const allergy_status = choice(value.allergy_status, 'allergy_status', [
     'unknown',
@@ -139,18 +143,21 @@ export function validatePatient(input: PatientWrite): PatientWrite {
         'Reported allergies require a nonempty list; other statuses require an empty list.',
     })
   }
+  const state = text(value.state, 'state', limits.state, true)
+  if (state !== null && [...state].length !== 2)
+    invalid({ state: 'Use exactly two characters or null.' })
   return {
-    first_name: text(value.first_name, 'first_name', 60)!,
+    first_name: text(value.first_name, 'first_name', limits.name)!,
     middle_initial,
-    last_name: text(value.last_name, 'last_name', 60)!,
+    last_name: text(value.last_name, 'last_name', limits.name)!,
     date_of_birth: date(value.date_of_birth, 'date_of_birth')!,
     phone,
     email,
-    address_line1: text(value.address_line1, 'address_line1', 200, true),
-    address_line2: text(value.address_line2, 'address_line2', 200, true),
+    address_line1: text(value.address_line1, 'address_line1', limits.address, true),
+    address_line2: text(value.address_line2, 'address_line2', limits.address, true),
     city: text(value.city, 'city', 100, true),
-    state: text(value.state, 'state', 100, true),
-    postal_code: text(value.postal_code, 'postal_code', 20, true),
+    state,
+    postal_code: text(value.postal_code, 'postal_code', limits.postal_code, true),
     blood_type,
     status: choice(value.status, 'status', ['active', 'inactive']),
     last_visit: date(value.last_visit, 'last_visit', true),
@@ -163,39 +170,49 @@ export function validatePatient(input: PatientWrite): PatientWrite {
 export function validateNote(input: NoteWrite): NoteWrite {
   const value = record(input)
   allowedKeys(value, ['timestamp', 'content'])
-  const timestamp = value.timestamp
-  if (
-    typeof timestamp !== 'string' ||
-    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/.test(timestamp) ||
-    Number(timestamp.slice(11, 13)) > 23 ||
-    Number.isNaN(Date.parse(timestamp))
-  ) {
-    invalid({ timestamp: 'Enter a valid timestamp with a timezone.' })
-  }
-  try {
-    formatDate(timestamp.slice(0, 10))
-  } catch {
-    invalid({ timestamp: 'Enter a valid timestamp.' })
-  }
+  const timestamp = validateTimestamp(value.timestamp, 'timestamp')
+  if (timestampMicros(timestamp) > BigInt(Date.now()) * 1000n)
+    invalid({ timestamp: 'Clinical time cannot be in the future.' })
   return {
     timestamp: new Date(timestamp).toISOString(),
-    content: text(value.content, 'content', 20_000)!,
+    content: text(value.content, 'content', NOTE_CONTENT_MAX)!,
   }
+}
+
+function validateTimestamp(value: unknown, field: string): string {
+  if (typeof value !== 'string') invalid({ [field]: 'Expected a timestamp with a timezone.' })
+  try {
+    timestampMicros(value)
+  } catch {
+    invalid({ [field]: 'Enter a valid timestamp with a timezone.' })
+  }
+  return value
+}
+
+export function validateDiscussionRead(input: DiscussionReadInput): DiscussionReadInput {
+  const value = record(input)
+  allowedKeys(value, ['through'])
+  return { through: validateTimestamp(value.through, 'through') }
 }
 
 export function validateIds(ids: unknown, field: string, max: number): string[] {
   if (!Array.isArray(ids) || ids.length > max)
     invalid({ [field]: `Use an array of at most ${max} IDs.` })
   ids.forEach((id, index) => validateId(id, `${field}[${index}]`))
-  return [...new Set(ids as string[])]
+  if (new Set(ids).size !== ids.length) invalid({ [field]: 'Note references must be distinct.' })
+  return ids as string[]
 }
 
 export function validateComment(input: CommentWrite): CommentWrite {
   const value = record(input)
   allowedKeys(value, ['body', 'note_ids'])
   return {
-    body: text(value.body, 'body', 10_000)!,
-    note_ids: validateIds(value.note_ids, 'note_ids', 20),
+    body: text(value.body, 'body', COMMENT_BODY_MAX)!,
+    note_ids: validateIds(
+      value.note_ids === undefined ? [] : value.note_ids,
+      'note_ids',
+      MAX_COMMENT_NOTE_IDS,
+    ),
   }
 }
 
@@ -216,6 +233,10 @@ export function validateList(params: PatientListParams) {
     params.status === undefined
       ? undefined
       : choice(params.status, 'query.status', ['active', 'inactive'])
+  const assigned_to =
+    params.assigned_to === undefined
+      ? undefined
+      : choice(params.assigned_to, 'query.assigned_to', ['me'])
   const sort_by =
     params.sort_by === undefined
       ? 'name'
@@ -232,5 +253,13 @@ export function validateList(params: PatientListParams) {
   if (params.has_unread_comments !== undefined && typeof params.has_unread_comments !== 'boolean') {
     invalid({ 'query.has_unread_comments': 'Expected a boolean.' })
   }
-  return { ...paging, q, status, sort_by, order, has_unread_comments: params.has_unread_comments }
+  return {
+    ...paging,
+    q,
+    status,
+    assigned_to,
+    sort_by,
+    order,
+    has_unread_comments: params.has_unread_comments,
+  }
 }

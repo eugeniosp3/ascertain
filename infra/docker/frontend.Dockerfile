@@ -20,7 +20,7 @@ CMD ["sh", "-c", "npm run lint && npm run typecheck && npm run format:check && n
 
 FROM source AS build
 # These two values are public and become part of the browser JavaScript.
-ARG VITE_DATA_MODE=demo
+ARG VITE_DATA_MODE=api
 ARG VITE_API_BASE=/api
 ENV VITE_DATA_MODE=${VITE_DATA_MODE} VITE_API_BASE=${VITE_API_BASE}
 RUN case "$VITE_DATA_MODE" in demo|api) ;; *) echo 'VITE_DATA_MODE must be demo or api' >&2; exit 1 ;; esac \

@@ -1,6 +1,6 @@
 """Typed patient export package: one JSONL line per patient plus a manifest.
 
-The ``record`` projection follows the patient section of ``backend/DATA_MODEL.md``. That
+The ``record`` projection follows the patient section of ``backend/docs/DATA_MODEL.md``. That
 backend mapping is still an unapproved draft, so the application-facing fields here are
 **provisional** until backend agrees them (``Manifest.application_projection``). The
 lineage UUIDs and the complete ``source_record`` follow the approved data contract.
