@@ -19,6 +19,8 @@ interface Props {
   comment?: Comment
   active?: boolean
   onSaved?: (comment: Comment) => void
+  /** Announces a new comment's result through the panel's always-mounted live region. */
+  onAnnounce?: (message: string) => void
   onCancel?: () => void
 }
 
@@ -29,6 +31,7 @@ export function CommentForm({
   comment,
   active = true,
   onSaved,
+  onAnnounce,
   onCancel,
 }: Props) {
   const id = useId()
@@ -49,9 +52,14 @@ export function CommentForm({
     },
     validators: { onSubmit: commentSchema },
     onSubmit: async ({ value }) => {
+      // A new attempt clears the last result, so a repeated result is announced again.
+      if (!comment) onAnnounce?.('')
       try {
         const saved = await save.mutateAsync({ body: value.body.trim(), note_ids: value.note_ids })
-        if (!comment) form.reset({ body: '', note_ids: [] })
+        if (!comment) {
+          form.reset({ body: '', note_ids: [] })
+          onAnnounce?.('Comment posted.')
+        }
         onSaved?.(saved)
       } catch {
         /* Keep both the text and selected references on failure. */
@@ -76,7 +84,8 @@ export function CommentForm({
         </p>
       </div>
       {server && <InlineError message={server.message} />}
-      {!comment && save.isSuccess && <p role="status">Comment posted.</p>}
+      {/* Plain text: onAnnounce reports the post through an always-mounted live region. */}
+      {!comment && save.isSuccess && <p>Comment posted.</p>}
       <form.Field name="body">
         {(field) => {
           const error = fieldMessage(field.state.meta.errors) ?? server?.fields.body

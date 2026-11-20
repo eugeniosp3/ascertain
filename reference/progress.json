@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-20 21:21 UTC",
+  "updated_at": "2026-11-20 21:44 UTC",
   "baseline_revision": "611bda5400332550708b3c39f049d3ee7690b01f",
   "verification_records": [
     {
@@ -670,7 +670,7 @@
           "part": "EVAL",
           "reference": "Eval · correctness",
           "title": "Exercise every endpoint by hand",
-          "detail": "Every endpoint is exercised by the 301 backend tests and through the browser in the clean-room live run.",
+          "detail": "Final QA wave on the runtime of 0ae1eb6, run by four independent test agents on isolated stacks with Opus adjudication. API: 317/317 matrix cases, 32/32 assignment, 16/16 seed rerun, and 64/64 new-behavior checks (date-order and pre-1900 validation, NUL bytes rejected with 422, LLM summary persistence and every fallback path), plus a 17/17 cross-check.",
           "status": "verified",
           "scope": "backend tests and clean-room live run",
           "evidence": [
@@ -1981,7 +1981,7 @@
           "part": "EVAL",
           "reference": "Eval · requirements",
           "title": "Walk <code>project.md</code> line by line against the running app",
-          "detail": "Walked the assessment on 20 Nov against the running API-mode app at 1440px and 390px: routes, list fields, search, filter, sort, pagination, notes, summary, form validation and 404. The clean-room Docker run and QA's live HTTP matrix (317/317 cases, plus 32/32 assignment and 16/16 seed-rerun checks) also pass.",
+          "detail": "Final QA wave, 20 Nov, compiled app at 1440px and 390px in light and dark. 96 browser checks (search including trailing spaces, filters, sort, paging, create/edit/delete with client and server validation, 404 and malformed IDs), 24 workspace checks (per-user overview, notes, AI summary badge, tooltip and fallback, discussion and unread) and 28 keyboard and contrast checks (lowest contrast 4.66:1 light, 6.04:1 dark). One minor defect, an AI-summary tooltip clipped on phone widths, is being fixed.",
           "status": "verified",
           "scope": "api-mode app, clean-room run, live api matrix",
           "evidence": [
@@ -2021,7 +2021,7 @@
           "part": "EVAL",
           "reference": "Eval · code quality",
           "title": "All tests pass",
-          "detail": "Final frozen tree, 20 Nov, all green. Backend: 337 tests plus Ruff, format and strict mypy; data: 153 tests (isolated checks container on real PostgreSQL). Frontend: 370 unit, 117 demo-browser and 11/11 HTTP-adapter browser tests, plus lint, format and strict TypeScript. Clean-room run: a fresh isolated stack passes migrations, the 100-patient seed, restart, recreate and log-privacy checks, and all 16 live browser journeys on desktop and phone.",
+          "detail": "Final tree, 20 Nov, all green. Backend: 338 tests plus Ruff, format and strict mypy; data: 153 tests (isolated checks container on real PostgreSQL). Frontend: 387 unit, 126 demo-browser and 11/11 HTTP-adapter browser tests, plus lint, format and strict TypeScript. Clean-room run: a fresh isolated stack passes migrations, the 100-patient seed, restart, recreate and log-privacy checks, and all 16 live browser journeys on desktop and phone. QA's final wave: 317 + 32 + 16 + 64 API checks and 148 browser checks pass.",
           "status": "verified",
           "scope": "final frozen tree",
           "evidence": [
@@ -3880,7 +3880,7 @@
     ]
   },
   "current_updates": [
-    "Submitted. Hosted CI is green on add0bdd, and every core requirement is verified.",
-    "Final pass (no new features): QA regression with independent test agents, verification of every implemented stretch goal, and a cleanliness sweep; only confirmed defects get fixed, then a final push."
+    "Submitted. Hosted CI is green, and every core requirement and implemented stretch goal is verified.",
+    "Final cleanup shipped: the patient list keeps its rows when a background refresh fails; calmer screen-reader announcements; one local 'today' for date fields; the AI-summary tooltip stays on screen on phones; and numeric searches (e.g. an MRN) now survive a reload or deep link."
   ]
 }

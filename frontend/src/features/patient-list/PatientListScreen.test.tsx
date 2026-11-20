@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   createMemoryHistory,
   createRootRoute,
@@ -8,6 +9,8 @@ import {
 } from '@tanstack/react-router'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { ApiError } from '@/api'
+import type { PatientListItem } from '@/api/types'
 import { defaultListSearch, validateListSearch, type ListView } from './search-params'
 import PatientListScreen from './PatientListScreen'
 
@@ -16,7 +19,10 @@ const mocks = vi.hoisted(() => ({
   summary: vi.fn(),
   refetch: vi.fn(),
 }))
-vi.mock('@/api', () => ({ api: {}, dataMode: 'demo' }))
+vi.mock('@/api', async () => {
+  const { ApiError, isApiError } = await import('@/api/client')
+  return { api: {}, dataMode: 'demo', ApiError, isApiError }
+})
 vi.mock('@/app/actor-context', () => ({ useActor: () => ({ actorId: 'demo-one' }) }))
 vi.mock('./queries', () => ({ usePatientList: mocks.list }))
 vi.mock('@/features/notifications/queries', () => ({ useNotificationSummary: mocks.summary }))
@@ -35,6 +41,30 @@ function renderList(view: ListView = 'patients', query = '') {
   })
   return render(<RouterProvider router={router} />)
 }
+
+function patient(index: number): PatientListItem {
+  return {
+    id: `p-${index}`,
+    assigned_user_id: null,
+    first_name: `Patient ${index}`,
+    last_name: 'Example',
+    middle_initial: null,
+    name: `Patient ${index} Example`,
+    source_patient_id: `PT-${index}`,
+    mrn: null,
+    date_of_birth: '1980-01-01',
+    age: 46,
+    last_visit: null,
+    status: 'active',
+    conditions: [],
+    notes_count: 0,
+    comments_count: 0,
+    unread_comments_count: 0,
+  }
+}
+// A last good page of two patients, as a successful earlier load left it in the cache.
+const cachedPage = { items: [patient(1), patient(2)], total: 2, page: 1, page_size: 20 }
+const refreshNotice = 'Couldn’t refresh the patient list.'
 
 beforeEach(() => {
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
@@ -129,8 +159,79 @@ describe('patient list states', () => {
     })
     renderList()
     expect(await screen.findByRole('alert')).toHaveTextContent('Access denied.')
+    // With nothing loaded yet, the full panel replaces the results; no pagination or notice.
+    expect(screen.getByRole('status')).toHaveTextContent('Patient list unavailable')
+    expect(screen.queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument()
+    expect(screen.queryByText(refreshNotice)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
     await waitFor(() => expect(mocks.refetch).toHaveBeenCalledTimes(1))
     expect(screen.queryByText('No patients yet')).not.toBeInTheDocument()
   })
+  it('keeps the last good page and pagination when a background refresh fails', async () => {
+    // The refresh fails until Retry succeeds; the cached page stays in data throughout.
+    function useRecoveringList() {
+      const [failed, setFailed] = useState(true)
+      return {
+        isPending: false,
+        isFetching: false,
+        isError: failed,
+        isRefetchError: failed,
+        isPlaceholderData: false,
+        data: cachedPage,
+        error: failed ? new ApiError(503, 'unavailable', 'Service unavailable.') : null,
+        refetch: () => {
+          mocks.refetch()
+          setFailed(false)
+          return Promise.resolve()
+        },
+      }
+    }
+    mocks.list.mockImplementation(useRecoveringList)
+    // Give the virtualized table a viewport so its rows render in jsdom (as PatientResults.test).
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(320)
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(1000)
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(216)
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(7000)
+    renderList()
+    const table = await screen.findByRole('table')
+    expect(table).toHaveTextContent('Patient 1 Example')
+    expect(screen.getByRole('button', { name: 'Next page' })).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('2 patients')
+    // The failure is polite: no alert, and Retry sits beside the live region, not inside it.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    const notice = screen.getByText(refreshNotice)
+    expect(notice).toHaveAttribute('aria-live', 'polite')
+    const retry = screen.getByRole('button', { name: 'Retry' })
+    expect(notice).not.toContainElement(retry)
+    fireEvent.click(retry)
+    expect(mocks.refetch).toHaveBeenCalledTimes(1)
+    // The region stays mounted and only its text clears once the refresh succeeds.
+    expect(notice).toBeInTheDocument()
+    expect(notice).toBeEmptyDOMElement()
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument()
+    expect(screen.getByRole('table')).toHaveTextContent('Patient 1 Example')
+  })
+  it.each([401, 403])(
+    'hides cached rows when a refresh fails with %i, since access may have changed',
+    async (status) => {
+      mocks.list.mockReturnValue({
+        isPending: false,
+        isFetching: false,
+        isError: true,
+        isRefetchError: true,
+        isPlaceholderData: false,
+        data: cachedPage,
+        error: new ApiError(status, 'forbidden', 'You can no longer view these patients.'),
+        refetch: mocks.refetch,
+      })
+      renderList()
+      expect(await screen.findByRole('alert')).toHaveTextContent('Patients couldn’t be loaded')
+      expect(screen.getByRole('alert')).toHaveTextContent('You can no longer view these patients.')
+      expect(screen.queryByRole('table')).not.toBeInTheDocument()
+      expect(screen.queryByText(/Patient 1 Example/)).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument()
+      expect(screen.getByRole('status')).toHaveTextContent('Patient list unavailable')
+      expect(screen.queryByText(refreshNotice)).not.toBeInTheDocument()
+    },
+  )
 })

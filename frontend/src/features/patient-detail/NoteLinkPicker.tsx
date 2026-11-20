@@ -3,6 +3,7 @@ import type { Comment } from '@/api'
 import { MAX_COMMENT_NOTE_IDS } from '@/api/constraints'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
+import { FieldError } from '@/components/shared/FormField'
 import { InlineError } from '@/components/shared/InlineError'
 import { getFormErrors } from '@/utils/form-errors'
 import { formatDateTime } from '@/utils/dates'
@@ -125,11 +126,7 @@ export function NoteLinkPicker({
           ))}
         </div>
       )}
-      {error && (
-        <p role="alert" id={`${id}-error`} className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <FieldError id={`${id}-error`} message={error} />}
     </fieldset>
   )
 }

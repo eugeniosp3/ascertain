@@ -75,7 +75,7 @@ test('UI validates, creates all writable fields, persists, replaces the profile 
   await form.getByRole('textbox', { name: /^Allergy 1/ }).fill(input.allergies[0]!)
   await form.getByRole('button', { name: 'Add patient', exact: true }).click()
   await expect(form.getByLabel('Email', { exact: true })).toHaveAttribute('aria-invalid', 'true')
-  await expect(form.getByText('Enter a valid email address.', { exact: true })).toBeVisible()
+  await expect(form.getByText('Error: Enter a valid email address.', { exact: true })).toBeVisible()
   await expect(form.getByLabel('Postal code', { exact: true })).toHaveValue('00123')
   await expect(form.getByLabel('Condition 1 code', { exact: true })).toHaveValue('I10')
   expect(writes, 'Invalid UI draft must not reach patient POST').toHaveLength(0)

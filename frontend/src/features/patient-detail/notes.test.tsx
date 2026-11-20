@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { api, ApiError } from '@/api'
@@ -143,9 +143,25 @@ describe('canonical note view', () => {
     expect(await screen.findByRole('heading', { name: 'Cached note' })).toBeVisible()
     await act(() => client.refetchQueries({ queryKey: patientKeys.note(patientId, note.id) }))
     expect(getNote).toHaveBeenCalledTimes(2)
-    expect(await screen.findByRole('button', { name: 'Retry' })).toBeVisible()
+    // The refetch was automatic: a polite notice with Retry beside it, not an alert.
+    const notice = await screen.findByText('Connection interrupted.')
+    expect(notice).toHaveAttribute('aria-live', 'polite')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    const retry = screen.getByRole('button', { name: 'Retry' })
+    expect(retry).toBeVisible()
+    expect(notice).not.toContainElement(retry)
     expect(screen.getByRole('heading', { name: 'Cached note' })).toBeVisible()
     expect(screen.getByText(/Still readable/, { selector: 'p' })).toBeVisible()
+  })
+
+  it('keeps an assertive error with Retry when a note fails with nothing cached', async () => {
+    vi.spyOn(api, 'getNote').mockRejectedValue(new ApiError(0, 'network', 'Connection lost.'))
+    renderFeature(
+      <NoteView patientId={patientId} actorId={actorId} noteId="note-1" onBack={vi.fn()} />,
+    )
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Connection lost.')
+    expect(within(alert).getByRole('button', { name: 'Retry' })).toBeVisible()
   })
 })
 

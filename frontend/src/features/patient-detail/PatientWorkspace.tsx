@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CountPill } from '@/components/ui/count-pill'
 import { Skeleton } from '@/components/ui/skeleton'
 import { InlineError } from '@/components/shared/InlineError'
+import { StatusNotice } from '@/components/shared/StatusNotice'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { formatCount } from '@/utils/count'
 import { getFormErrors } from '@/utils/form-errors'
@@ -163,14 +164,17 @@ function WorkspaceVisit({
                 activationMode="manual"
                 className="pw-tabs"
               >
-                {patient.isError && (
-                  <InlineError
-                    message="The latest patient details could not be refreshed. Your draft is still here."
-                    retry={() => {
-                      void patient.refetch()
-                    }}
-                  />
-                )}
+                {/* A failed background refresh is polite: the cached workspace and drafts stay usable. */}
+                <StatusNotice
+                  message={
+                    patient.isError
+                      ? 'The latest patient details could not be refreshed. Your draft is still here.'
+                      : null
+                  }
+                  retry={() => {
+                    void patient.refetch()
+                  }}
+                />
                 <TabsList className="pw-tab-list" aria-label="Patient record sections">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
                   <TabsTrigger value="notes">

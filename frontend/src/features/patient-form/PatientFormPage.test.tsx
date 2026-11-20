@@ -148,6 +148,31 @@ describe('composable patient form', () => {
       expect(screen.getByLabelText(label)).toHaveAttribute('maxlength', String(max))
   })
 
+  it('bounds the date pickers by the local calendar day and the 1900 birth-date floor', async () => {
+    // 08:00 on Nov 21 in Sydney is still Nov 20 in UTC.
+    vi.stubEnv('TZ', 'Australia/Sydney')
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-20T21:00:00Z'))
+    try {
+      const onSave = vi.fn().mockResolvedValue(undefined)
+      render(<PatientForm onSave={onSave} onCancel={vi.fn()} />)
+      const birth = screen.getByLabelText(/^Date of birth/)
+      expect(birth).toHaveAttribute('min', '1900-01-01')
+      expect(birth).toHaveAttribute('max', '2026-11-21')
+      const visit = screen.getByLabelText('Last visit')
+      expect(visit).toHaveAttribute('max', '2026-11-21')
+      fillRequired()
+      fireEvent.change(visit, { target: { value: '2026-11-21' } })
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Add patient' }))
+      await waitFor(() =>
+        expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ last_visit: '2026-11-21' })),
+      )
+    } finally {
+      vi.useRealTimers()
+      vi.unstubAllEnvs()
+    }
+  })
+
   it('starts empty and validates on blur and submit with associated plain-language errors', async () => {
     const onSave = vi.fn()
     render(<PatientForm onSave={onSave} onCancel={vi.fn()} />)
@@ -161,21 +186,23 @@ describe('composable patient form', () => {
     await user.tab()
     expect(await screen.findByText('Enter a first name.')).toBeVisible()
     expect(first).toHaveAttribute('aria-invalid', 'true')
-    expect(first).toHaveAccessibleDescription('Enter a first name.')
+    expect(first).toHaveAccessibleDescription('Error: Enter a first name.')
     expect(screen.queryByText('Enter a last name.')).not.toBeInTheDocument()
     expect(screen.queryByText('Enter a valid date.')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Add patient' }))
     expect(await screen.findByText('Enter a last name.')).toBeVisible()
     expect(screen.getByText('Enter a valid date.')).toBeVisible()
-    const summary = screen.getByRole('alert', { name: 'Check these fields before saving.' })
+    const summary = screen.getByRole('group', { name: 'Check these fields before saving.' })
     expect(summary).toHaveFocus()
+    // Focus is the single announcement: neither the summary nor the inline errors are alerts.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(summary).toHaveTextContent('First name: Enter a first name.')
     expect(summary).toHaveTextContent('Last name: Enter a last name.')
     expect(summary).toHaveTextContent('Date of birth: Enter a valid date.')
     await user.click(screen.getByRole('button', { name: 'Last name: Enter a last name.' }))
     expect(screen.getByLabelText(/^Last name/)).toHaveFocus()
     await user.click(screen.getByRole('button', { name: 'Add patient' }))
-    expect(screen.getByRole('alert', { name: 'Check these fields before saving.' })).toHaveFocus()
+    expect(screen.getByRole('group', { name: 'Check these fields before saving.' })).toHaveFocus()
     expect(onSave).not.toHaveBeenCalled()
   })
 
@@ -191,7 +218,9 @@ describe('composable patient form', () => {
     await user.keyboard('{Enter}')
     expect(screen.queryByText('Add at least one reported allergy.')).not.toBeInTheDocument()
     await waitFor(() =>
-      expect(screen.getByLabelText(/^Allergy 1/)).toHaveAccessibleDescription('Enter an allergy.'),
+      expect(screen.getByLabelText(/^Allergy 1/)).toHaveAccessibleDescription(
+        'Error: Enter an allergy.',
+      ),
     )
     await user.type(screen.getByLabelText(/^Allergy 1/), 'Example, with punctuation')
     expect(screen.queryByText('Enter an allergy.')).not.toBeInTheDocument()
@@ -290,10 +319,10 @@ describe('composable patient form', () => {
     await userEvent.setup().click(screen.getByRole('button', { name: 'Add patient' }))
     expect(await screen.findByText('Date cannot be in the future.')).toBeVisible()
     expect(screen.getByLabelText('Email')).toHaveAccessibleDescription(
-      'Enter a valid email address.',
+      'Error: Enter a valid email address.',
     )
     expect(screen.getByLabelText('Phone')).toHaveAccessibleDescription(
-      'Enter a valid phone number.',
+      'Error: Enter a valid phone number.',
     )
     expect(onSave).not.toHaveBeenCalled()
   })
@@ -452,7 +481,7 @@ describe('patient form page integration', () => {
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: 'Save changes' }))
     expect(await screen.findByText(error.message)).toBeVisible()
-    expect(screen.getByRole('alert', { name: error.message })).toHaveFocus()
+    expect(screen.getByRole('group', { name: error.message })).toHaveFocus()
     expect(screen.getByLabelText(/^First name/)).toHaveValue('Unsaved name')
     expect(screen.getByLabelText('Address line 2')).toHaveValue('Unit 009')
     expect(screen.getByLabelText(/^Condition 1 label/)).toHaveValue('Unsaved condition')
@@ -463,7 +492,7 @@ describe('patient form page integration', () => {
     await waitFor(() => expect(props.onSaved).toHaveBeenCalledWith(patient))
   })
 
-  it('maps server 422 nested fields to inputs and unknown paths to the form alert', async () => {
+  it('maps server 422 nested fields to inputs and unknown paths to the form summary', async () => {
     vi.mocked(api.updatePatient).mockRejectedValue(
       new ApiError(422, 'validation_error', 'Request validation failed.', {
         'conditions[0].label': 'This condition label is unavailable.',
@@ -480,18 +509,18 @@ describe('patient form page integration', () => {
     expect(await screen.findByText('This condition label is unavailable.')).toBeVisible()
     const condition = screen.getByLabelText(/^Condition 1 label/)
     expect(condition).toHaveAttribute('aria-invalid', 'true')
-    expect(condition).toHaveAccessibleDescription('This condition label is unavailable.')
+    expect(condition).toHaveAccessibleDescription('Error: This condition label is unavailable.')
     expect(screen.getByLabelText(/^Allergy 1/)).toHaveAccessibleDescription(
-      'Confirm this allergen.',
+      'Error: Confirm this allergen.',
     )
     expect(screen.getByLabelText('Email')).toHaveAccessibleDescription(
-      'Use an approved email address.',
+      'Error: Use an approved email address.',
     )
     expect(
       screen.getByText(/Request validation failed\. The record identifier needs attention\./),
     ).toBeVisible()
     expect(
-      screen.getByRole('alert', {
+      screen.getByRole('group', {
         name: 'Request validation failed. The record identifier needs attention.',
       }),
     ).toHaveFocus()
@@ -541,7 +570,16 @@ describe('patient form page integration', () => {
     fillRequired()
     await userEvent.setup().click(screen.getByRole('button', { name: 'Add patient' }))
     expect(await screen.findByText(message)).toBeVisible()
-    expect(screen.getByRole('alert', { name: 'Request validation failed.' })).toHaveFocus()
+    expect(screen.getByRole('group', { name: 'Request validation failed.' })).toHaveFocus()
+    // The closed editor's server error is inline text described by the allergy status radios.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    for (const name of ['Unknown', 'No known allergies', 'Reported allergies']) {
+      const radio = screen.getByRole('radio', { name })
+      expect(radio).toHaveAttribute('aria-invalid', 'true')
+      expect(radio).toHaveAccessibleDescription(
+        `Unknown or No known allergies clears the reported list. Error: ${message}`,
+      )
+    }
     await userEvent.setup().click(
       screen.getByRole('button', {
         name: `Reported allergy list: ${message}`,

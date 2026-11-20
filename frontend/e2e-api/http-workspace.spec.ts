@@ -138,7 +138,7 @@ test('patient POST preserves a nested 422 draft and network failure; PUT is comp
   await label.fill('Initial condition')
   await form.getByRole('button', { name: 'Add patient', exact: true }).click()
   await expect(label).toHaveAttribute('aria-invalid', 'true')
-  await expect(label).toHaveAccessibleDescription('Choose a more specific condition.')
+  await expect(label).toHaveAccessibleDescription('Error: Choose a more specific condition.')
   await expect(label).toHaveValue('Initial condition')
   await expect(form.getByLabel('First name', { exact: false })).toHaveValue('HTTP')
   expect(posts).toBe(1)
@@ -154,9 +154,9 @@ test('patient POST preserves a nested 422 draft and network failure; PUT is comp
   } finally {
     releaseWrite()
   }
-  await expect(form.getByRole('alert')).toContainText(
-    'Unable to reach the service. Check your connection.',
-  )
+  await expect(
+    form.getByRole('group', { name: 'Unable to reach the service. Check your connection.' }),
+  ).toBeVisible()
   await expect(label).toHaveValue('Revised condition')
   await expect(form.getByRole('button', { name: 'Add patient', exact: true })).toBeEnabled()
   expect(posts).toBe(2)
@@ -330,9 +330,18 @@ test('a failed background profile GET keeps the cached workspace and clinical dr
   await commentForm.getByLabel('Comment', { exact: false }).fill('Trigger profile revalidation')
   await commentForm.getByRole('button', { name: 'Post comment', exact: true }).click()
   await expect.poll(() => contract.matching('GET', patientPath).length).toBe(4)
-  await expect(
-    page.getByRole('alert').filter({ hasText: /latest|refresh|service is unavailable/i }),
-  ).toBeVisible()
+  // An automatic refresh failure is a polite live region, not an alert; Retry sits beside it.
+  const refreshNotice = page.getByText(
+    'The latest patient details could not be refreshed. Your draft is still here.',
+    { exact: true },
+  )
+  await expect(refreshNotice).toBeVisible()
+  await expect(refreshNotice).toHaveAttribute('aria-live', 'polite')
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  const retry = refreshNotice
+    .locator('xpath=..')
+    .getByRole('button', { name: 'Retry', exact: true })
+  await expect(refreshNotice.getByRole('button')).toHaveCount(0)
   await expect(page.getByRole('dialog', { name: 'HTTP Patient', exact: true })).toBeVisible()
   await page.getByRole('tab', { name: /^Notes/ }).click()
   await expect(draft.getByLabel('Note', { exact: false })).toHaveValue(
@@ -342,7 +351,8 @@ test('a failed background profile GET keeps the cached workspace and clinical dr
     '2026-11-18T10:15',
   )
   contract.handler = () => undefined
-  await page.getByRole('alert').getByRole('button', { name: 'Retry', exact: true }).click()
+  await retry.click()
+  await expect(refreshNotice).toHaveCount(0)
   await expect(page.getByRole('alert')).toHaveCount(0)
   await expect(draft.getByLabel('Note', { exact: false })).toHaveValue(
     'Unsaved HTTP clinical draft',

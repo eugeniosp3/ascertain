@@ -1,7 +1,6 @@
 import { PATIENT_FIELD_LIMITS as limits } from '@/api/constraints'
 import { useId, useRef } from 'react'
-import { FormField } from '@/components/shared/FormField'
-import { InlineError } from '@/components/shared/InlineError'
+import { FieldError, FormField } from '@/components/shared/FormField'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { fieldMessage } from '@/utils/form-errors'
@@ -24,11 +23,21 @@ export function AllergiesEditor({ binding }: { binding: PatientFormBinding }) {
       <form.Field name="allergy_status">
         {(field) => {
           const error = serverFields.allergy_status ?? fieldMessage(field.state.meta.errors)
+          // With the list editor closed, a server allergy error belongs to these radios: the
+          // summary sends focus here, so they describe it alongside their own error.
+          const listError = field.state.value === 'reported' ? undefined : serverFields.allergies
+          const describedBy = [
+            fieldDescription(id, 'description', error),
+            listError && `${id}-list-error`,
+          ]
+            .filter(Boolean)
+            .join(' ')
+          const invalid = !!(error || listError)
           return (
             <fieldset
               className="patient-form-choices"
-              aria-describedby={fieldDescription(id, 'description', error)}
-              aria-invalid={!!error}
+              aria-describedby={describedBy}
+              aria-invalid={invalid}
             >
               <legend>Allergy status</legend>
               <p id={`${id}-description`} className="patient-form-hint">
@@ -44,8 +53,8 @@ export function AllergiesEditor({ binding }: { binding: PatientFormBinding }) {
                       value={value}
                       checked={field.state.value === value}
                       onBlur={field.handleBlur}
-                      aria-invalid={!!error}
-                      aria-describedby={fieldDescription(id, 'description', error)}
+                      aria-invalid={invalid}
+                      aria-describedby={describedBy}
                       onChange={() => {
                         clearServerField('allergy_status')
                         clearServerField('allergies')
@@ -57,11 +66,7 @@ export function AllergiesEditor({ binding }: { binding: PatientFormBinding }) {
                   </Label>
                 ))}
               </div>
-              {error && (
-                <p id={`${id}-error`} role="alert" className="text-sm text-destructive">
-                  {error}
-                </p>
-              )}
+              {error && <FieldError id={`${id}-error`} message={error} />}
             </fieldset>
           )
         }}
@@ -135,7 +140,7 @@ export function AllergiesEditor({ binding }: { binding: PatientFormBinding }) {
               }}
             </form.Field>
           ) : serverFields.allergies ? (
-            <InlineError message={serverFields.allergies} />
+            <FieldError id={`${id}-list-error`} message={serverFields.allergies} />
           ) : null
         }
       </form.Subscribe>

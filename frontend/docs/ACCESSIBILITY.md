@@ -22,10 +22,10 @@ are intentionally quiet; controls use `--ac-control-border` instead.
 | 2.5.8 Target size (plus local 44px touch rule) | `globals.css` `(width < 48rem), (pointer: coarse)` minimums; component overrides in `overview.css`, `patient-detail/workspace.css`, `styles/workspace.css` (rail) | Source inspection: every explicit small `min-height` on a control has a coarse-pointer 44px override; fine-pointer desktop sizes unchanged |
 | 1.4.4 Resize text, 1.4.10 Reflow | `index.html` viewport does not block zoom; `html, body { min-width: 320px }`; phone rules below 48rem; chart tooltip wraps below a 22rem container | `e2e/visual-followup.spec.ts` at 375x667 and 390x844 (whole cards, unclipped page-size values, tabs without a scrolling strip). Rendered 320px / 400% check outstanding (AST-008) |
 | 1.4.12 Text spacing | Wrapping rows instead of fixed heights (filters, mobile sort, chart tooltip band) | Rendered check outstanding (AST-008) |
-| 1.4.13 Content on hover or focus | Radix tooltips (`tooltip.tsx`): hoverable and dismissed with Escape (Radix defaults), no arrow | `ThemeControl.test.tsx` covers show and hide; Escape and hover are Radix behavior |
+| 1.4.13 Content on hover or focus | Radix tooltips (`tooltip.tsx`): hoverable and dismissed with Escape (Radix defaults), no arrow; they wrap at `min(20rem, 100vw - 2rem)` and keep 8px from the viewport edge | `ThemeControl.test.tsx` covers show and hide; `e2e/visual-followup.spec.ts` keeps the AI-summary hint inside a 390px screen |
 | Reduced motion (2.3.3 is AAA; kept as a baseline) | Global `prefers-reduced-motion: reduce` rule in `globals.css` (animations, transitions, smooth scroll); spinner stop in `styles/workspace.css` | Source inspection |
 | Forced colors | `overview.css` keeps chart lines and marks visible with `CanvasText` | Source inspection |
-| 1.3.1 / 3.3.1 / 3.3.2 Labels and errors | `FormField.tsx`: label `htmlFor`, `${id}-description`, `${id}-error` with `role="alert"` | `PatientFormPage.test.tsx` (accessible descriptions and errors) |
+| 1.3.1 / 3.3.1 / 3.3.2 Labels and errors | `FormField.tsx`: label `htmlFor`, `${id}-description`, and `FieldError` (`${id}-error`): plain text with a hidden "Error:" prefix, bound by `aria-describedby` + `aria-invalid`; the focused summary is the single announcement on submit | `PatientFormPage.test.tsx` (accessible descriptions and errors), `e2e/form-recovery.spec.ts` |
 | 3.1.1 Language, 2.4.2 Page titled | `index.html`: `lang="en"`, document title | Source inspection |
 
 ## Styling review items (AST-001 to AST-010)
@@ -79,12 +79,12 @@ adopted. Keep the visible word with every tint.
 |---|---|---|
 | 2.4.1 Bypass, 2.4.2 Page titled, landmarks | `AppShell.tsx`: skip link to `#main-content`, header / nav / main, a document title per route; unknown routes say "Page not found" with no `aria-current` link | `AppShell.test.tsx` |
 | 1.3.1 Table and list semantics | `PatientResults.tsx`: captioned table, sort buttons in column headers, `aria-rowindex` on the header row; phone cards are a list with `aria-setsize` / `aria-posinset` for virtualized items | `PatientResults.test.tsx`, `e2e/directory.spec.ts` |
-| 4.1.3 Status messages | One status region per async state (list count; skeletons are `aria-hidden`); polite regions announce "Note saved / deleted" (`NotesPanel.tsx`) and "Comment saved / deleted" (`DiscussionPanel.tsx`); loading text for patient, notes, note, discussion and "Generating the summary" | `notes.test.tsx`, `discussion.test.tsx`, `PatientListScreen.test.tsx`, `profile.test.tsx` |
+| 4.1.3 Status messages | One status region per async state (list count; skeletons are `aria-hidden`); polite regions announce "Note saved / deleted" (`NotesPanel.tsx`) and "Comment posted / saved / deleted" once (`DiscussionPanel.tsx`); failures of automatic work (list, overview, workspace and edit-form refresh, mark-as-read, note refetch, unread totals) use the always-mounted polite `StatusNotice` with Retry beside it, never an alert | `notes.test.tsx`, `discussion.test.tsx`, `PatientListScreen.test.tsx`, `OverviewCharts.test.tsx`, `workspace.test.tsx` |
 | 2.4.3 Focus order and return | Closing the workspace refocuses the originating row action; removing the last allergy or condition focuses its Add button; closing a comment editor refocuses Edit; leaving a note focuses the "Clinical notes" heading; cancelling a new note refocuses Add note | `PatientFormPage.test.tsx`, `discussion.test.tsx`, `notes.test.tsx`, `e2e/history-focus.spec.ts` |
 | 2.1.1 Keyboard | Row links and arrow-key row movement; the AI-summary sparkles is a real button ("About AI summaries") whose tooltip opens on focus; the visit chart's month input and data-table toggle | `profile.test.tsx`, `e2e/visual-followup.spec.ts` |
 | 1.1.1 Chart alternatives | Overview figures have names, visible values and legends with counts and shares; the visit chart has a data-table toggle | `OverviewCharts.test.tsx`, `e2e/visual-followup.spec.ts` |
 | 3.3.1 / 3.3.3 Error recovery | Invalid submit focuses the error summary; inputs use `aria-invalid` + `aria-describedby`; malformed or missing IDs (404 / 422) show not-found with a way back and no futile retry; route errors link to all patients | `PatientFormPage.test.tsx`, `workspace.test.tsx`, `e2e/form-recovery.spec.ts` |
 
-Known gaps: inline field errors are still `role="alert"`, so a failed submit announces the summary and
-each field; there is no automated axe scan yet; the rendered 320px, 400% zoom and text-spacing checks
-(AST-008) are outstanding; a pending delete disables the focused confirm button.
+Known gaps: loading text in the workspace, notes, summary and pickers still mounts together with its
+status region; there is no automated axe scan yet; the rendered 320px, 400% zoom and text-spacing
+checks (AST-008) are outstanding; a pending delete disables the focused confirm button.

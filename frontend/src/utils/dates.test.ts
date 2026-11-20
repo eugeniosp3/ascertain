@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  localToday,
   formatDate,
   formatDateTime,
   toDateTimeLocal,
@@ -11,6 +12,19 @@ import {
 afterEach(() => vi.useRealTimers())
 
 describe('dates', () => {
+  it('uses the local calendar day for "today", not the UTC date', () => {
+    vi.stubEnv('TZ', 'America/New_York')
+    try {
+      // 01:30 UTC on Nov 21 is still 8:30 PM on Nov 20 in New York.
+      expect(localToday(new Date('2026-11-21T01:30:00Z'))).toBe('2026-11-20')
+      vi.stubEnv('TZ', 'Australia/Sydney')
+      // 22:00 UTC on Nov 20 is already 9 AM on Nov 21 in Sydney.
+      expect(localToday(new Date('2026-11-20T22:00:00Z'))).toBe('2026-11-21')
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+
   it('formats date-only values without shifting a day in the viewer timezone', () => {
     expect(formatDate('1948-05-10')).toBe('May 10, 1948')
     expect(formatDate('2024-02-29')).toBe('Feb 29, 2024')

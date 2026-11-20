@@ -1,4 +1,5 @@
 import { PATIENT_FIELD_LIMITS as limits } from '@/api/constraints'
+import { localToday } from '@/utils/dates'
 import { PatientInput, PatientSelect } from './PatientInput'
 import type { PatientFormBinding } from './use-patient-form'
 
@@ -36,8 +37,9 @@ export function PersonalFields({ binding }: { binding: PatientFormBinding }) {
         label="Date of birth"
         type="date"
         autoComplete="off"
-        min="0001-01-01"
-        max={new Date().toISOString().slice(0, 10)}
+        // Same floor as the form schema and the backend; max is today in the local calendar.
+        min="1900-01-01"
+        max={localToday()}
         required
       />
       <PatientSelect
@@ -55,7 +57,7 @@ export function PersonalFields({ binding }: { binding: PatientFormBinding }) {
         label="Last visit"
         type="date"
         min="0001-01-01"
-        max={new Date().toISOString().slice(0, 10)}
+        max={localToday()}
       />
     </div>
   )

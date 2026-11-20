@@ -55,7 +55,7 @@ for (const width of [390, 1440]) {
         }
         await form.getByRole('button', { name: 'Add patient', exact: true }).click()
 
-        const summary = form.getByRole('alert', { name: 'Request validation failed.' })
+        const summary = form.getByRole('group', { name: 'Request validation failed.' })
         await expect(summary).toBeFocused()
         await expect(summary).toContainText(failure.message)
         const rect = await summary.boundingBox()

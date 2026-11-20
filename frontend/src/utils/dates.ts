@@ -33,6 +33,16 @@ function instant(value: string): Date {
   return date
 }
 
+/**
+ * Today as YYYY-MM-DD in the user's local calendar. `toISOString()` is UTC, which is already
+ * tomorrow on a US evening and still yesterday on an Asia-Pacific morning.
+ */
+export function localToday(now = new Date()): string {
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}
+
 // Preserve database microseconds when comparing discussion watermarks and snapshot positions.
 export function timestampMicros(value: string): bigint {
   const date = instant(value)

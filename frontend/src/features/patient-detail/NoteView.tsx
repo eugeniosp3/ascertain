@@ -6,6 +6,7 @@ import { patientKeys } from '@/app/query-keys'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { InlineError } from '@/components/shared/InlineError'
+import { StatusNotice } from '@/components/shared/StatusNotice'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { formatDateTime } from '@/utils/dates'
 import { getFormErrors } from '@/utils/form-errors'
@@ -87,7 +88,7 @@ export function NoteView({
           />
         </>
       )}
-      {note.isError && !gone && !missing && (
+      {note.isError && !gone && !missing && !note.data && (
         <InlineError
           message={getFormErrors(note.error).message}
           retry={() => {
@@ -98,6 +99,13 @@ export function NoteView({
       {/* A cached note stays readable when a background refetch fails; only 404/410/422 hide it. */}
       {note.data && !gone && !missing && (
         <>
+          {/* The failed refetch was automatic, so it is reported politely beside a Retry. */}
+          <StatusNotice
+            message={note.isError ? getFormErrors(note.error).message : null}
+            retry={() => {
+              void note.refetch()
+            }}
+          />
           <div>
             <h3 ref={heading} tabIndex={-1} className="text-xl font-semibold">
               {noteLabel(note.data.content)}

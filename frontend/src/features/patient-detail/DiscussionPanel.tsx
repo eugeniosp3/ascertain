@@ -14,6 +14,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { InlineError } from '@/components/shared/InlineError'
+import { StatusNotice } from '@/components/shared/StatusNotice'
 import { formatCount } from '@/utils/count'
 import { getFormErrors } from '@/utils/form-errors'
 import { CommentForm } from './CommentForm'
@@ -130,12 +131,15 @@ function DiscussionVisit({ patientId, actorId, active, onNoteOpen }: Props) {
           Finish editing before changing pages or refreshing. Your draft stays here.
         </p>
       )}
-      {readError != null && (
-        <InlineError
-          message={`Comments could not be marked as read. ${getFormErrors(readError).message}`}
-          retry={retryRead}
-        />
-      )}
+      {/* Marking read is automatic, so its failure is a polite notice with Retry beside it. */}
+      <StatusNotice
+        message={
+          readError != null
+            ? `Comments could not be marked as read. ${getFormErrors(readError).message}`
+            : null
+        }
+        retry={retryRead}
+      />
       <p role="status" className="pw-discussion-status text-sm text-muted-foreground">
         {reading
           ? 'Marking displayed comments as read…'
@@ -143,7 +147,8 @@ function DiscussionVisit({ patientId, actorId, active, onNoteOpen }: Props) {
             ? 'Comments that were unread during this visit keep their New label.'
             : ''}
       </p>
-      {/* aria-live without role="status", so status queries in the discussion stay unambiguous. */}
+      {/* aria-live without role="status", so status queries in the discussion stay unambiguous.
+          Results from the composer and comment actions (posted, saved, deleted) are announced here once. */}
       <p className="sr-only" aria-live="polite">
         {announcement}
       </p>
@@ -253,7 +258,8 @@ function DiscussionVisit({ patientId, actorId, active, onNoteOpen }: Props) {
       )}
       {posted && (
         <aside className="pw-section grid gap-2" aria-label="Just posted comment">
-          <p role="status" className="text-sm text-muted-foreground">
+          {/* Plain text: the composer announces the post through the live region above. */}
+          <p className="text-sm text-muted-foreground">
             Comment posted. Refresh discussion to show it in order.
           </p>
           <p className="pw-prose">{posted.body}</p>
@@ -264,6 +270,7 @@ function DiscussionVisit({ patientId, actorId, active, onNoteOpen }: Props) {
         actorId={actorId}
         active={active}
         onSaved={setPosted}
+        onAnnounce={setAnnouncement}
         authorName={users.data?.find((user) => user.id === actorId)?.display_name}
       />
     </section>

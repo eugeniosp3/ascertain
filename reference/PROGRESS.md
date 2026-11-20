@@ -2,7 +2,7 @@
 
 [Project overview](../README.md) · [Interactive view](holepunch.html) · [Assessment](project.md)
 
-Updated 2026-11-20 21:21 UTC. This covers the original assessment and selected additions. A checked box means verified in the scope shown; it does not turn a demo or fixture test into live-application acceptance.
+Updated 2026-11-20 21:44 UTC. This covers the original assessment and selected additions. A checked box means verified in the scope shown; it does not turn a demo or fixture test into live-application acceptance.
 
 **Core assessment: 51/51 checks verified in reviewed scopes (100%).** 0 partially verified; 0 still open.
 
@@ -21,8 +21,8 @@ The detailed card also tracks recommendations and selected additions; those are 
 
 **Detailed work: 149/151 items verified in stated scopes.**
 
-- Submitted. Hosted CI is green on add0bdd, and every core requirement is verified.
-- Final pass (no new features): QA regression with independent test agents, verification of every implemented stretch goal, and a cleanliness sweep; only confirmed defects get fixed, then a final push.
+- Submitted. Hosted CI is green, and every core requirement and implemented stretch goal is verified.
+- Final cleanup shipped: the patient list keeps its rows when a background refresh fails; calmer screen-reader announcements; one local 'today' for date fields; the AI-summary tooltip stays on screen on phones; and numeric searches (e.g. an MRN) now survive a reload or deep link.
 
 151 tracked items: 149 verified in stated scope, 0 partially verified; excluded scope open, 0 implemented; acceptance pending, 0 in progress, 0 planned, 2 not selected.
 
@@ -255,7 +255,7 @@ Part 2 · task 1, plus the validation and error-handling requirements.
   Scope: backend 34e2150b OpenAPI. Requirement: Eval · API design. Evidence: [backend/docs/API_CONTRACT.md](../backend/docs/API_CONTRACT.md) · [backend/app/routers/notes.py](../backend/app/routers/notes.py).
 
 - [x] **a-smoke — Exercise every endpoint by hand** · Verified in stated scope.
-  Every endpoint is exercised by the 301 backend tests and through the browser in the clean-room live run.
+  Final QA wave on the runtime of 0ae1eb6, run by four independent test agents on isolated stacks with Opus adjudication. API: 317/317 matrix cases, 32/32 assignment, 16/16 seed rerun, and 64/64 new-behavior checks (date-order and pre-1900 validation, NUL bytes rejected with 422, LLM summary persistence and every fallback path), plus a 17/17 cross-check.
   Scope: backend tests and clean-room live run. Requirement: Eval · correctness. Evidence: [reference/project.md](../reference/project.md).
 
 ## Frontend foundation
@@ -591,7 +591,7 @@ The brief suggests one or two; this project selected more. Optional items that w
 Historical scoped passes do not close current integration and detailed QA checks.
 
 - [x] **q-spec — Walk `project.md` line by line against the running app** · Verified in stated scope.
-  Walked the assessment on 20 Nov against the running API-mode app at 1440px and 390px: routes, list fields, search, filter, sort, pagination, notes, summary, form validation and 404. The clean-room Docker run and QA's live HTTP matrix (317/317 cases, plus 32/32 assignment and 16/16 seed-rerun checks) also pass.
+  Final QA wave, 20 Nov, compiled app at 1440px and 390px in light and dark. 96 browser checks (search including trailing spaces, filters, sort, paging, create/edit/delete with client and server validation, 404 and malformed IDs), 24 workspace checks (per-user overview, notes, AI summary badge, tooltip and fallback, discussion and unread) and 28 keyboard and contrast checks (lowest contrast 4.66:1 light, 6.04:1 dark). One minor defect, an AI-summary tooltip clipped on phone widths, is being fixed.
   Scope: api-mode app, clean-room run, live api matrix. Requirement: Eval · requirements. Evidence: [reference/project.md](../reference/project.md) · [reference/chatroom/integration-coordination.md](../reference/chatroom/integration-coordination.md).
 
 - [x] **q-lint — Lint, format and typecheck pass on both sides** · Verified in stated scope.
@@ -599,7 +599,7 @@ Historical scoped passes do not close current integration and detailed QA checks
   Scope: isolated checks image and frontend tree. Requirement: Eval · code quality. Evidence: [.github/workflows/ci.yml](../.github/workflows/ci.yml) · [frontend/package.json](../frontend/package.json) · [backend/pyproject.toml](../backend/pyproject.toml).
 
 - [x] **q-tests — All tests pass** · Verified in stated scope.
-  Final frozen tree, 20 Nov, all green. Backend: 337 tests plus Ruff, format and strict mypy; data: 153 tests (isolated checks container on real PostgreSQL). Frontend: 370 unit, 117 demo-browser and 11/11 HTTP-adapter browser tests, plus lint, format and strict TypeScript. Clean-room run: a fresh isolated stack passes migrations, the 100-patient seed, restart, recreate and log-privacy checks, and all 16 live browser journeys on desktop and phone.
+  Final tree, 20 Nov, all green. Backend: 338 tests plus Ruff, format and strict mypy; data: 153 tests (isolated checks container on real PostgreSQL). Frontend: 387 unit, 126 demo-browser and 11/11 HTTP-adapter browser tests, plus lint, format and strict TypeScript. Clean-room run: a fresh isolated stack passes migrations, the 100-patient seed, restart, recreate and log-privacy checks, and all 16 live browser journeys on desktop and phone. QA's final wave: 317 + 32 + 16 + 64 API checks and 148 browser checks pass.
   Scope: final frozen tree. Requirement: Eval · code quality. Evidence: [reference/chatroom/integration-coordination.md](../reference/chatroom/integration-coordination.md).
 
 - [x] **q-clean — Remove dead code, stray `console.log`/`print` calls and TODOs** · Verified in stated scope.

@@ -1,4 +1,4 @@
-import { formatDate, timestampMicros } from '../utils/dates'
+import { formatDate, localToday, timestampMicros } from '../utils/dates'
 import { ApiError } from './client'
 import {
   COMMENT_BODY_MAX,
@@ -58,8 +58,8 @@ function date(value: unknown, field: string, nullable = false): string | null {
   } catch {
     invalid({ [field]: 'Enter a valid date.' })
   }
-  if (value > new Date().toISOString().slice(0, 10))
-    invalid({ [field]: 'Date cannot be in the future.' })
+  // Same local calendar day as the form schema, so both agree on what "the future" is.
+  if (value > localToday()) invalid({ [field]: 'Date cannot be in the future.' })
   return value
 }
 

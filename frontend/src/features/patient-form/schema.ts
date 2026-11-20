@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { formatDate } from '@/utils/dates'
+import { formatDate, localToday } from '@/utils/dates'
 import { isValidPhone, PATIENT_FIELD_LIMITS as limits } from '@/api/constraints'
 
 export const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const
@@ -18,14 +18,6 @@ function validDate(value: string) {
   } catch {
     return false
   }
-}
-
-// The user's local calendar day; UTC's date is already tomorrow on a US evening.
-function localToday(): string {
-  const now = new Date()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${now.getFullYear()}-${month}-${day}`
 }
 
 // Date validation: preserve calendar dates and reject invalid or future values before a write.

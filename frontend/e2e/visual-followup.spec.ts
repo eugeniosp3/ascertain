@@ -81,6 +81,22 @@ test.describe('phones', () => {
     await expect(tablist.getByRole('tab', { name: /^Discussion/ })).toBeInViewport({ ratio: 1 })
   })
 
+  test('390: the AI-summary hint wraps and stays on screen when opened from the keyboard', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await open(page, `${anaPath}?tab=summary`)
+    await page.getByRole('button', { name: 'About AI summaries' }).focus()
+    await expect(page.getByRole('tooltip')).toHaveText(
+      "AI-generated summary. It refreshes automatically when this patient's data changes.",
+    )
+    // The visible bubble (not Radix's hidden copy) must fit inside the 390px viewport.
+    const box = await page.locator('[data-slot="tooltip-content"]').boundingBox()
+    expect(box).not.toBeNull()
+    expect(box!.x).toBeGreaterThanOrEqual(0)
+    expect(box!.x + box!.width).toBeLessThanOrEqual(390)
+  })
+
   test('the menu sheet offers the labelled demo-user selector, with unique ids', async ({
     page,
   }) => {

@@ -32,9 +32,9 @@ for (const theme of ['dark', 'light'] as const) {
             'false',
           )
         }
-        await expect(form.getByText('Enter a first name.', { exact: true })).toHaveCount(0)
-        await expect(form.getByText('Enter a last name.', { exact: true })).toHaveCount(0)
-        await expect(form.getByText('Enter a valid date.', { exact: true })).toHaveCount(0)
+        await expect(form.getByText('Error: Enter a first name.', { exact: true })).toHaveCount(0)
+        await expect(form.getByText('Error: Enter a last name.', { exact: true })).toHaveCount(0)
+        await expect(form.getByText('Error: Enter a valid date.', { exact: true })).toHaveCount(0)
       }
 
       await activate(form.getByRole('button', { name: 'Add condition', exact: true }))
@@ -57,7 +57,7 @@ for (const theme of ['dark', 'light'] as const) {
       await expect(first).toHaveValue('')
       await untouchedPersonal()
       await expect(
-        form.getByText('Add at least one reported allergy.', { exact: true }),
+        form.getByText('Error: Add at least one reported allergy.', { exact: true }),
       ).toHaveCount(0)
       await expect(first).toHaveAttribute('aria-invalid', 'false')
       await first.fill('Penicillin')
@@ -67,7 +67,7 @@ for (const theme of ['dark', 'light'] as const) {
       const second = form.getByRole('textbox', { name: 'Allergy 2', exact: true })
       await second.focus()
       await second.press('Tab')
-      await expect(second).toHaveAccessibleDescription('Enter an allergy.')
+      await expect(second).toHaveAccessibleDescription('Error: Enter an allergy.')
       await untouchedPersonal()
       await second.fill('Latex')
       await expect(second).toHaveAttribute('aria-invalid', 'false')
@@ -84,13 +84,13 @@ for (const theme of ['dark', 'light'] as const) {
       const first = form.getByRole('textbox', { name: 'First name', exact: true })
       await first.focus()
       await first.press('Tab')
-      await expect(first).toHaveAccessibleDescription('Enter a first name.')
+      await expect(first).toHaveAccessibleDescription('Error: Enter a first name.')
       await form
         .getByRole('textbox', { name: 'Address line 2', exact: true })
         .fill('Unsaved draft unit 7')
       const submit = form.getByRole('button', { name: 'Add patient', exact: true })
       const summary = form
-        .getByRole('alert')
+        .getByRole('group')
         .filter({ hasText: /Check .*fields before saving\./ })
         .first()
 
@@ -137,7 +137,7 @@ for (const theme of ['dark', 'light'] as const) {
       await form.getByRole('radio', { name: 'Reported allergies', exact: true }).check()
       await form.getByRole('button', { name: 'Add patient', exact: true }).click()
       const summary = form
-        .getByRole('alert')
+        .getByRole('group')
         .filter({ hasText: /Check .*fields before saving\./ })
         .first()
       await expect(summary).toBeFocused()
@@ -149,20 +149,20 @@ for (const theme of ['dark', 'light'] as const) {
       await expect(add).toBeFocused()
       await page.keyboard.press('Enter')
       await expect(
-        form.getByText('Add at least one reported allergy.', { exact: true }),
+        form.getByText('Error: Add at least one reported allergy.', { exact: true }),
       ).toHaveCount(0)
       const allergy = form.getByRole('textbox', { name: 'Allergy 1', exact: true })
-      await expect(allergy).toHaveAccessibleDescription('Enter an allergy.')
+      await expect(allergy).toHaveAccessibleDescription('Error: Enter an allergy.')
       await allergy.fill('Latex')
       await expect(summary).toHaveCount(0)
       await form.getByRole('button', { name: 'Remove allergy 1', exact: true }).click()
       await expect(
-        form.getByText('Add at least one reported allergy.', { exact: true }),
+        form.getByText('Error: Add at least one reported allergy.', { exact: true }),
       ).toBeVisible()
       await form.getByRole('radio', { name: 'No known allergies', exact: true }).check()
       await expect(summary).toHaveCount(0)
       await expect(
-        form.getByText('Add at least one reported allergy.', { exact: true }),
+        form.getByText('Error: Add at least one reported allergy.', { exact: true }),
       ).toHaveCount(0)
       await expect(form.getByRole('textbox', { name: 'First name', exact: true })).toHaveValue(
         'Recovery',

@@ -64,13 +64,20 @@ describe('patient workspace routes and visit state', () => {
     await act(async () => {
       await client.invalidateQueries({ queryKey: patientKeys.detail(patientId, actorId) })
     })
-    expect(await screen.findByText(/Your draft is still here/)).toBeVisible()
+    const notice = await screen.findByText(/Your draft is still here/)
+    expect(notice).toBeVisible()
+    // An automatic refresh failure is polite, with Retry beside the live region, not inside it.
+    expect(notice).toHaveAttribute('aria-live', 'polite')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: /^Note/ })).toBe(draft)
     expect(draft).toHaveValue('Keep this clinical draft through a temporary outage.')
-    await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
-    await waitFor(() =>
-      expect(screen.queryByText(/Your draft is still here/)).not.toBeInTheDocument(),
-    )
+    const retry = screen.getByRole('button', { name: 'Retry' })
+    expect(notice).not.toContainElement(retry)
+    await userEvent.click(retry)
+    // The region stays mounted and only its text clears.
+    await waitFor(() => expect(notice).toBeEmptyDOMElement())
+    expect(notice).toBeInTheDocument()
+    expect(screen.queryByText(/Your draft is still here/)).not.toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: /^Note/ })).toBe(draft)
     expect(draft).toHaveValue('Keep this clinical draft through a temporary outage.')
   })

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Link, useLocation, useNavigate, useSearch } from '@tanstack/react-router'
 import { Bell, CheckCheck, LoaderCircle, Plus, SearchX, Users } from 'lucide-react'
+import { isApiError } from '@/api'
 import { useActor } from '@/app/actor-context'
 import { ActorRequired } from '@/app/ActorSelector'
 import { BackToPatients } from '@/app/AppShell'
 import { getListView, updateListView } from '@/app/view-state'
+import { StatusNotice } from '@/components/shared/StatusNotice'
 import { Button } from '@/components/ui/button'
 import { formatCount } from '@/utils/count'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -30,7 +32,10 @@ export default function PatientListScreen({ view }: { view: ListView }) {
   const summary = useNotificationSummary(actorId)
   const heading = useRef<HTMLHeadingElement>(null)
   const notifications = view === 'notifications'
-  const data = query.data
+  // Data first: a failed background refresh keeps the last good page. A 401 or 403 means this
+  // viewer may no longer see those rows, so access errors hide them behind the error panel.
+  const denied = isApiError(query.error) && [401, 403].includes(query.error.status)
+  const data = denied ? undefined : query.data
   const needsClamp = Boolean(
     data && !query.isPlaceholderData && search.page > clampPage(data.total, search.page_size),
   )
@@ -124,16 +129,20 @@ export default function PatientListScreen({ view }: { view: ListView }) {
             <LoaderCircle className="ac-loading-spinner" aria-hidden="true" />
             {query.isPending ? 'Loading patients…' : 'Updating patients…'}
           </>
-        ) : query.isError ? (
-          'Patient list unavailable'
         ) : data ? (
           `${formatCount(data.total, 'patient')}${filtered ? ' matching your filters' : ''}`
+        ) : query.isError ? (
+          'Patient list unavailable'
         ) : (
           ''
         )}
       </div>
+      <StatusNotice
+        message={data && query.isRefetchError ? 'Couldn’t refresh the patient list.' : null}
+        retry={() => void query.refetch()}
+      />
       <div className="ac-table-surface ac-surface">
-        {query.isError ? (
+        {query.isError && !data ? (
           <div className="ac-empty" role="alert">
             <h2>Patients couldn’t be loaded</h2>
             <p>{query.error.message || 'The service is unavailable. Try again.'}</p>
@@ -215,7 +224,7 @@ export default function PatientListScreen({ view }: { view: ListView }) {
             )}
           </div>
         )}
-        {data && !query.isError && (
+        {data && (
           <PatientPagination
             search={search}
             total={data.total}
@@ -224,19 +233,13 @@ export default function PatientListScreen({ view }: { view: ListView }) {
           />
         )}
       </div>
-      {notifications && summary.isError && (
-        <p className="ac-summary-error" role="status">
-          Unread totals couldn’t be refreshed.{' '}
-          <Button
-            variant="link"
-            size="sm"
-            onClick={() => {
-              void summary.refetch()
-            }}
-          >
-            Retry totals
-          </Button>
-        </p>
+      {notifications && (
+        <StatusNotice
+          message={summary.isError ? 'Unread totals couldn’t be refreshed.' : null}
+          retry={() => {
+            void summary.refetch()
+          }}
+        />
       )}
     </section>
   )

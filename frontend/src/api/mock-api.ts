@@ -1,6 +1,6 @@
 import { createDemoData, demoId } from '../fixtures/demo-data'
 import type { DemoComment, DemoNote, DemoPatient } from '../fixtures/demo-data'
-import { timestampFromMicros, timestampMicros } from '../utils/dates'
+import { localToday, timestampFromMicros, timestampMicros } from '../utils/dates'
 import { decodeDiscussionCursor, encodeDiscussionCursor } from './mock-discussion-cursor'
 import { ApiError } from './client'
 import type {
@@ -53,7 +53,7 @@ function fullName(item: DemoPatient): string {
 }
 
 function ageOf(birthDate: string): number {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = localToday()
   return (
     Number(today.slice(0, 4)) -
     Number(birthDate.slice(0, 4)) -

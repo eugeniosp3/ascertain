@@ -118,11 +118,26 @@ describe('Overview chart presentation', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Retry overview' }))
     expect(onRetry).toHaveBeenCalledOnce()
     const summary = aggregateOverview([makePatient('one')], asOfDate)
-    rerender(<OverviewCharts {...baseProps} summary={summary} isFetching />)
+    rerender(<OverviewCharts {...baseProps} summary={summary} isFetching onRetry={onRetry} />)
     expect(screen.getByRole('status')).toHaveTextContent('Refreshing your assigned patients')
-    rerender(<OverviewCharts {...baseProps} summary={summary} isError />)
-    expect(screen.getByRole('alert')).toHaveTextContent('Showing the last complete overview')
+    rerender(<OverviewCharts {...baseProps} summary={summary} isError onRetry={onRetry} />)
+    // A failed background refresh keeps the verified charts and does not interrupt the user.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    const failed = 'Refresh failed. Showing the last complete overview.'
+    const notice = screen.getByText(failed)
+    expect(notice).toHaveAttribute('aria-live', 'polite')
+    const retry = screen.getByRole('button', { name: 'Retry' })
+    expect(notice).not.toContainElement(retry)
+    await userEvent.click(retry)
+    expect(onRetry).toHaveBeenCalledTimes(2)
     expect(screen.getAllByRole('figure')).toHaveLength(4)
+    // The live region stays mounted and only its text changes, so a repeat failure is announced.
+    rerender(<OverviewCharts {...baseProps} summary={summary} onRetry={onRetry} />)
+    expect(notice).toBeInTheDocument()
+    expect(notice).toBeEmptyDOMElement()
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument()
+    rerender(<OverviewCharts {...baseProps} summary={summary} isError onRetry={onRetry} />)
+    expect(screen.getByText(failed)).toBe(notice)
   })
 
   it('never renders chart totals from a successful first page when a later page fails', async () => {

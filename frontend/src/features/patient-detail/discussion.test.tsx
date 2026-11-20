@@ -268,6 +268,24 @@ describe('displayed discussion acknowledgments', () => {
     expect(change).toHaveBeenCalledWith([])
   })
 
+  it('describes the note-reference group with a plain error instead of an alert', async () => {
+    renderFeature(
+      <NoteLinkPicker
+        patientId={patientId}
+        actorId={actorId}
+        selected={[]}
+        onChange={vi.fn()}
+        error="Choose notes for this patient."
+      />,
+    )
+    await screen.findByText('This patient has no active notes to link.')
+    // jsdom's description algorithm trims the hidden prefix's trailing space; browsers keep it.
+    expect(screen.getByRole('group', { name: /^Link clinical notes/ })).toHaveAccessibleDescription(
+      /^Error: ?Choose notes for this patient\.$/,
+    )
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
   it('leaves newer counts and per-comment unread flags authoritative when an older receipt completes', async () => {
     let complete!: (receipt: ReadReceipt) => void
     const mark = vi.mocked(api.markCommentsRead).mockImplementation(
@@ -460,6 +478,26 @@ describe('displayed discussion acknowledgments', () => {
     )
     expect(mark).toHaveBeenCalledTimes(3)
     expect(screen.getByTestId('snapshot')).toHaveTextContent('failed,later')
+  })
+
+  it('reports a failed automatic read politely, with Retry beside the live region', async () => {
+    const mark = vi
+      .mocked(api.markCommentsRead)
+      .mockRejectedValueOnce(new ApiError(0, 'network', 'Offline.'))
+      .mockResolvedValue(receipt)
+    vi.spyOn(api, 'listComments').mockResolvedValue(makeCommentPage([makeComment()]))
+    renderFeature(panel())
+    const notice = await screen.findByText('Comments could not be marked as read. Offline.')
+    expect(notice).toHaveAttribute('aria-live', 'polite')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    const retry = screen.getByRole('button', { name: 'Retry' })
+    expect(notice).not.toContainElement(retry)
+    await userEvent.click(retry)
+    await waitFor(() => expect(mark).toHaveBeenCalledTimes(2))
+    // The region stays mounted and only its text clears.
+    await waitFor(() => expect(notice).toBeEmptyDOMElement())
+    expect(notice).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument()
   })
 
   it('acknowledges a displayed bound once when Strict Mode replays effects', async () => {
@@ -796,9 +834,21 @@ describe('comment forms and note references', () => {
     const composer = screen.getByRole('form', { name: 'Add a comment' })
     await userEvent.type(within(composer).getByRole('textbox', { name: /^Comment/ }), own.body)
     await userEvent.click(within(composer).getByRole('button', { name: 'Post comment' }))
-    expect(await screen.findByText('Comment posted.')).toBeVisible()
+    const confirmation = await within(composer).findByText('Comment posted.')
+    expect(confirmation).toBeVisible()
     expect(await screen.findByText(own.body)).toBeVisible()
-    expect(screen.getByRole('complementary', { name: 'Just posted comment' })).toBeVisible()
+    const aside = screen.getByRole('complementary', { name: 'Just posted comment' })
+    expect(aside).toBeVisible()
+    // Both visible confirmations are plain text; one always-mounted live region announces once.
+    expect(confirmation).not.toHaveAttribute('role')
+    expect(
+      within(aside).getByText('Comment posted. Refresh discussion to show it in order.'),
+    ).not.toHaveAttribute('role')
+    const announcing = [
+      ...document.querySelectorAll('[aria-live], [role="status"], [role="alert"]'),
+    ].filter((region) => region.textContent?.includes('Comment posted'))
+    expect(announcing).toHaveLength(1)
+    expect(announcing[0]).toHaveTextContent(/^Comment posted\.$/)
     expect(screen.getByRole('textbox', { name: /^Comment/ })).toHaveValue('')
     await waitFor(() => expect(screen.getByText('Page 1 · 11 comments')).toBeVisible())
     expect(

@@ -91,10 +91,11 @@ export function PatientForm({ patient, onSave, onCancel }: PatientFormProps) {
           for (const [name, message] of Object.entries(serverFields)) messages.set(name, message)
           return (
             <>
+              {/* Focus is the single announcement on submit: a named group, not an alert. */}
               {error && (error.source === 'server' || messages.size > 0) && (
                 <div
                   ref={summaryRef}
-                  role="alert"
+                  role="group"
                   tabIndex={-1}
                   aria-labelledby={summaryId}
                   className="patient-form-error-summary"

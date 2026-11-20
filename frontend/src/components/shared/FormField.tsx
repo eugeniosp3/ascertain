@@ -31,15 +31,21 @@ export function FormField({
         </p>
       )}
       {children}
-      {error && (
-        <p
-          id={`${htmlFor}-error`}
-          className="text-sm max-md:text-base text-destructive"
-          role="alert"
-        >
-          {error}
-        </p>
-      )}
+      {error && <FieldError id={`${htmlFor}-error`} message={error} />}
     </div>
+  )
+}
+
+/**
+ * Inline field error: plain text that the control references through aria-describedby and
+ * aria-invalid. It is deliberately not an alert; on submit the focused error summary is the
+ * single announcement. The hidden prefix tells screen-reader users this description is an error.
+ */
+export function FieldError({ id, message }: { id: string; message: string }) {
+  return (
+    <p id={id} className="text-sm max-md:text-base text-destructive">
+      {/* The space sits outside the hidden span so every name computation reads "Error: …". */}
+      <span className="sr-only">Error:</span> {message}
+    </p>
   )
 }

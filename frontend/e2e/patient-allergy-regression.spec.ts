@@ -109,7 +109,7 @@ for (const width of [375, 390, 1440]) {
       await second.focus()
       await second.press('Tab')
       await expect(second).toHaveAttribute('aria-invalid', 'true')
-      await expect(second).toHaveAccessibleDescription('Enter an allergy.')
+      await expect(second).toHaveAccessibleDescription('Error: Enter an allergy.')
       await page.keyboard.press('Enter')
       await expect(second).toHaveCount(0)
       await expect(first).toHaveValue('Penicillin')

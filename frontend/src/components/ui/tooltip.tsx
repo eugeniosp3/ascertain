@@ -27,6 +27,8 @@ function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimiti
 function TooltipContent({
   className,
   sideOffset = 6,
+  // Keep the tooltip at least 8px inside the viewport; Radix shifts or flips it on collision.
+  collisionPadding = 8,
   children,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
@@ -35,8 +37,10 @@ function TooltipContent({
       <TooltipPrimitive.Content
         data-slot="tooltip-content"
         sideOffset={sideOffset}
+        collisionPadding={collisionPadding}
+        // A max width lets long hints wrap on phones instead of running off-screen as one line.
         className={cn(
-          'z-50 w-fit origin-(--radix-tooltip-content-transform-origin) animate-in duration-150 rounded-md bg-foreground px-3 py-1.5 text-[13px]/[18px] text-balance text-primary-foreground fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0',
+          'z-50 w-fit max-w-[min(20rem,calc(100vw-2rem))] origin-(--radix-tooltip-content-transform-origin) animate-in duration-150 rounded-md bg-foreground px-3 py-1.5 text-[13px]/[18px] break-words text-balance text-primary-foreground fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0',
           className,
         )}
         {...props}

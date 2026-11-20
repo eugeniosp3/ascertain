@@ -25,7 +25,9 @@ test('create the 101st patient, preserve an invalid draft, edit the full profile
       .getByLabel('Condition 2 label', { exact: false })
       .fill('Uncoded clinical observation')
     await create.getByRole('button', { name: 'Add patient', exact: true }).click()
-    await expect(create.getByText('Enter a valid email address.', { exact: true })).toBeVisible()
+    await expect(
+      create.getByText('Error: Enter a valid email address.', { exact: true }),
+    ).toBeVisible()
     await expect(create.getByLabel('First name', { exact: false })).toHaveValue('Zelda')
     await expect(create.getByLabel('Condition 1 code', { exact: true })).toHaveValue('I10')
     await expect(create.getByLabel('Postal code', { exact: true })).toHaveValue('00123')

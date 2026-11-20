@@ -6,6 +6,7 @@ import type { PatientDetail, PatientWrite } from '@/api/types'
 import { patientKeys } from '@/app/query-keys'
 import { patientDetailOptions } from '@/app/patient-query'
 import { InlineError } from '@/components/shared/InlineError'
+import { StatusNotice } from '@/components/shared/StatusNotice'
 import { Button } from '@/components/ui/button'
 import { getFormErrors } from '@/utils/form-errors'
 import { PatientForm } from './PatientForm'
@@ -124,14 +125,17 @@ function PatientFormSession({ patientId, actorId, onCancel, onSaved }: PatientFo
         )
       ) : (
         <>
-          {patient.isError && (
-            <InlineError
-              message="The latest profile could not be loaded. Your draft is still here."
-              retry={() => {
-                void patient.refetch()
-              }}
-            />
-          )}
+          {/* A failed background refresh is announced politely; the draft stays in place. */}
+          <StatusNotice
+            message={
+              patient.isError
+                ? 'The latest profile could not be loaded. Your draft is still here.'
+                : null
+            }
+            retry={() => {
+              void patient.refetch()
+            }}
+          />
           <PatientForm
             patient={patientId === undefined ? undefined : patient.data}
             onSave={savePatient}

@@ -1,3 +1,4 @@
+import { StatusNotice } from '@/components/shared/StatusNotice'
 import { Button } from '@/components/ui/button'
 import { formatDate, formatDateTime } from '@/utils/dates'
 import { formatNumber, formatPercentage, percentage, type OverviewSummary } from './aggregation'
@@ -89,6 +90,7 @@ export function OverviewCharts({
   /** Wording for the cohort the projection declares (see `overviewCopy`). */
   copy: OverviewCopy
 }) {
+  const refreshFailed = isError && summary !== undefined
   return (
     <section className="ac-population" aria-labelledby="population-title">
       <div className="ac-population-heading">
@@ -107,14 +109,21 @@ export function OverviewCharts({
           </p>
         )}
       </div>
-      {isError && (
+      {isError && !summary && (
         <div className="ac-chart-notice" role="alert">
-          <p>{summary ? 'Refresh failed. Showing the last complete overview.' : copy.loadFailed}</p>
+          <p>{copy.loadFailed}</p>
           <Button variant="outline" size="sm" onClick={onRetry} disabled={isFetching}>
             Retry overview
           </Button>
         </div>
       )}
+      {/* Background refresh failure: polite, since the last complete overview is still shown. */}
+      <div className={refreshFailed ? 'mb-3' : undefined}>
+        <StatusNotice
+          message={refreshFailed ? 'Refresh failed. Showing the last complete overview.' : null}
+          retry={onRetry}
+        />
+      </div>
       <p className="ac-chart-query-status" role="status">
         {isFetching
           ? summary

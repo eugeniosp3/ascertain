@@ -2,6 +2,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  defaultParseSearch,
   lazyRouteComponent,
   type RouterHistory,
 } from '@tanstack/react-router'
@@ -91,11 +92,24 @@ const routeTree = rootRoute.addChildren([
   notFound,
 ])
 
+/**
+ * Search parsing: TanStack's default parser JSON-decodes each value, so a hand-typed or deep-linked
+ * `?q=12345` (or `1e5`, `true`) arrives as a number or boolean, fails the list schema and is
+ * silently cleared. Free-text search stays the text in the URL; quoted values the app writes
+ * itself still decode as before.
+ */
+export function parseSearch(searchStr: string): Record<string, unknown> {
+  const search: Record<string, unknown> = defaultParseSearch(searchStr)
+  const q = new URLSearchParams(searchStr).get('q')
+  return q !== null && typeof search.q !== 'string' ? { ...search, q } : search
+}
+
 export function createAppRouter(history?: RouterHistory) {
   // Route preloading: link intent can start loading early; feature code restores list scroll.
   return createRouter({
     routeTree,
     history,
+    parseSearch,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 30_000,
     scrollRestoration: false,
