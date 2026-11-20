@@ -2,7 +2,7 @@
 
 [Project overview](../README.md) · [Interactive view](holepunch.html) · [Assessment](project.md)
 
-Updated 2026-11-20 20:58 UTC. This covers the original assessment and selected additions. A checked box means verified in the scope shown; it does not turn a demo or fixture test into live-application acceptance.
+Updated 2026-11-20 21:11 UTC. This covers the original assessment and selected additions. A checked box means verified in the scope shown; it does not turn a demo or fixture test into live-application acceptance.
 
 **Core assessment: 51/51 checks verified in reviewed scopes (100%).** 0 partially verified; 0 still open.
 
@@ -19,12 +19,12 @@ The 51 checks split the original assessment into individually testable requireme
 
 The detailed card also tracks recommendations and selected additions; those are separate from the core assessment denominator.
 
-**Detailed work: 148/151 items verified in stated scopes.**
+**Detailed work: 149/151 items verified in stated scopes.**
 
-- Final: all checks green on the frozen code (backend 337, data 153, frontend 370 unit + 117 demo + 11 API browser tests, clean-room live run 16/16). Committed and pushed; hosted CI confirms on GitHub.
-- Also delivered: LLM patient summary (saved, regenerated only when data changes, AI badge and tooltip), per-user overview, accessibility and anti-pattern fixes, date-order validation, a folder tidy and a rewritten README. Advanced search filters were deliberately not selected.
+- Submitted. Hosted CI is green on add0bdd, and every core requirement is verified.
+- Final pass (no new features): QA regression with independent test agents, verification of every implemented stretch goal, and a cleanliness sweep; only confirmed defects get fixed, then a final push.
 
-151 tracked items: 148 verified in stated scope, 0 partially verified; excluded scope open, 0 implemented; acceptance pending, 1 in progress, 0 planned, 2 not selected.
+151 tracked items: 149 verified in stated scope, 0 partially verified; excluded scope open, 0 implemented; acceptance pending, 0 in progress, 0 planned, 2 not selected.
 
 ## Verification record
 
@@ -582,9 +582,9 @@ The brief suggests one or two; this project selected more. Optional items that w
   Closed by the written Opus pass-02 decision in the recorded candidate scope. Stretch item; frontend candidate only; backend identity unbound This does not approve later source edits, the default demo setup or final visual readiness.
   Scope: Opus-approved compiled LIVE candidate-03. Requirement: Stretch · Testing. Evidence: [frontend/e2e-live/](../frontend/e2e-live/).
 
-- [ ] **x-ci — CI pipeline config** · In progress.
-  Hosted run 44811327552 for 80c9dab: the application checks, the demo and contract browser tests, and all 16 live browser journeys on the real stack PASS. The run is red because one verifier probe deliberately stops the backend and expects nginx to answer 502, but GitHub's runners answer 504 (both mean the upstream is unreachable). Infra is fixing the probe without weakening its log-privacy assertion. The next push re-runs CI.
-  Scope: hosted ci run for 80c9dab. Requirement: Stretch · DX. Evidence: [.github/workflows/ci.yml](../.github/workflows/ci.yml) · [infra/scripts/verify_stack.py](../infra/scripts/verify_stack.py) · [Hosted CI run](https://github.com/eugeniosp3/ascertain/actions/runs/44811327552).
+- [x] **x-ci — CI pipeline config** · Verified in stated scope.
+  Hosted CI run 44816245004 for add0bdd is green. All three jobs pass: application checks and Docker startup, demo and intercepted-contract browser regressions, and real-API browser integration on a fresh stack.
+  Scope: hosted ci on add0bdd. Requirement: Stretch · DX. Evidence: [.github/workflows/ci.yml](../.github/workflows/ci.yml) · [infra/scripts/verify_stack.py](../infra/scripts/verify_stack.py) · [Hosted CI run](https://github.com/eugeniosp3/ascertain/actions/runs/44816245004).
 
 ## Final application quality
 

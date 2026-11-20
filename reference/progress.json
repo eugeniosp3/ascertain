@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-20 20:58 UTC",
+  "updated_at": "2026-11-20 21:11 UTC",
   "baseline_revision": "611bda5400332550708b3c39f049d3ee7690b01f",
   "verification_records": [
     {
@@ -1958,13 +1958,13 @@
           "part": "X",
           "reference": "Stretch · DX",
           "title": "CI pipeline config",
-          "detail": "Hosted run 44811327552 for 80c9dab: the application checks, the demo and contract browser tests, and all 16 live browser journeys on the real stack PASS. The run is red because one verifier probe deliberately stops the backend and expects nginx to answer 502, but GitHub's runners answer 504 (both mean the upstream is unreachable). Infra is fixing the probe without weakening its log-privacy assertion. The next push re-runs CI.",
-          "status": "in_progress",
-          "scope": "hosted ci run for 80c9dab",
+          "detail": "Hosted CI run 44816245004 for add0bdd is green. All three jobs pass: application checks and Docker startup, demo and intercepted-contract browser regressions, and real-API browser integration on a fresh stack.",
+          "status": "verified",
+          "scope": "hosted ci on add0bdd",
           "evidence": [
             ".github/workflows/ci.yml",
             "infra/scripts/verify_stack.py",
-            "https://github.com/eugeniosp3/ascertain/actions/runs/44811327552"
+            "https://github.com/eugeniosp3/ascertain/actions/runs/44816245004"
           ],
           "basis": "Infra owner reports compiled image/proxy/deep-link and seeded restart checks passing; published baseline 611bda5 passed hosted CI run 44781809472. The current live-browser integration lane remains pending."
         }
@@ -3880,7 +3880,7 @@
     ]
   },
   "current_updates": [
-    "Final: all checks green on the frozen code (backend 337, data 153, frontend 370 unit + 117 demo + 11 API browser tests, clean-room live run 16/16). Committed and pushed; hosted CI confirms on GitHub.",
-    "Also delivered: LLM patient summary (saved, regenerated only when data changes, AI badge and tooltip), per-user overview, accessibility and anti-pattern fixes, date-order validation, a folder tidy and a rewritten README. Advanced search filters were deliberately not selected."
+    "Submitted. Hosted CI is green on add0bdd, and every core requirement is verified.",
+    "Final pass (no new features): QA regression with independent test agents, verification of every implemented stretch goal, and a cleanliness sweep; only confirmed defects get fixed, then a final push."
   ]
 }

@@ -8,6 +8,7 @@ is stored per patient and reused while sha256(model + FACTS) is unchanged.
 import hashlib
 import json
 import logging
+import re
 import urllib.request
 from datetime import UTC, datetime
 from uuid import UUID
@@ -29,8 +30,12 @@ SYSTEM_PROMPT = (
     "summary of this patient using ONLY the facts provided. Start with name, age, status and "
     "blood type; then conditions and allergies; then synthesize the clinical notes "
     "chronologically (most recent first) into narrative. Do not invent facts, diagnoses or "
-    "advice. If there are no notes, say so."
+    "advice. If there are no notes, say so. Respond in plain prose paragraphs with no "
+    "Markdown, bullets, headings or bold."
 )
+# The UI shows text literally, so drop Markdown the model may still emit.
+_EMPHASIS = re.compile(r"\*\*|__|`")
+_LEADING_MARKER = re.compile(r"^[ \t]*(?:#{1,6}|[-*])[ \t]+", re.MULTILINE)
 
 
 def summarize(session: Session, patient_id: UUID, settings: Settings) -> SummaryResponse:
@@ -116,9 +121,12 @@ def _complete(settings: Settings, facts: str) -> str:
             raise ValueError("unexpected status")
         payload = json.load(response)
     content = payload["choices"][0]["message"]["content"]
-    if not isinstance(content, str) or not content.strip():
+    if not isinstance(content, str):
+        raise ValueError("unexpected content")
+    text = _LEADING_MARKER.sub("", _EMPHASIS.sub("", content)).strip()
+    if not text:
         raise ValueError("empty content")
-    return content.strip()
+    return text
 
 
 def age_article(age: int) -> str:

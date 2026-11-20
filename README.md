@@ -1,68 +1,125 @@
-# Ascertain patient dashboard
+# Ascertain Patient Dashboard
 
 [![CI](https://github.com/eugeniosp3/ascertain/actions/workflows/ci.yml/badge.svg)](https://github.com/eugeniosp3/ascertain/actions/workflows/ci.yml)
 
-A patient dashboard for a medical practice. You can find patients fast, keep their records and clinical notes, read an AI summary, and see your own workload at a glance. It uses React + TypeScript (Vite), FastAPI and PostgreSQL, and starts with one command.
+A full-stack patient management dashboard for a medical practice, built with React and TypeScript (Vite), FastAPI and PostgreSQL. Clinicians can find patients quickly, maintain profiles and clinical notes, read an AI-generated patient summary, and track their own assigned workload. The whole stack starts with a single command and runs on fictional data.
 
-## Run it
+## TLDR
 
-You need [Docker Desktop](https://docs.docker.com/get-docker/). From the repository root:
+1. Make sure [Docker Desktop](https://docs.docker.com/get-docker/) is installed and its initial setup is complete.
+2. Open a terminal in the root of the repository and run:
 
 ```sh
-./setup.sh        # or: cp .env.example .env && docker compose up --build
+./setup.sh
 ```
 
-| Open | Address |
+3. Open the dashboard at [http://localhost:10050](http://localhost:10050). You start as **Demo Clinician**, with 100 fictional patients already loaded.
+
+The script reports each step as it goes. It starts Docker Desktop if needed, creates a `.env` from the sample configuration (an existing `.env` is never overwritten), builds the images, applies database migrations, seeds the data, waits until every service is healthy, and finishes by printing the address of each service. Use `./setup.sh --dev` for hot reload of the frontend and API. On Windows, run it from a WSL 2 terminal. If you prefer plain Compose: `cp .env.example .env && docker compose up --build`.
+
+| Service | Address |
 | --- | --- |
 | Dashboard | [http://localhost:10050](http://localhost:10050) |
-| API docs | [http://localhost:10051/docs](http://localhost:10051/docs) |
-| PostgreSQL | `localhost:10052` (credentials in `.env.example`) |
+| API documentation (OpenAPI) | [http://localhost:10051/docs](http://localhost:10051/docs) |
+| PostgreSQL | `localhost:10052` (sample credentials in [.env.example](.env.example)) |
 
-On first start the database migrates and seeds 100 fictional patients, and your edits survive restarts. You start as **Demo Clinician**; switch users at the top right. `./setup.sh --dev` adds hot reload. On Windows, use a WSL 2 terminal.
+## Contents
+
+- [Status](#status)
+- [What the application does](#what-the-application-does)
+- [Architecture](#architecture)
+- [Key technical decisions](#key-technical-decisions)
+- [Assessment coverage](#assessment-coverage)
+- [Testing and quality](#testing-and-quality)
+- [Project structure](#project-structure)
+- [How this was built](#how-this-was-built)
+- [Notes and limitations](#notes-and-limitations)
+
+## What the application does
+
+| Area | Capabilities |
+| --- | --- |
+| **Patient directory** | Search, filter, sort and page through 100+ patients. Create, edit and delete patients, with validation in the browser and on the server. |
+| **Patient workspace** | Profile and medical details, timestamped clinical notes, an AI-generated summary, and a team discussion thread with unread tracking. |
+| **Overview** | Each user's assigned patients at a glance: status, age bands, latest visits and clinical-note coverage. |
+| **Experience** | Responsive from phone to desktop, dark and light themes, keyboard accessible, and it restores your place in the list after you close a patient. |
+
+## Architecture
+
+```
+Browser (React + TypeScript)
+   │  /api/...
+   ▼
+nginx  ── serves the compiled app and proxies /api
+   │
+   ▼
+FastAPI ── validates (Pydantic), applies business rules, persists (SQLAlchemy)
+   │
+   ▼
+PostgreSQL ◀── Alembic migrations and an idempotent seed on startup
+                 (prepared by a DuckDB data pipeline from the source CSV)
+```
+
+| Layer | Technology | Responsibility |
+| --- | --- | --- |
+| [Frontend](frontend/README.md) | React 19, TypeScript, TanStack Router, Query, Table, Virtual and Form, Zod, Tailwind CSS with shadcn/ui | Screens, validation, server-state caching and an accessible UI |
+| [Backend](backend/README.md) | FastAPI, Pydantic v2, SQLAlchemy 2, Alembic | REST API, business rules, consistent errors and schema migrations |
+| [Data](data/README.md) | Python with DuckDB | Cleans and validates the source dataset, keeps the original values for traceability, and feeds the seed |
+| [Infrastructure](infra/README.md) | Docker Compose, nginx, GitHub Actions | One-command local setup, a production-style frontend build, and CI on every push |
+
+## Key technical decisions
+
+1. **The server does the heavy lifting.** Search, filtering, sorting and pagination run in PostgreSQL against matching indexes, so the browser only renders the current page. The list stays fast at any size, and searching never blocks typing.
+2. **Each kind of state has one owner.** Server data lives in TanStack Query (cached, cancellable, refreshed after every change), list filters live in the URL (shareable and back-button friendly), and the few UI preferences live in Zustand.
+3. **Validate twice, report clearly.** Zod gives immediate feedback in the form; Pydantic is the authority on the server. Server-side errors carry field paths, so every message appears beside the field it belongs to.
+4. **The schema changes only through migrations.** Alembic recreates the database exactly on any machine, and the seed is idempotent: restarts never duplicate or overwrite data.
+5. **AI summaries are generated once and reused.** An open-weight LLM writes each summary from the patient's verified facts. The result is stored with a fingerprint of those facts and regenerated only when they change; if the LLM is unavailable, a deterministic summary is returned instead.
+
+## Assessment coverage
+
+Every core requirement in [the original assessment](reference/project.md) is implemented and verified. The [project punch card](reference/PROGRESS.md#core-assessment-checks) maps each requirement to its evidence, and an [interactive version](reference/holepunch.html) is available.
 
 <!-- progress-summary:start -->
 ## Status
 
-**51/51 assessment requirements verified** · 148/151 tracked items · updated 2026-11-20 20:58 UTC. Every requirement is mapped to its evidence in the [punch card](reference/PROGRESS.md#core-assessment-checks) ([interactive version](reference/holepunch.html)).
+**51/51 assessment requirements verified** · 149/151 tracked items · updated 2026-11-20 21:11 UTC. Every requirement is mapped to its evidence in the [punch card](reference/PROGRESS.md#core-assessment-checks) ([interactive version](reference/holepunch.html)).
 <!-- progress-summary:end -->
 
-## What you can do
+**Stretch goals implemented:** list virtualization; code splitting with lazy-loaded routes; memoized list rendering; sorting and filtering query parameters; Alembic migrations; dark and light themes; overview charts (patient status, age bands, latest visits, note coverage); API unit tests; component tests; end-to-end tests; CI; and hot reload in Docker.
 
-| Area | What it does |
-| --- | --- |
-| Patients | Search, filter, sort and page through 100+ patients. Add, edit and delete them, with validation on both sides. |
-| Patient page | Profile, timestamped clinical notes, an AI summary and a team discussion thread with unread counts. |
-| Overview | Your assigned patients as charts: status, age bands, latest visits and note coverage. |
+**Beyond the brief:** per-patient discussion threads with unread notifications, per-user workloads on the overview, the AI patient summary, and list position restoration.
 
-## How it's built
+**Not selected:** request-logging middleware and advanced multi-field search filters.
 
-| Layer | Stack | Why |
+## Testing and quality
+
+| Suite | Command | What it verifies |
 | --- | --- | --- |
-| [Frontend](frontend/README.md) | React, TanStack (Router, Query, Table, Virtual, Form), Zod, Tailwind + shadcn/ui | Server data is cached and refreshed in one place, filters live in the URL, and only visible rows render. |
-| [Backend](backend/README.md) | FastAPI, Pydantic v2, SQLAlchemy 2, Alembic | Thin routes over testable services, one error format, and schema changes only through migrations. |
-| [Data](data/README.md) | DuckDB pipeline feeding the PostgreSQL seed | Cleans the source CSV once, keeps the original values for traceability, and never seeds twice. |
-| [Infra](infra/README.md) | Docker Compose, nginx, GitHub Actions | One command to run. nginx serves the app and proxies the API, and CI runs every check on each push. |
+| Backend and data | `docker compose --profile checks run --rm checks` | 338 API, migration and seed tests and 153 data-pipeline tests against real PostgreSQL, plus Ruff and strict mypy |
+| Frontend | `cd frontend && npm ci && npm run lint && npm run typecheck && npm test` | 370 unit and component tests, ESLint, Prettier and strict TypeScript |
+| Browser journeys | `cd frontend && npm run e2e && npm run e2e:api` | End-to-end journeys on desktop and phone, plus the HTTP client against recorded API responses |
+| Clean-room stack | `python3 infra/scripts/verify_stack.py --live-browser` | Builds a fresh, isolated stack; checks migrations, seeding, restarts and log privacy; drives the live app in a browser |
 
-**The five decisions that matter**
+[GitHub Actions](.github/workflows/ci.yml) runs these checks on every push.
 
-1. **The server does the heavy work.** Search, filters, sorting and paging run in PostgreSQL with matching indexes. The browser only renders the current page.
-2. **Each kind of state has one home.** Server data lives in TanStack Query, filters in the URL, and small UI preferences in Zustand.
-3. **Validate twice, report once.** Zod gives instant feedback, Pydantic is the authority, and server errors land on the right field.
-4. **The database changes only through migrations,** and seeding never duplicates or overwrites data.
-5. **Summaries are generated once and reused.** An open-weight LLM writes each summary from the patient's facts. It is saved with a fingerprint of those facts and regenerated only when they change. If the LLM is unreachable, a deterministic template answers instead.
+## Project structure
 
-## Quality
-
-```sh
-docker compose --profile checks run --rm checks              # backend + data tests, lint, types
-(cd frontend && npm ci && npm run lint && npm run typecheck && npm test && npm run e2e)
-python3 infra/scripts/verify_stack.py --live-browser           # fresh stack + browser journeys on PostgreSQL
+```
+frontend/    React application: features, shared UI, API client, tests
+backend/     FastAPI service: routers, schemas, services, models, Alembic migrations, tests
+data/        Data-preparation pipeline that turns the source CSV into the seed
+infra/       Dockerfiles, Compose, nginx configuration and verification scripts
+reference/   Original assessment, design system, progress punch card and team handoffs
 ```
 
-The backend (337) and data (153) suites run against real PostgreSQL. The frontend has 370 unit tests plus browser journeys on desktop and phone. A clean-room run builds the whole stack from nothing and drives it in a real browser, and CI repeats the checks on every push.
+Each folder has its own README with setup details, design notes and commands.
 
-## How I built it
+## How this was built
 
-I ran this like a small engineering team made of AI agents. Each area (frontend, backend, data, infrastructure, QA and accessibility) had a lead agent that delegated focused work to specialist sub-agents, and a project-manager agent held the requirements and the contracts between teams. I set direction and reviewed. Nothing counted as done until tests and a clean-room run proved it. The [Holepunch](reference/holepunch.html) tracks every requirement against its evidence, and the teams' handoffs are in [reference/chatroom](reference/chatroom/README.md). The original brief is in [reference/project.md](reference/project.md).
+The project was delivered by a small team of AI agents that I directed and reviewed. Each area (frontend, backend, data, infrastructure, QA and accessibility) had a lead agent that planned its work and delegated focused tasks to specialist sub-agents. A project-manager agent maintained the requirement checklist and the API contracts between teams. Work was accepted only when tests, independent reviews and a clean-room run proved it. The [punch card](reference/PROGRESS.md) tracks every requirement against its evidence, and the coordination log between teams is kept in [reference/chatroom](reference/chatroom/README.md).
 
-**Good to know:** the user switcher demonstrates authorship and per-user views; it is not authentication. Note and comment writes through the API need an `X-Demo-User-ID` header (any id from `GET /users`). The UI sends it for you. The source data has no blood type or status, so patients start active, with blood type left unrecorded rather than invented.
+## Notes and limitations
+
+- **Demo identity, not authentication.** The user switcher demonstrates authorship and per-user views. API writes to notes and comments need an `X-Demo-User-ID` header (any id from `GET /users`); the UI sends it automatically. A production deployment would use the practice's identity provider.
+- **Source data.** The dataset has no blood type or patient status, so patients start active and blood type is left unrecorded rather than invented. Both can be edited in the form.
+- **AI summaries** use a free, keyless LLM endpoint with a daily quota per network. When the quota is reached, the application shows the standard summary and says so. Set `SUMMARY_PROVIDER=template` to turn the LLM off. All patient data is fictional.

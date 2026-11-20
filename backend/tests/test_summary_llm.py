@@ -142,6 +142,26 @@ def test_llm_success_sends_facts_and_stores_the_row(
     assert row.generated_at.isoformat().replace("+00:00", "Z") == result["generated_at"]
 
 
+def test_markdown_in_llm_output_is_stored_as_plain_text(
+    llm_client: TestClient, patient: Patient, db_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    markdown = (
+        "## Summary\n\n**Fictional Person** is a 56-year-old active patient.\n\n"
+        "**Conditions:**\n- Type 2 diabetes\n* `E11` coded\n\nNo __clinical notes__ yet."
+    )
+    fake = install(monkeypatch, FakeResponse(completion(markdown)))
+    result = llm_client.get(f"/patients/{patient.id}/summary").json()
+    plain = (
+        "Summary\n\nFictional Person is a 56-year-old active patient.\n\n"
+        "Conditions:\nType 2 diabetes\nE11 coded\n\nNo clinical notes yet."
+    )
+    assert result["method"] == "llm" and result["summary"] == plain
+    [row] = stored_rows(db_session, patient.id)
+    assert row.summary == plain
+    system = json.loads(cast(bytes, fake.calls[0][0].data))["messages"][0]["content"]
+    assert "no Markdown" in system
+
+
 def test_unchanged_facts_reuse_the_stored_summary_without_a_call(
     llm_client: TestClient,
     patient: Patient,
