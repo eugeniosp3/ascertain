@@ -1,0 +1,6 @@
+# Keep the interviewer command simple; actual infrastructure lives in infra/.
+name: ascertain
+include:
+  - path: ./infra/compose.yml
+    project_directory: .
+    env_file: ./.env.example

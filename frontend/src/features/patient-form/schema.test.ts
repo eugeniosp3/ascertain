@@ -1,0 +1,96 @@
+import { describe, expect, it } from 'vitest'
+import { emptyPatientValues } from './mapping'
+import { patientFormSchema } from './schema'
+
+const valid = {
+  ...emptyPatientValues(),
+  first_name: 'Ada',
+  last_name: 'Example',
+  date_of_birth: '1980-01-02',
+}
+
+describe('patient form validation', () => {
+  it('accepts an empty optional profile and a real leap day', () => {
+    expect(patientFormSchema.safeParse(valid).success).toBe(true)
+    expect(patientFormSchema.safeParse({ ...valid, date_of_birth: '2000-02-29' }).success).toBe(
+      true,
+    )
+  })
+
+  it.each([
+    ['first_name', '  '],
+    ['last_name', ''],
+    ['date_of_birth', '2001-02-29'],
+    ['date_of_birth', 'not-a-date'],
+    ['date_of_birth', '2999-01-01'],
+    ['last_visit', '2999-01-01'],
+    ['last_visit', '2024-04-31'],
+    ['email', 'bad-email'],
+    ['phone', 'telephone'],
+    ['middle_initial', '1'],
+    ['middle_initial', 'AB'],
+    ['status', 'pending'],
+    ['blood_type', 'C+'],
+    ['allergy_status', 'none'],
+    ['postal_code', 'x'.repeat(21)],
+  ])('rejects invalid %s: %s', (field, value) => {
+    const result = patientFormSchema.safeParse({ ...valid, [field]: value })
+    expect(result.success).toBe(false)
+    if (!result.success)
+      expect(result.error.issues.some((issue) => issue.path[0] === field)).toBe(true)
+  })
+
+  it('requires a reported list and distinguishes unknown from no known allergies', () => {
+    expect(patientFormSchema.safeParse({ ...valid, allergy_status: 'reported' }).success).toBe(
+      false,
+    )
+    for (const allergy_status of ['unknown', 'no_known']) {
+      const result = patientFormSchema.safeParse({
+        ...valid,
+        allergy_status,
+        allergies: ['Example allergen'],
+      })
+      expect(result.success).toBe(false)
+    }
+    expect(
+      patientFormSchema.safeParse({
+        ...valid,
+        allergy_status: 'reported',
+        allergies: ['Example allergen'],
+      }).success,
+    ).toBe(true)
+  })
+
+  it('bounds list sizes and labels and locates condition errors on the row', () => {
+    expect(
+      patientFormSchema.safeParse({
+        ...valid,
+        conditions: Array.from({ length: 101 }, () => ({ code: '', label: 'Condition' })),
+      }).success,
+    ).toBe(false)
+    expect(
+      patientFormSchema.safeParse({
+        ...valid,
+        allergies: Array.from({ length: 101 }, () => 'Allergen'),
+        allergy_status: 'reported',
+      }).success,
+    ).toBe(false)
+    const result = patientFormSchema.safeParse({
+      ...valid,
+      conditions: [{ code: 'x'.repeat(41), label: '' }],
+    })
+    expect(result.success).toBe(false)
+    if (!result.success)
+      expect(result.error.issues.map((issue) => issue.path)).toEqual([
+        ['conditions', 0, 'code'],
+        ['conditions', 0, 'label'],
+      ])
+    expect(
+      patientFormSchema.safeParse({
+        ...valid,
+        allergies: ['x'.repeat(201)],
+        allergy_status: 'reported',
+      }).success,
+    ).toBe(false)
+  })
+})

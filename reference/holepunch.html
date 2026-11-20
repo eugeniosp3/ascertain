@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Holepunch</title>
+<meta name="description" content="Step-by-step checklist of every requirement in the healthcare dashboard take-home.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ebe6dc;
+  --paper:#fbf8f1;
+  --paper-2:#f2ede2;
+  --ink:#1c1a16;
+  --muted:#5b564c;
+  --faint:#8a8478;
+  --line:#e1dacb;
+  --perf:#c9c0ad;
+  --accent:#0b7568;
+  --on-accent:#ffffff;
+  --req:#0b7568;
+  --rec:#4a5ba6;
+  --stretch:#94590a;
+  --gate:#b0223b;
+  --hl:rgba(11,117,104,.11);
+  --shadow:0 1px 0 rgba(40,30,10,.05), 0 12px 30px -20px rgba(40,30,10,.40);
+  --radius:14px;
+  --sans:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11100d; --paper:#1b1915; --paper-2:#24211b; --ink:#ece6d9; --muted:#aba394; --faint:#7a7265;
+    --line:#2f2b24; --perf:#4b453b; --accent:#3cc3af; --on-accent:#0b1412;
+    --req:#3cc3af; --rec:#97a5f3; --stretch:#e4a84d; --gate:#f37388; --hl:rgba(60,195,175,.13);
+    --shadow:0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11100d; --paper:#1b1915; --paper-2:#24211b; --ink:#ece6d9; --muted:#aba394; --faint:#7a7265;
+  --line:#2f2b24; --perf:#4b453b; --accent:#3cc3af; --on-accent:#0b1412;
+  --req:#3cc3af; --rec:#97a5f3; --stretch:#e4a84d; --gate:#f37388; --hl:rgba(60,195,175,.13);
+  --shadow:0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px}
+code{font:500 12.5px/1.4 var(--mono);background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:0 5px;overflow-wrap:anywhere}
+b{font-weight:600}
+button{font:inherit;color:inherit}
+h2.section{font:600 11.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:40px 0 14px;display:flex;align-items:center;gap:12px}
+h2.section::after{content:"";flex:1;border-top:1.5px dashed var(--perf)}
+
+/* ---------- masthead ---------- */
+.masthead{padding:48px 0 8px}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.eyebrow .punch{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:inset 0 1px 2px rgba(0,0,0,.35)}
+h1{font:700 clamp(42px,8vw,68px)/1 var(--sans);letter-spacing:-.035em;margin:14px 0 12px}
+.lede{color:var(--muted);max-width:62ch;margin:0;font-size:16.5px}
+.stats{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-top:26px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);min-width:0}
+.stat .k{font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font:600 30px/1.1 var(--sans);margin-top:8px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stat .v small{font-size:15px;color:var(--muted);font-weight:500;letter-spacing:0}
+.stat .note{font-size:12.5px;color:var(--faint);margin-top:8px}
+.dots{display:flex;flex-wrap:wrap;gap:4px;margin-top:14px}
+.dot{width:9px;height:9px;border-radius:50%;border:1.2px solid var(--perf);display:block;transition:background .2s,border-color .2s}
+.dot.on{background:var(--accent);border-color:var(--accent)}
+.dot.gate{border-style:dashed}
+.dot:hover,.dot:focus-visible{border-color:var(--accent);outline:none;transform:scale(1.35)}
+.bar{height:6px;background:var(--paper-2);border:1px solid var(--line);border-radius:99px;overflow:hidden;margin-top:14px}
+.bar i{display:block;height:100%;width:0;background:var(--stretch);transition:width .4s ease}
+.next{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:12px 14px 12px 18px}
+.next .k{flex:none}
+.next-btn{all:unset;box-sizing:border-box;flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 10px;border-radius:9px}
+.next-btn:hover{background:var(--hl)}
+.next-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.next-step{font:600 12px/1 var(--mono);color:var(--accent);flex:none}
+.next-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.next-btn svg{flex:none;color:var(--muted)}
+
+/* ---------- toolbar ---------- */
+.toolbar{position:sticky;top:0;z-index:20;margin-top:26px;background:color-mix(in srgb,var(--bg) 86%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.toolbar .wrap{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:10px;padding-bottom:10px}
+.search{flex:1 1 180px;min-width:0;position:relative}
+.search input{width:100%;font:inherit;font-size:14px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 12px 8px 34px;outline:none}
+.search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--hl)}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper)}
+.seg button{all:unset;cursor:pointer;font:500 13px/1 var(--sans);padding:9px 12px;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.seg button:focus-visible,.fchip:focus-visible,.tbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.fchips{display:inline-flex;gap:6px;flex-wrap:wrap}
+.fchip{all:unset;cursor:pointer;font:600 10.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:8px 9px;border-radius:8px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);border:1px solid color-mix(in srgb,var(--c) 30%,transparent)}
+.fchip[aria-pressed="false"]{color:var(--faint);background:transparent;border-color:var(--line);text-decoration:line-through}
+.tbtn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font:500 13px/1 var(--sans);padding:8px 11px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--muted)}
+.tbtn:hover{color:var(--ink);border-color:var(--perf)}
+
+/* ---------- briefing ---------- */
+.brief{display:grid;grid-template-columns:1fr 1.45fr;gap:12px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}
+.card h3{font:600 15px/1.3 var(--sans);margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.card h3 .pip{width:8px;height:8px;border-radius:50%;background:var(--c,var(--accent))}
+.card ul,.card ol{margin:0;padding-left:20px;font-size:14px}
+.card li{margin:6px 0}
+.card li::marker{color:var(--faint);font-family:var(--mono);font-size:12px}
+.rules{--c:var(--gate)}
+.gotchas{--c:var(--stretch)}
+.interp{grid-column:1/-1;--c:var(--rec);padding:0}
+.interp summary{list-style:none;cursor:pointer;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.interp summary::-webkit-details-marker{display:none}
+.interp summary h3{margin:0}
+.interp summary .chev{transition:transform .2s;color:var(--muted)}
+.interp:not([open]) summary .chev{transform:rotate(-90deg)}
+.interp summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:var(--radius)}
+.interp dl{margin:0;border-top:1px solid var(--line);display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr)}
+.interp dt,.interp dd{margin:0;padding:11px 20px;border-bottom:1px solid var(--line);font-size:14px}
+.interp dt{color:var(--muted);font-style:italic;border-right:1px dashed var(--perf)}
+.interp dl > :nth-last-child(-n+2){border-bottom:0}
+
+/* ---------- coverage ---------- */
+.coverage{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.cov{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.cov .k{font:500 10.5px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cov .s{font-size:13px;color:var(--faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cov .n{font:600 18px/1 var(--sans);margin-top:10px;font-variant-numeric:tabular-nums}
+.cov .n small{color:var(--faint);font-weight:500;font-size:13px}
+.cov .bar i{background:var(--accent)}
+.cov.x .bar i{background:var(--stretch)}
+
+/* ---------- phases ---------- */
+.phase{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin:14px 0;overflow:hidden}
+.phase-head{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:16px 18px;cursor:pointer}
+.phase-head:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:var(--radius)}
+.phase-num{font:600 13px/1 var(--mono);width:38px;height:38px;display:grid;place-items:center;border-radius:10px;border:1.5px solid var(--ink);letter-spacing:.02em}
+.phase.complete .phase-num{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.phase.gated .phase-num{border-color:var(--gate);color:var(--gate);border-style:dashed}
+.phase-title{display:block;font:600 17px/1.25 var(--sans);letter-spacing:-.01em}
+.phase-blurb{display:block;font-size:13.5px;color:var(--muted);margin-top:3px}
+.phase-count{font:500 12.5px/1 var(--mono);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.chev{transition:transform .2s;color:var(--muted)}
+.phase.collapsed .phase-head .chev{transform:rotate(-90deg)}
+.phase-bar{height:2px;background:var(--line)}
+.phase-bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .35s ease}
+.phase.collapsed .items{display:none}
+
+.items{list-style:none;margin:0;padding:0;position:relative}
+.items::before{content:"";position:absolute;top:0;bottom:0;left:52px;border-left:1.5px dashed var(--perf);pointer-events:none}
+.item{border-top:1px solid var(--line);scroll-margin-top:96px;position:relative}
+.item:first-child{border-top:0}
+.cb{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.row{display:grid;grid-template-columns:52px minmax(0,1fr) auto;column-gap:16px;padding:13px 18px 13px 0;cursor:pointer;align-items:start}
+.row:hover{background:color-mix(in srgb,var(--hl) 60%,transparent)}
+.hole{justify-self:center;margin-top:0;width:22px;height:22px;border-radius:50%;border:1.5px dashed var(--faint);position:relative;display:grid;place-items:center;transition:background .15s,border-color .15s;background:var(--paper)}
+.row:hover .hole{border-color:var(--accent);border-style:solid}
+.cb:focus-visible + .row .hole{outline:2px solid var(--accent);outline-offset:3px}
+.cb:checked + .row .hole{background:var(--accent);border:1.5px solid var(--accent);box-shadow:inset 0 2px 4px rgba(0,0,0,.28)}
+.tick{width:12px;height:12px;stroke:var(--on-accent);opacity:0;transform:scale(.5);transition:opacity .15s,transform .15s}
+.cb:checked + .row .tick{opacity:1;transform:scale(1)}
+.chad{position:absolute;inset:-1.5px;border-radius:50%;background:var(--paper);border:1.5px solid var(--perf);opacity:0;pointer-events:none}
+.item.punching .chad{animation:chad .7s cubic-bezier(.3,.55,.45,1) forwards}
+.item.punching .hole{animation:punch .22s ease-out}
+@keyframes chad{0%{opacity:1;transform:translate(0,0) rotate(0) scale(1)}100%{opacity:0;transform:translate(12px,36px) rotate(80deg) scale(.7)}}
+@keyframes punch{0%{transform:scale(1)}45%{transform:scale(.8)}100%{transform:scale(1)}}
+.body{min-width:0}
+.step{font:500 11px/1 var(--mono);color:var(--faint);margin-right:8px;letter-spacing:.02em;vertical-align:1px}
+.t{font-weight:500}
+.d{display:block;font-size:13.5px;color:var(--muted);margin-top:4px;max-width:72ch}
+.cb:checked + .row .t{color:var(--muted)}
+.cb:checked + .row .d{color:var(--faint)}
+.meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding-top:1px}
+.tag{font:600 10px/1 var(--mono);letter-spacing:.07em;text-transform:uppercase;padding:5px 7px;border-radius:6px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);border:1px solid color-mix(in srgb,var(--c) 28%,transparent);white-space:nowrap}
+.tag-req{--c:var(--req)} .tag-rec{--c:var(--rec)} .tag-stretch{--c:var(--stretch)} .tag-gate{--c:var(--gate)}
+.ref{font:500 11px/1.2 var(--mono);color:var(--faint);white-space:nowrap;text-align:right}
+.star{color:var(--stretch)}
+.item.flash .row{animation:flash 1.8s ease-out}
+@keyframes flash{0%,35%{background:var(--hl)}100%{background:transparent}}
+
+.empty{text-align:center;color:var(--muted);padding:40px 16px;border:1.5px dashed var(--perf);border-radius:var(--radius);margin:14px 0}
+
+/* ---------- legend / footer ---------- */
+.legend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.legend .card{padding:14px 16px;font-size:13.5px;color:var(--muted)}
+.legend .tag{display:inline-block;margin-bottom:8px}
+footer{color:var(--faint);font-size:13px;padding:28px 0 56px}
+footer p{margin:6px 0}
+
+@media (max-width:760px){
+  .stats{grid-template-columns:1fr}
+  .brief{grid-template-columns:1fr}
+  .coverage,.legend{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .interp dl{grid-template-columns:1fr}
+  .interp dt{border-right:0;border-bottom:0;padding-bottom:2px;font-size:13px}
+  .interp dd{padding-top:0}
+  .interp dl > :nth-last-child(2){border-bottom:0}
+}
+@media (max-width:640px){
+  .toolbar{position:static}
+  .item{scroll-margin-top:16px}
+  .masthead{padding-top:32px}
+  .items::before{left:42px}
+  .row{grid-template-columns:42px minmax(0,1fr);column-gap:12px;padding-right:14px}
+  .meta{grid-column:2;flex-direction:row;align-items:center;flex-wrap:wrap;margin-top:9px;gap:8px}
+  .ref{text-align:left}
+  .phase-head{grid-template-columns:auto minmax(0,1fr) auto;gap:12px;padding:14px}
+  .phase-head .chev{display:none}
+  .next{flex-direction:column;align-items:stretch;gap:8px}
+  .next-btn{padding:6px 0}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important;transition:none !important}
+}
+@media print{
+  .toolbar,.next,.dots{display:none}
+  body{background:#fff}
+  .phase.collapsed .items{display:block}
+  .phase,.card,.stat,.cov{box-shadow:none}
+}
+</style>
+</head>
+<body>
+
+<header class="masthead wrap">
+  <div class="eyebrow"><span class="punch" aria-hidden="true"></span>Full-stack take-home · Healthcare dashboard</div>
+  <h1>Holepunch</h1>
+  <p class="lede">Every requirement in <code>project.md</code>, in the order we’ll build it. Punch a hole when an item is done. The submission phase stays locked until you say go.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="k">Core holes punched</div>
+      <div class="v"><span id="coreDone">0</span> <small>/ <span id="coreTotal">0</span> · <span id="corePct">0</span>%</small></div>
+      <div class="dots" id="dots" aria-label="One dot per core item"></div>
+    </div>
+    <div class="stat">
+      <div class="k">Stretch · pick 1–2</div>
+      <div class="v"><span id="xDone">0</span> <small>/ <span id="xTotal">0</span></small></div>
+      <div class="bar"><i id="xBar"></i></div>
+      <div class="note"><span class="star">★</span> marks the two recommended picks. The rest is a menu, not a to-do list.</div>
+    </div>
+    <div class="stat next">
+      <div class="k">Next hole</div>
+      <button class="next-btn" id="nextBtn" type="button">
+        <span class="next-step" id="nextStep"></span>
+        <span class="next-title" id="nextTitle"></span>
+        <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="wrap">
+    <label class="search">
+      <svg width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M13 13l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="Filter items  ( / )" aria-label="Filter checklist items" autocomplete="off">
+    </label>
+    <div class="seg" role="group" aria-label="Show">
+      <button type="button" data-view="all">All</button>
+      <button type="button" data-view="todo">To do</button>
+      <button type="button" data-view="done">Done</button>
+    </div>
+    <div class="fchips" role="group" aria-label="Item types">
+      <button type="button" class="fchip" data-tag="req" style="--c:var(--req)">Required</button>
+      <button type="button" class="fchip" data-tag="rec" style="--c:var(--rec)">Recommended</button>
+      <button type="button" class="fchip" data-tag="stretch" style="--c:var(--stretch)">Stretch</button>
+      <button type="button" class="fchip" data-tag="gate" style="--c:var(--gate)">Gate</button>
+    </div>
+    <button type="button" class="tbtn" id="foldAll">Collapse all</button>
+    <button type="button" class="tbtn" id="reset">Reset</button>
+    <button type="button" class="tbtn" id="theme" aria-label="Toggle light or dark theme" title="Toggle theme">
+      <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 3a7 7 0 0 1 0 14z" fill="currentColor"/></svg>
+    </button>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <h2 class="section">Before you start</h2>
+  <section class="brief">
+    <div class="card rules">
+      <h3><span class="pip"></span>Ground rules</h3>
+      <ul>
+        <li><b>No <code>git init</code>, commits or GitHub</b> until you say so. Phase 16 is gated.</li>
+        <li>Required work first. Stretch only after the clean-room Docker test passes.</li>
+        <li>The spec suggests <b>2–4 hours</b>. A finished core beats a half-built stretch goal.</li>
+        <li>Fictional patient data only. Nothing real goes in seeds, logs or screenshots.</li>
+      </ul>
+    </div>
+    <div class="card gotchas">
+      <h3><span class="pip"></span>Easy points to lose</h3>
+      <ol>
+        <li><code>GET /health</code> must return exactly <code>{"status": "ok"}</code>.</li>
+        <li>Seeding runs <b>automatically on startup</b>, not through a manual script.</li>
+        <li><code>POST …/notes</code> <b>accepts a timestamp</b> from the client. Don’t only auto-generate it.</li>
+        <li>Search, filter and sort must work across <b>every page</b> of results, so they run on the server.</li>
+        <li>Deep links like <code>/patients/12</code> must survive a browser refresh in the Docker build (nginx SPA fallback).</li>
+        <li>Validation runs on <b>both</b> client and server, and server errors reach the user.</li>
+        <li><code>docker compose up</code> works on a clean machine with no extra steps.</li>
+        <li>The layout has to hold up at <b>lower resolutions</b>. Test narrow widths.</li>
+      </ol>
+    </div>
+    <details class="card interp" open>
+      <summary>
+        <h3><span class="pip"></span>How we’re reading the ambiguous parts</h3>
+        <svg class="chev" width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <dl>
+        <dt>“15–20 patients minimum” vs. “handle 100+ efficiently”</dt>
+        <dd>Seed the 100 invented patients from <code>prior-auth-pack</code>. That clears the minimum and gives real volume for the 100+ check.</dd>
+        <dt>“Pagination or infinite scroll”</dt>
+        <dd>Page-based pagination. Simpler, and it keeps the list state in the URL.</dd>
+        <dt>“Dockerfile for the frontend (or serve via the backend)”</dt>
+        <dd>A separate nginx container, which matches the three services compose has to start.</dd>
+        <dt>“An LLM can be helpful, but a template is acceptable”</dt>
+        <dd>Template by default so it runs with no keys. An LLM is optional, behind the same interface.</dd>
+        <dt>“PUT /patients/{id}”</dt>
+        <dd>Full replacement. No PATCH, since it isn’t asked for.</dd>
+        <dt>“Contact” and “address”</dt>
+        <dd>Contact = phone + email. Address = line 1, line 2, city, state and postal code as columns.</dd>
+        <dt>“Age”</dt>
+        <dd>Computed from date of birth when read, never stored.</dd>
+        <dt>“Choose 1–2 stretch features”</dt>
+        <dd>Claim two: Alembic migrations and API unit tests. Overlaps such as server-side sort/filter get a one-line mention.</dd>
+      </dl>
+    </details>
+  </section>
+
+  <h2 class="section">Coverage by spec section</h2>
+  <section class="coverage" id="coverage"></section>
+
+  <h2 class="section">Checklist</h2>
+  <div id="phases"></div>
+  <div class="empty" id="empty" hidden>No items match these filters.</div>
+  <noscript><p class="empty">This checklist needs JavaScript to render.</p></noscript>
+
+  <h2 class="section">Legend</h2>
+  <section class="legend">
+    <div class="card"><span class="tag tag-req">Required</span><br>Written into the spec. Missing it costs points.</div>
+    <div class="card"><span class="tag tag-rec">Recommended</span><br>Not literally in the spec, but the evaluation criteria reward it.</div>
+    <div class="card"><span class="tag tag-stretch">Stretch</span><br>From the spec’s stretch list, or another optional extra.</div>
+    <div class="card"><span class="tag tag-gate">Gate</span><br>Waits for your explicit go-ahead.</div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p>The small code after each tag is the spec reference: <code>P2.3</code> is Part 2, task 3; <code>P1 BE-2</code> is Part 1, backend task 2; <code>Req</code> is a section’s Requirements list.</p>
+  <p>Punches are saved in this browser only. Items marked done inside this file’s source show as punched by default, so the checklist can be updated as work lands.</p>
+  <p>Built from <code>project.md</code> · 20 Nov 2026</p>
+</footer>
+
+<script>
+(function(){
+"use strict";
+
+const TAGS = { req:"Required", rec:"Recommended", stretch:"Stretch", gate:"Gate" };
+const PARTS = [
+  ["P1","Part 1","Foundation"],
+  ["P2","Part 2","Core dashboard"],
+  ["P3","Part 3","Notes & summary"],
+  ["P4","Part 4","Forms & errors"],
+  ["P5","Part 5","Containers"],
+  ["SUB","Submission","README & repo"],
+  ["EVAL","Evaluation","Quality extras"],
+  ["X","Stretch","Pick 1–2"]
+];
+function I(id, tag, ref, part, t, d, done){ return { id, tag, ref, part, t, d: d || "", done: !!done }; }
+
+const PHASES = [
+{ id:"decide", title:"Lock the decisions", blurb:"Before any code. These choices become the README’s tech-decisions section.", items:[
+  I("d-fe","rec","P1 FE-2","P1","Lock the frontend stack",
+    `Recommended: <b>Vite + React + TypeScript</b> · <b>Mantine</b> for UI (its AppShell gives header + sidebar + main with a mobile burger, plus tables, forms, date inputs and notifications) · styling through the Mantine theme + CSS Modules · <b>React Router</b> · <b>TanStack Query</b> for server state, URL params for list state, no global store unless one earns its place · <b>React Hook Form + Zod</b> for forms.`),
+  I("d-be","rec","P1 BE","P1","Lock the backend stack",
+    `<b>FastAPI</b> · <b>Pydantic v2</b> · <b>SQLAlchemy 2.0</b> typed models · <b>Alembic</b> · <b>psycopg 3</b> · <b>pydantic-settings</b> for env config · <b>Ruff</b> · <b>pytest</b> + httpx. Locked dependencies (uv or pip-tools).`),
+  I("d-patient","req","P1 BE-2 · P4.1","P1","Define the Patient model",
+    `<code>first_name</code>, <code>last_name</code>, <code>date_of_birth</code> (age is derived, never stored), <code>email</code>, <code>phone</code>, address (<code>line1</code>, <code>line2</code>, <code>city</code>, <code>state</code>, <code>postal_code</code>), <code>blood_type</code> (A+ A− B+ B− AB+ AB− O+ O−), <code>status</code> (e.g. active · inactive · follow_up · critical), <code>allergies[]</code>, <code>conditions[]</code>, <code>last_visit</code> (nullable), <code>created_at</code>, <code>updated_at</code>.`),
+  I("d-seed-src","rec","P1 BE-3 · P2 Req","P1","Seed from <code>prior-auth-pack/data/patients_100.csv</code>",
+    `100 invented patients that map onto the model: names, DOB, address, phones, email, <code>pcp_last_visit_date</code> → last visit, <code>drug_allergies</code> → allergies, <code>problem_list_text</code> → conditions, <code>primary_clinical_story</code> → a first note. There are no blood type or status columns, so assign them deterministically. Covers the 15–20 minimum and the 100+ check without Faker.`),
+  I("d-design","rec","Eval · UI/UX","EVAL","Theme the UI with <code>design-system/</code>",
+    `Map <code>tokens.css</code> into the Mantine theme: warm paper <code>#f6f4f1</code>, ink <code>#121212</code>, one lilac accent <code>#d4c1ff</code>, hairlines instead of shadows, radius 8/10/12. Status shows as a soft tinted pill with a word. The brand fonts are licensed, so use the documented fallbacks.`),
+  I("d-note","req","P3 BE-1","P3","Define the Note model",
+    `<code>id</code>, <code>patient_id</code> (FK, cascade delete), <code>timestamp</code> (timestamptz, supplied by the client), <code>content</code>, <code>created_at</code>.`),
+  I("d-contract","rec","Eval · API design","EVAL","Write the API contract down before building",
+    `List shape <code>{items, total, page, page_size}</code>. One error envelope for every non-2xx response. Codes: 200 read/update · 201 create · 204 delete · 404 missing · 409 conflict · 422 validation · 500 unexpected (generic message, no stack trace).`),
+  I("d-paths","rec","Eval · requirements","EVAL","Keep backend paths exactly as the spec writes them",
+    `<code>/health</code>, <code>/patients</code>, <code>/patients/{id}/notes</code>… with no <code>/api</code> prefix in FastAPI. The Vite dev proxy and nginx add and strip <code>/api</code> for the browser.`),
+  I("d-growth","rec","Context","EVAL","Choose a structure that can grow",
+    `The spec says more user types, workflows and real-time features are coming. Backend: routers → services → models/schemas. Frontend: feature folders (<code>features/patients</code>, <code>features/notes</code>) over a shared <code>api/</code> layer.`),
+  I("d-summary","rec","P3 BE-2","P3","Decide the summary approach",
+    `Recommended: template-based by default so it runs with no API keys, with an optional LLM provider behind the same interface.`)
+]},
+{ id:"skeleton", title:"Project skeleton", blurb:"Local files only. No git init.", items:[
+  I("s-tree","rec","Submission","SUB","Create the folder layout",
+    `<code>backend/</code> · <code>frontend/</code> · <code>docker-compose.yml</code> · <code>.env.example</code> · <code>README.md</code> at the root.`),
+  I("s-ignore","rec","Submission","SUB","Add <code>.gitignore</code> and <code>.dockerignore</code> files",
+    `Plain files only, ready for later. Exclude <code>.env</code>, <code>node_modules</code>, <code>dist</code>, <code>.venv</code>, <code>__pycache__</code> and coverage output.`)
+]},
+{ id:"be-foundation", title:"Backend foundation", blurb:"Part 1 · backend tasks.", items:[
+  I("b-init","req","P1 BE-1","P1","Initialize the FastAPI app",
+    `App factory, settings loaded from env, CORS limited to the frontend origin.`),
+  I("b-health","req","P1 BE-1","P1","<code>GET /health</code> returns exactly <code>{\"status\": \"ok\"}</code>",
+    `HTTP 200 and nothing else in the body. The compose healthcheck uses it too.`),
+  I("b-db-dev","rec","P5.3","P1","Run Postgres in Docker from the start",
+    `Add the <code>db</code> service to <code>docker-compose.yml</code> now, so local dev and the final setup use the same database.`),
+  I("b-db","req","P1 BE-2","P1","Connect to PostgreSQL",
+    `SQLAlchemy engine, a session per request through a FastAPI dependency, <code>DATABASE_URL</code> from env.`),
+  I("b-schema","req","P1 BE-2","P1","Create the patients table in an Alembic migration",
+    `Constraints in the database too: NOT NULL, enum or check for <code>blood_type</code> and <code>status</code>. Indexes on <code>last_name</code>, <code>status</code> and <code>last_visit</code> for search and sort.`),
+  I("b-recreate","req","P1 BE-2","P1","Make the database easy to recreate",
+    `<code>alembic upgrade head</code> runs automatically on container start. The manual command goes in the README.`),
+  I("b-seed","req","P1 BE-3","P1","Seed 15–20 realistic patients on startup",
+    `Hand-written and plausible: a spread of ages, blood types, conditions, allergies, statuses and last-visit dates. Fictional people only.`),
+  I("b-seed-safe","rec","P1 BE-3 · P2 Req","P1","Make seeding idempotent and scalable",
+    `Skip if data already exists. <code>SEED_ON_STARTUP</code> toggles it. Loading the 100 CSV patients (copied into the backend image) proves the 100+ requirement; <code>SEED_EXTRA_PATIENTS</code> can top up with generated ones if needed.`),
+  I("b-seed-notes","rec","P3 BE-2","P3","Seed a few clinical notes per patient",
+    `So the summary has something to work with on first launch.`),
+  I("b-ruff","rec","Eval · code quality","EVAL","Backend linting: Ruff lint + format, type hints throughout")
+]},
+{ id:"crud", title:"Patient CRUD API", blurb:"Part 2 · task 1, plus the validation and error-handling requirements.", items:[
+  I("a-schemas","req","P2.1 · P4.2","P2","Pydantic schemas: <code>PatientCreate</code>, <code>PatientUpdate</code>, <code>PatientRead</code>, <code>PatientPage</code>",
+    `<code>PatientRead</code> adds the computed age. Server-side validation lives here.`),
+  I("a-rules","req","P2 Req · P4.2","P4","Server-side validation rules",
+    `Names trimmed, non-empty and length-capped · DOB in the past and under 130 years ago · valid email · phone format · <code>blood_type</code> and <code>status</code> enums · allergies and conditions trimmed and de-duplicated · <code>last_visit</code> not in the future.`),
+  I("a-list","req","P2.1","P2","<code>GET /patients</code> with pagination",
+    `<code>page</code> ≥ 1, <code>page_size</code> default 20 and max 100. Returns items plus total. Bad params → 422.`),
+  I("a-query","req","P2.3 · Stretch","P2","Search, filter and sort as query params on <code>GET /patients</code>",
+    `<code>q</code> (name or email, case-insensitive), <code>status</code>, <code>sort_by</code> (allowlist: name, dob, last_visit, status), <code>order</code> asc|desc. Required for correct search across pages; it also covers the “sorting/filtering query params” stretch goal.`),
+  I("a-get","req","P2.1","P2","<code>GET /patients/{id}</code>",
+    `404 with the error envelope when the patient doesn’t exist.`),
+  I("a-post","req","P2.1","P2","<code>POST /patients</code> → 201",
+    `Returns the created patient, plus a <code>Location</code> header.`),
+  I("a-put","req","P2.1","P2","<code>PUT /patients/{id}</code> → 200",
+    `Full replacement with the same validation as create. 404 if missing. Updates <code>updated_at</code>.`),
+  I("a-delete","req","P2.1","P2","<code>DELETE /patients/{id}</code> → 204",
+    `404 if missing. The patient’s notes are deleted with it (cascade).`),
+  I("a-errors","req","P2 Req","P2","Global exception handlers with proper status codes",
+    `Validation → 422 with per-field details (<code>loc</code>, <code>msg</code>) · not found → 404 · integrity error → 409 · anything else → 500 with a generic message, logged in full on the server.`),
+  I("a-docs","rec","Eval · API design","EVAL","Polish the OpenAPI docs at <code>/docs</code>",
+    `Tags, summaries, response models and documented error responses. Reviewers will open this page.`),
+  I("a-smoke","rec","Eval · correctness","EVAL","Exercise every endpoint by hand",
+    `The happy path plus each error code, through <code>/docs</code> or curl.`)
+]},
+{ id:"fe-foundation", title:"Frontend foundation", blurb:"Part 1 · frontend tasks.", items:[
+  I("f-vite","req","P1 FE-1","P1","Scaffold the app with Vite (<code>react-ts</code> template)"),
+  I("f-ts","req","P1 FE-3","P1","TypeScript configuration",
+    `<code>strict</code>, <code>noUncheckedIndexedAccess</code>, an <code>@/</code> path alias and a <code>typecheck</code> script.`),
+  I("f-lint","req","P1 FE-3","P1","Linting and formatting",
+    `ESLint flat config (typescript-eslint, react-hooks, react-refresh) + Prettier. Scripts: <code>lint</code>, <code>format</code>, <code>typecheck</code>.`),
+  I("f-ui","req","P1 FE-2","P1","Install and configure the UI library and styling approach",
+    `Mantine provider, theme tokens, global styles, notifications.`),
+  I("f-router","req","P1 FE-2","P1","Install and configure routing",
+    `React Router, with the route table in one place.`),
+  I("f-query","req","P1 FE-2","P1","Install and configure state management",
+    `TanStack Query client with a sensible <code>staleTime</code>, no retries on 4xx, devtools in dev only.`),
+  I("f-api","rec","P4.3","P4","Build a typed API client layer",
+    `One fetch wrapper: base URL from env, JSON handling, errors normalized into network / validation (field map) / not found / server. Types mirror the backend schemas, optionally generated from OpenAPI.`),
+  I("f-proxy","rec","Eval · local setup","EVAL","Vite dev proxy to the backend",
+    `The same relative <code>/api</code> URLs in dev and behind nginx, so CORS never surprises anyone.`)
+]},
+{ id:"layout", title:"Layout & routing", blurb:"Part 2 · tasks 2 and 4.", items:[
+  I("l-shell","req","P2.2","P2","App layout: header with navigation, sidebar, main content area"),
+  I("l-resp","req","P2 Req","P2","Responsive at lower resolutions",
+    `The sidebar collapses into a burger drawer on small screens. Check 1280, 1024, 768 and 375 px wide, with no horizontal scrolling.`),
+  I("l-routes","req","P2.4","P2","Routes: <code>/</code> · <code>/patients</code> · <code>/patients/:id</code> · catch-all 404"),
+  I("l-form-routes","rec","P4","P4","Form routes: <code>/patients/new</code> and <code>/patients/:id/edit</code>"),
+  I("l-404","req","P2.4","P2","404 page",
+    `A friendly message with a link home. An unknown patient ID gets a not-found state as well.`),
+  I("l-home","req","P2.4","P2","Dashboard home at <code>/</code>",
+    `Something useful at a glance: counts by status, recent visits, a shortcut to add a patient.`),
+  I("l-boundary","rec","Eval · error handling","EVAL","Route-level error boundary with a retry"),
+  I("l-polish","rec","Eval · code quality","EVAL","Active nav highlighting and a page title per route"),
+  I("l-lazy","stretch","Stretch · Performance","X","Lazy-load routes (code splitting)",
+    `<code>React.lazy</code> + <code>Suspense</code> per page.`)
+]},
+{ id:"list", title:"Patient list", blurb:"Part 2 · task 3. The most heavily specified screen.", items:[
+  I("pl-cols","req","P2.3","P2","Rows or cards show name, age, last visit and status",
+    `Status as a colored badge. One date format everywhere.`),
+  I("pl-search","req","P2.3 · P2 Req","P2","Search that never blocks typing",
+    `Debounce about 300 ms, <code>useDeferredValue</code>, keep the previous results on screen while fetching (<code>placeholderData</code>), cancel stale requests.`),
+  I("pl-filter","req","P2.3","P2","Filter by status"),
+  I("pl-sort","req","P2.3","P2","Sort by name, age and last visit, both directions",
+    `Clickable column headers with <code>aria-sort</code>.`),
+  I("pl-page","req","P2.3","P2","Pagination",
+    `Page controls, page size and total count. Jump back to page 1 when search or filters change.`),
+  I("pl-url","rec","Eval · state management","EVAL","Keep search, filter, sort and page in the URL",
+    `Refresh, shared links and the back button all keep the view.`),
+  I("pl-states","rec","Eval · error handling","EVAL","Loading skeleton, empty state, and error state with retry"),
+  I("pl-mobile","req","P2 Req","P2","Responsive list",
+    `A table on wide screens, stacked cards on narrow ones.`),
+  I("pl-click","rec","P2.4","P2","Clicking a patient opens <code>/patients/:id</code>"),
+  I("pl-100","req","P2 Req","P2","Prove it with 100+ patients",
+    `Seed the extra patients and confirm search, sort and paging stay quick.`),
+  I("pl-virtual","stretch","Stretch · Performance","X","Memoized rows or list virtualization",
+    `Only if time allows. Server-side paging already covers the requirement.`)
+]},
+{ id:"detail", title:"Patient detail", blurb:"The /patients/:id view that notes and summary attach to.", items:[
+  I("pd-view","req","P2.4","P2","Detail page at <code>/patients/:id</code> shows the full profile",
+    `Personal, contact, address and medical sections.`),
+  I("pd-404","req","P2 Req","P2","A missing or deleted patient shows a not-found state, not a crash"),
+  I("pd-actions","rec","P2.1","P2","Edit and Delete actions",
+    `Delete asks for confirmation, then returns to the list and refreshes cached data.`)
+]},
+{ id:"notes", title:"Clinical notes", blurb:"Part 3 · backend task 1 and frontend task 1.", items:[
+  I("n-migr","req","P3 BE-1","P3","Notes table in a second Alembic migration",
+    `FK to patients with <code>ON DELETE CASCADE</code>; index on <code>(patient_id, timestamp)</code>.`),
+  I("n-post","req","P3 BE-1","P3","<code>POST /patients/{id}/notes</code> accepts timestamp and text → 201",
+    `Body <code>{timestamp, content}</code>. Timezone-aware ISO 8601, non-empty content with a length cap, 404 if the patient doesn’t exist.`),
+  I("n-get","req","P3 BE-1","P3","<code>GET /patients/{id}/notes</code> lists all notes",
+    `Newest first. 404 if the patient doesn’t exist.`),
+  I("n-del","req","P3 BE-1","P3","<code>DELETE /patients/{id}/notes/{note_id}</code> → 204",
+    `404 if the note doesn’t exist or belongs to a different patient.`),
+  I("n-list","req","P3 FE-1","P3","Notes section on the detail page, with timestamps"),
+  I("n-form","req","P3 FE-1","P3","Form to add a note",
+    `A textarea plus a date-time field that defaults to now. Validated, and disabled while saving.`),
+  I("n-delete-ui","req","P3 FE-1","P3","Delete a note from the UI",
+    `Confirm first. The notes list and the summary both refresh afterwards.`)
+]},
+{ id:"summary", title:"Patient summary", blurb:"Part 3 · backend task 2 and frontend task 2.", items:[
+  I("sm-ep","req","P3 BE-2","P3","<code>GET /patients/{id}/summary</code>",
+    `Returns identifiers (name, age, blood type), a narrative built from the notes, and key clinical info (conditions, allergies). 404 if the patient doesn’t exist.`),
+  I("sm-tpl","req","P3 BE-2","P3","Template-based summarizer",
+    `Deterministic and offline. Reads as prose, not a field dump. Handles a patient with no notes.`),
+  I("sm-llm","stretch","P3 hint","X","Optional LLM summarizer behind the same interface",
+    `Used only when an API key is set, with a short timeout and a fallback to the template. The app never depends on it.`),
+  I("sm-ui","req","P3 FE-2","P3","Summary view in the UI",
+    `A panel or tab on the detail page with a loading state. Refreshes when notes change.`)
+]},
+{ id:"form", title:"Patient form", blurb:"Part 4 · create and edit with real validation.", items:[
+  I("pf-zod","req","P4.2","P4","Zod schema that mirrors the server rules"),
+  I("pf-personal","req","P4.1","P4","Personal information: name, DOB, contact (phone, email), address"),
+  I("pf-medical","req","P4.1","P4","Medical information: allergies, conditions, blood type, status",
+    `Tag inputs for allergies and conditions; selects for blood type and status.`),
+  I("pf-modes","req","P4","P4","One form for both create and edit",
+    `Edit mode pre-fills from the API.`),
+  I("pf-client","req","P4.2","P4","Inline client-side error messages",
+    `Shown on blur and on submit, in plain language: “Date of birth can’t be in the future.”`),
+  I("pf-server","req","P4.2 · P4.3","P4","Show server 422 errors on the matching fields",
+    `<code>setError</code> keyed by each error’s <code>loc</code>. Errors that don’t map to a field go in a form-level alert.`),
+  I("pf-net","req","P4.3","P4","Handle network failures on submit",
+    `Keep what the user typed, say the server couldn’t be reached, and offer a retry. Never fail silently.`),
+  I("pf-submit","rec","Eval · UX","EVAL","Submit flow",
+    `Disabled while pending, no double submits, a success toast, navigate to the patient, refresh the list cache.`)
+]},
+{ id:"errors", title:"Error handling & polish", blurb:"Part 4 · task 3, plus what the evaluation criteria look for.", items:[
+  I("e-global","req","P4.3","P4","App-wide network failure handling",
+    `Failed queries show inline errors with a retry. Failed mutations show a toast. 5xx errors get a friendly message.`),
+  I("e-retry","rec","Eval · error handling","EVAL","Retry policy",
+    `Retry network and 5xx errors with backoff. Never retry 4xx.`),
+  I("e-a11y","rec","Eval · best practices","EVAL","Accessibility basics",
+    `A label on every input, full keyboard navigation, visible focus, readable contrast.`),
+  I("e-console","rec","Eval · code quality","EVAL","A clean browser console: no errors or warnings")
+]},
+{ id:"docker", title:"Containerization", blurb:"Part 5 · one command to run everything.", items:[
+  I("c-be","req","P5.1","P5","<code>backend/Dockerfile</code>",
+    `Slim Python image, locked dependencies, non-root user. The entrypoint runs migrations, then seeding, then uvicorn.`),
+  I("c-fe","req","P5.2","P5","<code>frontend/Dockerfile</code>",
+    `Multi-stage: build with Node, serve the static build with nginx.`),
+  I("c-nginx","req","P5.2 · P2.4","P5","nginx config: SPA fallback and API proxy",
+    `<code>try_files $uri /index.html</code> so deep links like <code>/patients/12</code> survive a refresh; proxy <code>/api/</code> to <code>backend:8000/</code> with the prefix stripped.`),
+  I("c-compose","req","P5.3","P5","<code>docker-compose.yml</code> starts the backend API, PostgreSQL and the frontend"),
+  I("c-health","rec","P5.3","P5","Healthchecks and startup order",
+    `<code>pg_isready</code> for the database, <code>/health</code> for the backend, <code>depends_on</code> with <code>condition: service_healthy</code>.`),
+  I("c-vol","rec","P5.3","P5","Named volume for Postgres data"),
+  I("c-env","req","P5.4","P5","<code>.env.example</code> with every required variable",
+    `<code>POSTGRES_USER</code>, <code>POSTGRES_PASSWORD</code>, <code>POSTGRES_DB</code>, <code>DATABASE_URL</code>, <code>CORS_ORIGINS</code>, <code>SEED_ON_STARTUP</code>, <code>SEED_EXTRA_PATIENTS</code>, an optional LLM key. Compose uses <code>\${VAR:-default}</code> so it runs even before <code>.env</code> is copied.`),
+  I("c-clean","req","Submission","SUB","Clean-room test",
+    `<code>docker compose down -v</code>, then <code>docker compose up --build</code>. The app, API, seeded data and <code>/health</code> all work with no manual steps.`),
+  I("c-hot","stretch","Stretch · DX","X","Hot reload in Docker for frontend and backend",
+    `A dev override with bind mounts, <code>uvicorn --reload</code> and the Vite dev server.`)
+]},
+{ id:"stretch", title:"Stretch goals — pick 1–2", blurb:"The spec asks for one or two. ★ marks the recommended picks; the rest is a menu.", items:[
+  I("x-alembic","stretch","Stretch · Advanced Backend","X","<span class=\"star\">★</span> Database migrations with Alembic",
+    `Recommended pick. Already built in phase 02, so claim it in the README.`),
+  I("x-tests","stretch","Stretch · Testing","X","<span class=\"star\">★</span> Unit tests for the API endpoints",
+    `Recommended pick. pytest + httpx against a throwaway Postgres database (not SQLite, because arrays and enums behave differently). Cover CRUD, 422s, 404s, notes and summary. Write them alongside phase 03.`),
+  I("x-log","stretch","Stretch · Advanced Backend","X","Request logging middleware",
+    `Method, path, status, duration and a request ID. Never log request bodies, since they hold patient data.`),
+  I("x-theme","stretch","Stretch · UI/UX","X","Dark/light theme switching"),
+  I("x-adv-search","stretch","Stretch · UI/UX","X","Advanced search with filters",
+    `Blood type, condition, age range, last-visit range.`),
+  I("x-chart","stretch","Stretch · UI/UX","X","Patient status chart on the dashboard"),
+  I("x-comp","stretch","Stretch · Testing","X","Component tests for PatientList and PatientForm",
+    `Vitest + Testing Library.`),
+  I("x-e2e","stretch","Stretch · Testing","X","E2E test of the main user journey",
+    `Playwright: list → search → open patient → add note → edit.`),
+  I("x-ci","stretch","Stretch · DX","X","CI pipeline config",
+    `Lint, typecheck, tests and a docker build. The workflow file can be written now; it only runs once the repo exists.`)
+]},
+{ id:"qa", title:"Final quality pass", blurb:"Read the spec against the running app one last time.", items:[
+  I("q-spec","req","Eval · requirements","EVAL","Walk <code>project.md</code> line by line against the running app",
+    `Every endpoint path, status code, field, route and UI element.`),
+  I("q-lint","rec","Eval · code quality","EVAL","Lint, format and typecheck pass on both sides"),
+  I("q-tests","rec","Eval · code quality","EVAL","All tests pass"),
+  I("q-clean","rec","Eval · code quality","EVAL","Remove dead code, stray <code>console.log</code>/<code>print</code> calls and TODOs"),
+  I("q-secrets","rec","Submission","SUB","No secrets and no real <code>.env</code> anywhere in the folder")
+]},
+{ id:"readme", title:"README", blurb:"“Comprehensive yet succinct.” Reviewers read this before any code.", items:[
+  I("r-quick","req","Submission","SUB","Quick start",
+    `<code>cp .env.example .env</code> → <code>docker compose up --build</code> → links to the app, the API and <code>/docs</code>.`),
+  I("r-local","req","Submission","SUB","Running without Docker",
+    `Backend and frontend dev commands, plus how to migrate and seed.`),
+  I("r-decisions","req","Eval · decisions","EVAL","Tech decisions, each with a one-line reason",
+    `UI library, state management, routing, styling, forms, ORM and migrations, summary approach.`),
+  I("r-api","rec","Eval · API design","EVAL","API overview",
+    `Endpoint table, error format, pagination shape.`),
+  I("r-perf","rec","P2 Req","P2","How 100+ patients and non-blocking search are handled"),
+  I("r-growth","rec","Context","EVAL","How it grows",
+    `Where auth and roles, multi-step workflows and real-time updates would fit.`),
+  I("r-stretch","rec","Stretch","SUB","Which stretch goals were completed"),
+  I("r-trade","rec","Eval · decisions","EVAL","Trade-offs, known limits, next steps"),
+  I("r-short","req","Submission","SUB","Succinct: skimmable in about three minutes")
+]},
+{ id:"submit", title:"Submission", blurb:"Locked. Nothing here happens until you give the go-ahead.", gated:true, items:[
+  I("g-ok","gate","Submission","SUB","Get your explicit go-ahead to create the repo"),
+  I("g-init","gate","Submission","SUB","<code>git init</code>, check <code>.gitignore</code>, first commit"),
+  I("g-push","gate","Submission","SUB","Create the public GitHub repository and push"),
+  I("g-verify","gate","Submission","SUB","Fresh clone into a new folder → <code>docker compose up --build</code> works"),
+  I("g-send","gate","Submission","SUB","Send the repository link")
+]}
+];
+
+/* ---------- state ---------- */
+const KEY = "holepunch.v1";
+const DEFAULT_TAGS = { req:true, rec:true, stretch:true, gate:true };
+let state = { checks:{}, collapsed:{}, view:"all", tags:Object.assign({}, DEFAULT_TAGS), theme:null };
+try {
+  const raw = localStorage.getItem(KEY);
+  if (raw) {
+    const s = JSON.parse(raw) || {};
+    state.checks = s.checks || {};
+    state.collapsed = s.collapsed || {};
+    state.view = ["all","todo","done"].includes(s.view) ? s.view : "all";
+    state.tags = Object.assign({}, DEFAULT_TAGS, s.tags || {});
+    state.theme = s.theme === "light" || s.theme === "dark" ? s.theme : null;
+  }
+} catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+let query = "";
+
+const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const scratch = document.createElement("div");
+function plain(html){ scratch.innerHTML = html; return scratch.textContent.replace(/\s+/g, " ").trim(); }
+
+const ALL = [];
+PHASES.forEach((ph, pi) => {
+  ph.num = String(pi).padStart(2, "0");
+  ph.items.forEach((it, ii) => {
+    it.phase = ph;
+    it.step = ph.num + "." + String(ii + 1).padStart(2, "0");
+    it.plain = plain(it.t);
+    it.search = (it.plain + " " + plain(it.d) + " " + it.ref + " " + TAGS[it.tag] + " " + it.step).toLowerCase();
+    ALL.push(it);
+  });
+});
+const CORE = ALL.filter(it => it.tag !== "stretch");
+const STRETCH = ALL.filter(it => it.tag === "stretch");
+
+function isDone(it){
+  return Object.prototype.hasOwnProperty.call(state.checks, it.id) ? !!state.checks[it.id] : it.done;
+}
+
+/* ---------- build DOM ---------- */
+const CHEV = '<svg class="chev" width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const TICK = '<svg class="tick" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+const phasesEl = document.getElementById("phases");
+PHASES.forEach(ph => {
+  const sec = document.createElement("section");
+  sec.className = "phase" + (ph.gated ? " gated" : "");
+  sec.id = "phase-" + ph.id;
+  sec.innerHTML =
+    '<button class="phase-head" type="button" aria-controls="list-' + ph.id + '">' +
+      '<span class="phase-num">' + ph.num + '</span>' +
+      '<span><span class="phase-title">' + ph.title + '</span><span class="phase-blurb">' + ph.blurb + '</span></span>' +
+      '<span class="phase-count"></span>' + CHEV +
+    '</button>' +
+    '<div class="phase-bar"><i></i></div>' +
+    '<ol class="items" id="list-' + ph.id + '"></ol>';
+  const ol = sec.querySelector(".items");
+  ph.items.forEach(it => {
+    const li = document.createElement("li");
+    li.className = "item";
+    li.id = "item-" + it.id;
+    li.innerHTML =
+      '<input type="checkbox" class="cb" id="cb-' + it.id + '">' +
+      '<label class="row" for="cb-' + it.id + '">' +
+        '<span class="hole" aria-hidden="true">' + TICK + '<span class="chad"></span></span>' +
+        '<span class="body"><span class="step">' + it.step + '</span><span class="t">' + it.t + '</span>' +
+          (it.d ? '<span class="d">' + it.d + '</span>' : '') + '</span>' +
+        '<span class="meta"><span class="tag tag-' + it.tag + '">' + TAGS[it.tag] + '</span><span class="ref">' + it.ref + '</span></span>' +
+      '</label>';
+    it.el = li;
+    it.cb = li.querySelector(".cb");
+    it.cb.checked = isDone(it);
+    it.cb.addEventListener("change", () => onToggle(it));
+    ol.appendChild(li);
+  });
+  ph.el = sec;
+  ph.countEl = sec.querySelector(".phase-count");
+  ph.barEl = sec.querySelector(".phase-bar i");
+  ph.headEl = sec.querySelector(".phase-head");
+  ph.headEl.addEventListener("click", () => {
+    state.collapsed[ph.id] = !isCollapsed(ph);
+    save();
+    applyCollapse(ph);
+    syncFoldBtn();
+  });
+  phasesEl.appendChild(sec);
+});
+
+/* dots: one per core item */
+const dotsEl = document.getElementById("dots");
+CORE.forEach(it => {
+  const a = document.createElement("a");
+  a.className = "dot" + (it.tag === "gate" ? " gate" : "");
+  a.href = "#item-" + it.id;
+  a.title = it.step + " · " + it.plain;
+  a.setAttribute("aria-label", it.step + " " + it.plain);
+  a.addEventListener("click", e => { e.preventDefault(); goTo(it); });
+  it.dot = a;
+  dotsEl.appendChild(a);
+});
+
+/* coverage */
+const covEl = document.getElementById("coverage");
+const covRefs = {};
+PARTS.forEach(([key, label, sub]) => {
+  const items = ALL.filter(it => it.part === key);
+  const div = document.createElement("div");
+  div.className = "cov" + (key === "X" ? " x" : "");
+  div.innerHTML = '<div class="k">' + label + '</div><div class="s">' + sub + '</div>' +
+    '<div class="n"><span></span> <small>/ ' + items.length + '</small></div><div class="bar"><i></i></div>';
+  covRefs[key] = { items, n: div.querySelector(".n span"), bar: div.querySelector(".bar i") };
+  covEl.appendChild(div);
+});
+
+/* ---------- behaviour ---------- */
+function isCollapsed(ph){ return !!state.collapsed[ph.id] && !query; }
+function applyCollapse(ph){
+  const c = isCollapsed(ph);
+  ph.el.classList.toggle("collapsed", c);
+  ph.headEl.setAttribute("aria-expanded", String(!c));
+}
+
+function onToggle(it){
+  const v = it.cb.checked;
+  if (v === it.done) delete state.checks[it.id]; else state.checks[it.id] = v;
+  save();
+  if (v && !reduceMotion) {
+    it.el.classList.remove("punching");
+    void it.el.offsetWidth;
+    it.el.classList.add("punching");
+    setTimeout(() => it.el.classList.remove("punching"), 760);
+  }
+  updateCounts();
+  if (state.view !== "all") setTimeout(applyFilters, reduceMotion ? 0 : 720);
+}
+
+function pct(a, b){ return b ? Math.round(a / b * 100) : 0; }
+
+function updateCounts(){
+  const coreDone = CORE.filter(isDone).length;
+  const xDone = STRETCH.filter(isDone).length;
+  document.getElementById("coreDone").textContent = coreDone;
+  document.getElementById("coreTotal").textContent = CORE.length;
+  document.getElementById("corePct").textContent = pct(coreDone, CORE.length);
+  document.getElementById("xDone").textContent = xDone;
+  document.getElementById("xTotal").textContent = STRETCH.length;
+  document.getElementById("xBar").style.width = pct(xDone, STRETCH.length) + "%";
+  CORE.forEach(it => it.dot.classList.toggle("on", isDone(it)));
+
+  PHASES.forEach(ph => {
+    const done = ph.items.filter(isDone).length;
+    ph.countEl.textContent = done + " / " + ph.items.length;
+    ph.barEl.style.width = pct(done, ph.items.length) + "%";
+    ph.el.classList.toggle("complete", done === ph.items.length);
+  });
+
+  Object.values(covRefs).forEach(c => {
+    const d = c.items.filter(isDone).length;
+    c.n.textContent = d;
+    c.bar.style.width = pct(d, c.items.length) + "%";
+  });
+
+  const next = CORE.find(it => !isDone(it));
+  const stepEl = document.getElementById("nextStep");
+  const titleEl = document.getElementById("nextTitle");
+  const btn = document.getElementById("nextBtn");
+  if (next) {
+    stepEl.textContent = next.step;
+    titleEl.textContent = next.plain;
+    btn.disabled = false;
+    btn.onclick = () => goTo(next);
+  } else {
+    stepEl.textContent = "✓";
+    titleEl.textContent = "Every core hole is punched.";
+    btn.disabled = true;
+    btn.onclick = null;
+  }
+}
+
+function visible(it){
+  const d = isDone(it);
+  if (!state.tags[it.tag]) return false;
+  if (state.view === "todo" && d) return false;
+  if (state.view === "done" && !d) return false;
+  if (query && !it.search.includes(query)) return false;
+  return true;
+}
+
+function applyFilters(){
+  let any = 0;
+  PHASES.forEach(ph => {
+    let n = 0;
+    ph.items.forEach(it => { const v = visible(it); it.el.hidden = !v; if (v) n++; });
+    ph.el.hidden = n === 0;
+    applyCollapse(ph);
+    any += n;
+  });
+  document.getElementById("empty").hidden = any > 0;
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === state.view)));
+  document.querySelectorAll(".fchip").forEach(b => b.setAttribute("aria-pressed", String(!!state.tags[b.dataset.tag])));
+  syncFoldBtn();
+}
+
+function goTo(it){
+  if (!visible(it)) {
+    state.view = "all";
+    state.tags = Object.assign({}, DEFAULT_TAGS);
+    query = "";
+    document.getElementById("q").value = "";
+    save();
+    applyFilters();
+  }
+  if (state.collapsed[it.phase.id]) {
+    state.collapsed[it.phase.id] = false;
+    save();
+    applyCollapse(it.phase);
+    syncFoldBtn();
+  }
+  it.el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+  it.el.classList.remove("flash");
+  void it.el.offsetWidth;
+  it.el.classList.add("flash");
+  setTimeout(() => it.el.classList.remove("flash"), 1900);
+  try { it.cb.focus({ preventScroll: true }); } catch (e) { it.cb.focus(); }
+}
+
+const foldBtn = document.getElementById("foldAll");
+function syncFoldBtn(){
+  const anyOpen = PHASES.some(ph => !ph.el.hidden && !isCollapsed(ph));
+  foldBtn.textContent = anyOpen ? "Collapse all" : "Expand all";
+}
+foldBtn.addEventListener("click", () => {
+  const collapse = foldBtn.textContent === "Collapse all";
+  PHASES.forEach(ph => { state.collapsed[ph.id] = collapse; applyCollapse(ph); });
+  save();
+  syncFoldBtn();
+});
+
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+  state.view = b.dataset.view; save(); applyFilters();
+}));
+document.querySelectorAll(".fchip").forEach(b => b.addEventListener("click", () => {
+  state.tags[b.dataset.tag] = !state.tags[b.dataset.tag]; save(); applyFilters();
+}));
+
+const qEl = document.getElementById("q");
+qEl.addEventListener("input", () => { query = qEl.value.trim().toLowerCase(); applyFilters(); });
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== qEl && !e.metaKey && !e.ctrlKey) { e.preventDefault(); qEl.focus(); }
+  if (e.key === "Escape" && document.activeElement === qEl) { qEl.value = ""; query = ""; applyFilters(); qEl.blur(); }
+});
+
+document.getElementById("reset").addEventListener("click", () => {
+  if (!window.confirm("Clear every punch saved in this browser?")) return;
+  state.checks = {};
+  save();
+  ALL.forEach(it => { it.cb.checked = it.done; });
+  updateCounts();
+  applyFilters();
+});
+
+function applyTheme(){
+  if (state.theme) document.documentElement.setAttribute("data-theme", state.theme);
+  else document.documentElement.removeAttribute("data-theme");
+}
+document.getElementById("theme").addEventListener("click", () => {
+  const sysDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const current = state.theme || (sysDark ? "dark" : "light");
+  state.theme = current === "dark" ? "light" : "dark";
+  save();
+  applyTheme();
+});
+
+applyTheme();
+updateCounts();
+applyFilters();
+})();
+</script>
+</body>
+</html>

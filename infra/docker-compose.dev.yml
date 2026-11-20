@@ -1,0 +1,7 @@
+# Run from the repository root: docker compose -f infra/docker-compose.dev.yml up --build
+name: ascertain
+include:
+  - path:
+      - ./compose.yml
+      - ./compose.dev.yml
+    project_directory: ..

@@ -1,0 +1,28 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+.DS_Store
+.env
+.env.*
+!.env.example
+work/
+tmp/
+temp/
+*.tmp
+*.temp
+*.duckdb
+*.duckdb.*
+# Keep the two finished stages in the project; temporary databases and sidecars stay ignored.
+!/assets/bronze/bronze.duckdb
+!/assets/silver/silver.duckdb
+# Completed assets/exports/<dataset-key>/patients.jsonl and manifest.json remain trackable.

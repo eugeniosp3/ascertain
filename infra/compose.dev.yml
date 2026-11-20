@@ -1,0 +1,36 @@
+# Hot-reload overrides, loaded by infra/docker-compose.dev.yml.
+services:
+  frontend:
+    build:
+      target: development
+    init: true
+    environment:
+      VITE_DATA_MODE: ${VITE_DATA_MODE:-demo}
+      VITE_API_BASE: ${VITE_API_BASE:-/api}
+      API_PROXY_TARGET: http://backend:8000
+      DEV_SERVER_HOST: 0.0.0.0
+      # Reliable file-change detection through Docker Desktop/Colima mounts.
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "200"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_npm_cache:/home/node/.npm
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/').then(r => {if (!r.ok) process.exit(1)}).catch(() => process.exit(1))"]
+      start_period: 45s
+      interval: 3s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    command: ["serve", "--reload"]
+    volumes:
+      - ./backend/app:/workspace/backend/app:ro
+      - ./backend/alembic:/workspace/backend/alembic:ro
+      - ./backend/alembic.ini:/workspace/backend/alembic.ini:ro
+      - ./data/src:/workspace/data/src:ro
+
+volumes:
+  frontend_node_modules:
+  frontend_npm_cache:

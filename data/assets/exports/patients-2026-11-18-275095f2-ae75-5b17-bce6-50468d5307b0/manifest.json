@@ -1,0 +1,265 @@
+{
+  "application_projection": "provisional",
+  "contract_version": "patient-export-v2",
+  "dataset_date": "2026-11-18",
+  "dataset_key": "patients-2026-11-18-275095f2-ae75-5b17-bce6-50468d5307b0",
+  "export_id": "275095f2-ae75-5b17-bce6-50468d5307b0",
+  "manifest_version": "1",
+  "patients": {
+    "byte_count": 532039,
+    "count": 100,
+    "file": "patients.jsonl",
+    "sha256": "715a445ad223d8ec3f9719d64bea9f29af7aca4fd6eb9319e0d0fcac5cbeb4f7"
+  },
+  "source": {
+    "column_count": 76,
+    "columns": [
+      "patient_id",
+      "mrn",
+      "first_name",
+      "middle_initial",
+      "last_name",
+      "date_of_birth",
+      "age_years",
+      "sex_at_birth",
+      "gender_identity",
+      "race",
+      "ethnicity",
+      "preferred_language",
+      "interpreter_needed",
+      "marital_status",
+      "employment_status",
+      "address_line1",
+      "city",
+      "state",
+      "zip",
+      "home_phone",
+      "mobile_phone",
+      "email",
+      "emergency_contact_name",
+      "emergency_contact_relationship",
+      "emergency_contact_phone",
+      "pcp_name",
+      "pcp_npi",
+      "pcp_last_visit_date",
+      "home_facility_key",
+      "first_registered_date",
+      "primary_payer_name",
+      "primary_line_of_business",
+      "primary_plan_name",
+      "primary_plan_type",
+      "primary_member_id",
+      "primary_group_number",
+      "primary_coverage_effective_date",
+      "secondary_payer_name",
+      "secondary_member_id",
+      "primary_clinical_story",
+      "height_cm",
+      "weight_kg",
+      "bmi",
+      "smoking_status",
+      "alcohol_use",
+      "problem_list_icd10",
+      "problem_list_text",
+      "has_hypertension",
+      "has_diabetes",
+      "has_ckd",
+      "has_copd",
+      "has_heart_failure",
+      "has_cad",
+      "has_afib",
+      "has_osa",
+      "has_depression",
+      "has_obesity",
+      "has_cancer_history",
+      "charlson_comorbidity_index",
+      "active_medications",
+      "drug_allergies",
+      "last_labs_date",
+      "last_hba1c_pct",
+      "last_egfr",
+      "last_creatinine_mg_dl",
+      "last_ldl_mg_dl",
+      "last_hemoglobin_g_dl",
+      "hospitalizations_12mo",
+      "ed_visits_12mo",
+      "housing_status",
+      "transportation_barrier",
+      "advance_directive_on_file",
+      "code_status",
+      "pa_request_count",
+      "created_at",
+      "updated_at"
+    ],
+    "path": "prior-auth-pack/data/patients_100.csv",
+    "row_count": 100,
+    "sha256": "f04b95e0b28e825674c32ab803d48dba8f3c5db515365ef5ad0ecdab9e58deef",
+    "source_file_id": "749427ea-ab25-594b-ac57-33890f62f943"
+  },
+  "transformation_version": "patient-rules-v1",
+  "uuid_namespace_version": "v1",
+  "validation": [
+    {
+      "message": "100 records x 76 fields",
+      "name": "source.csv",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "tables ['patients', 'source_files'] present",
+      "name": "bronze.tables",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "7 columns match",
+      "name": "bronze.source_files.columns",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "81 columns match",
+      "name": "bronze.patients.columns",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "source metadata and source_file_id are consistent",
+      "name": "bronze.source_files.row",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "bronze matches the current source CSV bytes",
+      "name": "bronze.source_checksum",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "100 rows; expected 100 (metadata says 100)",
+      "name": "bronze.patients.count",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "row numbers are 1..N without gaps",
+      "name": "bronze.patients.row_numbers",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "every bronze_id re-derives from source_file_id and row number",
+      "name": "bronze.patients.bronze_id",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "every row checksum matches its stored values",
+      "name": "bronze.patients.row_checksum",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "all 100 rows x 76 fields equal the source",
+      "name": "bronze.patients.reconcile_source",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "tables ['build_metadata', 'patients'] present",
+      "name": "silver.tables",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "6 columns match",
+      "name": "silver.build_metadata.columns",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "156 columns match",
+      "name": "silver.patients.columns",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "metadata matches bronze and the current transformation version",
+      "name": "silver.build_metadata.row",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "every silver row links to exactly one bronze row and vice versa",
+      "name": "silver.patients.lineage",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "all 76 raw columns equal bronze",
+      "name": "silver.patients.raw_matches_bronze",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "100 rows; expected 100",
+      "name": "silver.patients.count",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "every silver_id re-derives from bronze_id and the transformation version",
+      "name": "silver.patients.silver_id",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "every clean value equals the field rule applied to its raw value",
+      "name": "silver.patients.clean_values",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "unique patient_id/mrn, date ordering, snapshot age and problem-list pairing hold",
+      "name": "silver.patients.invariants",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "UTF-8 with a final newline",
+      "name": "package.patients.encoding",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "every line is a canonical PatientExportLine",
+      "name": "package.patients.schema",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "100 patients; expected 100",
+      "name": "package.patients.count",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "sorted by unique source_patient_id",
+      "name": "package.patients.order",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "export/silver/bronze UUIDs and original source row numbers re-derive",
+      "name": "package.patients.lineage",
+      "required": true,
+      "status": "passed"
+    },
+    {
+      "message": "every record equals the field rules + export mapping applied to its source_record",
+      "name": "package.patients.mapping",
+      "required": true,
+      "status": "passed"
+    }
+  ]
+}

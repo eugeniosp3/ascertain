@@ -1,0 +1,152 @@
+/* ==========================================================================
+   Ascertain design tokens (reverse-engineered from https://www.ascertain.com
+   and the hero product video). Single source of truth for index.html.
+
+   Legend
+   [site]  value read from the site's real CSS (authoritative)
+   [video] value sampled from the hero video pixels (approximate, +/- 4)
+   [new]   semantic name or alias added by this document, not in the source
+   ========================================================================== */
+
+:root {
+  /* ---- Color: core palette [site] ------------------------------------- */
+  --ink:            #121212;  /* --colors--black   text, dark sections, primary button */
+  --paper:          #f6f4f1;  /* --colors--white   page background (warm off-white)    */
+  --white:          #ffffff;  /* --pure-white      cards, inputs, chips                */
+  --brand-blue:     #002bba;  /* --colors--brand-color  links, tag text, active tab    */
+  --violet:         #d4c1ff;  /* --violet-primary  accent fill, hover, focus border    */
+  --surface-dark:   #242322;  /* --neutral-925     dark cards, banner                  */
+  --neutral-900:    #302f2e;  /* text on violet hover                                  */
+  --neutral-800:    #3b3a38;  /* dark button, menu button                              */
+  --text-secondary: #5e5a56;  /* --neutral-600-text  grey paragraph                    */
+  --text-muted:     #9b9b9b;  /* --grey                                                */
+
+  /* ---- Color: surfaces and lines [site] ------------------------------- */
+  --surface-warm:    #f6f4f2; /* cards, tab pills, TOC card                            */
+  --surface-stone:   #e1deda; /* media tiles, arrow buttons                            */
+  --surface-lavender-top:    #f0eafc; /* gradient start, callout fill                  */
+  --surface-lavender-bottom: #f4f1f4; /* gradient end                                  */
+  --mint:            #d4f3f0; /* hero gradient (and, in product, "success")            */
+  --line-hairline:   rgba(0, 0, 0, 0.05); /* #0000000d card border                     */
+  --line-input:      rgba(0, 0, 0, 0.10); /* #0000001a input border                    */
+  --line-divider:    #e4e4e4;
+  --line-pill:       #dddddd;
+
+  /* ---- Color: accents used in headlines and links [site] -------------- */
+  --accent-on-light: #814aff; /* .is-purple word inside a headline on light            */
+  --accent-on-dark:  #d4c1ff; /* .is-soft-purple word inside a headline on black       */
+  --link-article:    #9a6eff; /* rich-text links (fails AA on white, see 05)           */
+  --link-current:    #6e30f7; /* current TOC link, TOC label badge                     */
+
+  /* ---- Gradients [site] ----------------------------------------------- */
+  --gradient-lavender: linear-gradient(#f0eafc, #f4f1f4);
+  --gradient-violet-card: linear-gradient(#e1deda, #d4c1ff);
+  --gradient-hero-mint:   linear-gradient(0deg, #d4f3f0, #f6f4f1);
+  --gradient-hero-violet: linear-gradient(0deg, #d4c1ff, #f6f4f1);
+  --gradient-footer:      linear-gradient(0deg, rgba(176, 172, 167, 0.5), #f6f4f1);
+  --gradient-footer-dark: linear-gradient(0deg, rgba(0, 0, 0, 0.85), #121212);
+
+  /* ---- Color: product UI [video] -------------------------------------- */
+  --app-paper:        #f4f3ef;
+  --app-selected:     #e7e6e2;
+  --app-card-fill:    #e8e7e4;
+  --app-row:          #efefef;
+  --app-row-line:     #e2e2e2;
+  --app-track:        #e0dfdb;
+  --app-empty-icon:   #d1d0cc;
+  --ai-text:          #703fe4;
+  --ai-fill:          #ece8f8;
+  --backdrop-top:     #b2a8ba;
+  --backdrop-bottom:  #352d3b;
+  --bezel:            #c6bdcf;
+
+  /* Status pills: fill / text [video] [new] */
+  --status-approved-bg:   #d8f4ec;  --status-approved-fg:   #1f9e7a;
+  --status-review-bg:     #f4e4ac;  --status-review-fg:     #8a6d12;
+  --status-denied-bg:     #f4d0d4;  --status-denied-fg:     #b3203a;
+  --status-pending-bg:    #d8ecfc;  --status-pending-fg:    #2f7fb5;
+  --status-info-bg:       #e8d8fc;  --status-info-fg:       #6b4fd0;
+  --status-draft-bg:      #dcdcdc;  --status-draft-fg:      #666666;
+  --status-submitting-bg: #f8e8c4;  --status-submitting-fg: #8a6d12;
+  --progress-complete:    #2aa88a;
+
+  /* ---- Typography: families [site] ------------------------------------ */
+  --font-display: "Rhetorik Serif", Georgia, "Times New Roman", serif; /* headlines [new fallback: source uses Arial] */
+  --font-body:    "neue-haas-unica", Arial, sans-serif;          /* body and UI */
+  --font-control: "Neue Montreal", Arial, sans-serif;            /* buttons, forms, tags */
+  --font-utility: "Inter", sans-serif;                           /* a few utility classes */
+
+  /* ---- Typography: scale [site] --------------------------------------- */
+  --text-copy-small: 14px;
+  --text-copy:       16px;
+  --text-xs:         18px;
+  --text-s:          36px;   /* 28px at <=479 */
+  --text-m:          48px;   /* 32px at <=479 */
+  --text-l:          64px;   /* 48px at <=479 */
+  --text-xl:         80px;   /* unchanged on mobile */
+  --track-display:   -0.5px;
+  --track-large:     -0.75px;
+  --track-small:     -0.25px;
+
+  /* Product UI scale [video], ratios only [new] */
+  --app-text-caption: 10px;
+  --app-text-label:   12px;
+  --app-text-body:    13px;
+  --app-text-title:   18px;
+
+  /* ---- Spacing [site] -------------------------------------------------- */
+  --space-025: 0.25rem;
+  --space-05:  0.5rem;
+  --space-1:   1rem;
+  --space-2:   2rem;
+  --space-3:   3rem;
+  --space-4:   4rem;
+  --space-5:   5rem;
+  --space-6:   6rem;
+  --space-7:   7rem;
+  --space-8:   8rem;
+
+  /* ---- Layout [site] --------------------------------------------------- */
+  --container:        80rem;   /* 85rem at >=1440, 90rem at >=1920 */
+  --container-pad-x:  2rem;    /* 1.5rem at <=479 */
+  --section-pad-y:    7rem;    /* 4rem at <=991 */
+
+  /* ---- Shape [site] ---------------------------------------------------- */
+  --radius-xs:   4px;
+  --radius-s:    8px;    /* tags, nav button, media tiles */
+  --radius-btn:  10px;   /* primary buttons, form fields  */
+  --radius-m:    12px;   /* cards, tabs                   */
+  --radius-l:    16px;
+  --radius-xl:   24px;   /* feature cards, thumbnails     */
+  --radius-pill: 100px;
+
+  /* ---- Depth [site] ---------------------------------------------------- */
+  --shadow-pill:  0 2px 40px rgba(0, 0, 0, 0.05);
+  --shadow-modal: 0 4px 1rem rgba(38, 41, 38, 0.05);
+  --blur-glass:   blur(25px);
+  --blur-nav:     blur(30px);
+  --blur-chip:    blur(5px);
+
+  /* ---- Motion [site] --------------------------------------------------- */
+  --motion-fast:   0.2s;
+  --motion-base:   0.3s;
+  --motion-slow:   0.4s;
+  --motion-fade:   0.8s;
+  --ease-ui:       ease;
+  --ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Mobile type tokens [site]: Webflow redeclares the variables at <=479px */
+@media (max-width: 479px) {
+  :root {
+    --text-s: 28px;
+    --text-m: 32px;
+    --text-l: 48px;
+    --container-pad-x: 1.5rem;
+    --section-pad-y: 4rem;
+  }
+}
+
+@media (min-width: 1440px) { :root { --container: 85rem; } }
+@media (min-width: 1920px) { :root { --container: 90rem; } }
+@media (max-width: 991px)  { :root { --section-pad-y: 4rem; } }

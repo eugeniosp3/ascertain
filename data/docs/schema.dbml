@@ -1,0 +1,314 @@
+Project ascertain_patient_data {
+  database_type: 'DuckDB'
+  Note: 'Implemented stage model for prior-auth-pack/data/patients_100.csv only. Two separate files: data/assets/bronze/bronze.duckdb and data/assets/silver/silver.duckdb. Diagram namespaces represent file catalogs; actual tables use main. Cross-file references are logical lineage checked by queries. PostgreSQL application schema remains a separate, deferred backend responsibility.'
+}
+
+Table bronze.source_files {
+  source_file_id uuid [pk]
+  source_path varchar [not null]
+  source_sha256 varchar(64) [not null]
+  dataset_date date [not null]
+  row_count bigint [not null]
+  column_count integer [not null]
+  ingested_at timestamptz [not null]
+  indexes { (source_path, source_sha256) [unique] }
+  Note: 'One metadata row for the selected patients_100.csv snapshot. Initial dataset: 100 patients and 76 source fields. Original CSV bytes remain unchanged.'
+}
+
+Table bronze.patients {
+  bronze_id uuid [pk]
+  source_file_id uuid [not null]
+  source_row_number bigint [not null]
+  source_row_sha256 varchar(64) [not null]
+  ingested_at timestamptz [not null]
+
+  // Identity
+  patient_id varchar [not null]
+  mrn varchar [not null]
+  first_name varchar [not null]
+  middle_initial varchar [not null]
+  last_name varchar [not null]
+  date_of_birth varchar [not null]
+  age_years varchar [not null]
+  sex_at_birth varchar [not null]
+  gender_identity varchar [not null]
+  race varchar [not null]
+  ethnicity varchar [not null]
+  preferred_language varchar [not null]
+  interpreter_needed varchar [not null]
+  marital_status varchar [not null]
+  employment_status varchar [not null]
+
+  // Contact
+  address_line1 varchar [not null]
+  city varchar [not null]
+  state varchar [not null]
+  zip varchar [not null]
+  home_phone varchar [not null]
+  mobile_phone varchar [not null]
+  email varchar [not null]
+  emergency_contact_name varchar [not null]
+  emergency_contact_relationship varchar [not null]
+  emergency_contact_phone varchar [not null]
+
+  // Care team and registration
+  pcp_name varchar [not null]
+  pcp_npi varchar [not null]
+  pcp_last_visit_date varchar [not null]
+  home_facility_key varchar [not null]
+  first_registered_date varchar [not null]
+
+  // Coverage on file
+  primary_payer_name varchar [not null]
+  primary_line_of_business varchar [not null]
+  primary_plan_name varchar [not null]
+  primary_plan_type varchar [not null]
+  primary_member_id varchar [not null]
+  primary_group_number varchar [not null]
+  primary_coverage_effective_date varchar [not null]
+  secondary_payer_name varchar [not null]
+  secondary_member_id varchar [not null]
+
+  // Clinical profile
+  primary_clinical_story varchar [not null]
+  height_cm varchar [not null]
+  weight_kg varchar [not null]
+  bmi varchar [not null]
+  smoking_status varchar [not null]
+  alcohol_use varchar [not null]
+  problem_list_icd10 varchar [not null]
+  problem_list_text varchar [not null]
+  has_hypertension varchar [not null]
+  has_diabetes varchar [not null]
+  has_ckd varchar [not null]
+  has_copd varchar [not null]
+  has_heart_failure varchar [not null]
+  has_cad varchar [not null]
+  has_afib varchar [not null]
+  has_osa varchar [not null]
+  has_depression varchar [not null]
+  has_obesity varchar [not null]
+  has_cancer_history varchar [not null]
+  charlson_comorbidity_index varchar [not null]
+  active_medications varchar [not null]
+  drug_allergies varchar [not null]
+
+  // Recent labs and utilization
+  last_labs_date varchar [not null]
+  last_hba1c_pct varchar [not null]
+  last_egfr varchar [not null]
+  last_creatinine_mg_dl varchar [not null]
+  last_ldl_mg_dl varchar [not null]
+  last_hemoglobin_g_dl varchar [not null]
+  hospitalizations_12mo varchar [not null]
+  ed_visits_12mo varchar [not null]
+
+  // Social and administrative
+  housing_status varchar [not null]
+  transportation_barrier varchar [not null]
+  advance_directive_on_file varchar [not null]
+  code_status varchar [not null]
+  pa_request_count varchar [not null]
+
+  // System audit fields
+  created_at varchar [not null]
+  updated_at varchar [not null]
+
+  indexes { (source_file_id, source_row_number) [unique] }
+  Note: 'One original patient row. All 76 source fields are text, including empty strings. Patient source keys are not constrained unique here so a future invalid duplicate remains inspectable. pa_request_count is preserved source context; no request records are ingested.'
+}
+
+Table silver.build_metadata {
+  patient_source_file_id uuid [not null]
+  source_path varchar [not null]
+  source_sha256 varchar(64) [not null]
+  dataset_date date [not null]
+  transformation_version varchar [not null]
+  completed_at timestamptz [not null]
+  Note: 'Exactly one row identifying the patient snapshot and rules used to build silver. Pipeline validation enforces one-row cardinality. Processing timestamps are excluded from deterministic export payloads.'
+}
+
+Table silver.patients {
+  silver_id uuid [pk]
+  bronze_id uuid [not null]
+  transformation_version varchar [not null]
+  transformed_at timestamptz [not null]
+
+  // Identity
+  patient_id_raw varchar [not null]
+  patient_id_clean varchar
+  mrn_raw varchar [not null]
+  mrn_clean varchar
+  first_name_raw varchar [not null]
+  first_name_clean varchar
+  middle_initial_raw varchar [not null]
+  middle_initial_clean varchar
+  last_name_raw varchar [not null]
+  last_name_clean varchar
+  date_of_birth_raw varchar [not null]
+  date_of_birth_clean date
+  age_years_raw varchar [not null]
+  age_years_clean bigint
+  sex_at_birth_raw varchar [not null]
+  sex_at_birth_clean varchar
+  gender_identity_raw varchar [not null]
+  gender_identity_clean varchar
+  race_raw varchar [not null]
+  race_clean varchar
+  ethnicity_raw varchar [not null]
+  ethnicity_clean varchar
+  preferred_language_raw varchar [not null]
+  preferred_language_clean varchar
+  interpreter_needed_raw varchar [not null]
+  interpreter_needed_clean boolean
+  marital_status_raw varchar [not null]
+  marital_status_clean varchar
+  employment_status_raw varchar [not null]
+  employment_status_clean varchar
+
+  // Contact
+  address_line1_raw varchar [not null]
+  address_line1_clean varchar
+  city_raw varchar [not null]
+  city_clean varchar
+  state_raw varchar [not null]
+  state_clean varchar
+  zip_raw varchar [not null]
+  zip_clean varchar
+  home_phone_raw varchar [not null]
+  home_phone_clean varchar
+  mobile_phone_raw varchar [not null]
+  mobile_phone_clean varchar
+  email_raw varchar [not null]
+  email_clean varchar
+  emergency_contact_name_raw varchar [not null]
+  emergency_contact_name_clean varchar
+  emergency_contact_relationship_raw varchar [not null]
+  emergency_contact_relationship_clean varchar
+  emergency_contact_phone_raw varchar [not null]
+  emergency_contact_phone_clean varchar
+
+  // Care team and registration
+  pcp_name_raw varchar [not null]
+  pcp_name_clean varchar
+  pcp_npi_raw varchar [not null]
+  pcp_npi_clean varchar
+  pcp_last_visit_date_raw varchar [not null]
+  pcp_last_visit_date_clean date
+  home_facility_key_raw varchar [not null]
+  home_facility_key_clean varchar
+  first_registered_date_raw varchar [not null]
+  first_registered_date_clean date
+
+  // Coverage on file
+  primary_payer_name_raw varchar [not null]
+  primary_payer_name_clean varchar
+  primary_line_of_business_raw varchar [not null]
+  primary_line_of_business_clean varchar
+  primary_plan_name_raw varchar [not null]
+  primary_plan_name_clean varchar
+  primary_plan_type_raw varchar [not null]
+  primary_plan_type_clean varchar
+  primary_member_id_raw varchar [not null]
+  primary_member_id_clean varchar
+  primary_group_number_raw varchar [not null]
+  primary_group_number_clean varchar
+  primary_coverage_effective_date_raw varchar [not null]
+  primary_coverage_effective_date_clean date
+  secondary_payer_name_raw varchar [not null]
+  secondary_payer_name_clean varchar
+  secondary_member_id_raw varchar [not null]
+  secondary_member_id_clean varchar
+
+  // Clinical profile
+  primary_clinical_story_raw varchar [not null]
+  primary_clinical_story_clean varchar
+  height_cm_raw varchar [not null]
+  height_cm_clean decimal(18,6)
+  weight_kg_raw varchar [not null]
+  weight_kg_clean decimal(18,6)
+  bmi_raw varchar [not null]
+  bmi_clean decimal(18,6)
+  smoking_status_raw varchar [not null]
+  smoking_status_clean varchar
+  alcohol_use_raw varchar [not null]
+  alcohol_use_clean varchar
+  problem_list_icd10_raw varchar [not null]
+  problem_list_icd10_clean varchar
+  problem_list_text_raw varchar [not null]
+  problem_list_text_clean varchar
+  has_hypertension_raw varchar [not null]
+  has_hypertension_clean boolean
+  has_diabetes_raw varchar [not null]
+  has_diabetes_clean varchar
+  has_ckd_raw varchar [not null]
+  has_ckd_clean boolean
+  has_copd_raw varchar [not null]
+  has_copd_clean boolean
+  has_heart_failure_raw varchar [not null]
+  has_heart_failure_clean boolean
+  has_cad_raw varchar [not null]
+  has_cad_clean boolean
+  has_afib_raw varchar [not null]
+  has_afib_clean boolean
+  has_osa_raw varchar [not null]
+  has_osa_clean boolean
+  has_depression_raw varchar [not null]
+  has_depression_clean boolean
+  has_obesity_raw varchar [not null]
+  has_obesity_clean boolean
+  has_cancer_history_raw varchar [not null]
+  has_cancer_history_clean boolean
+  charlson_comorbidity_index_raw varchar [not null]
+  charlson_comorbidity_index_clean bigint
+  active_medications_raw varchar [not null]
+  active_medications_clean varchar
+  drug_allergies_raw varchar [not null]
+  drug_allergies_clean varchar
+
+  // Recent labs and utilization
+  last_labs_date_raw varchar [not null]
+  last_labs_date_clean date
+  last_hba1c_pct_raw varchar [not null]
+  last_hba1c_pct_clean decimal(18,6)
+  last_egfr_raw varchar [not null]
+  last_egfr_clean bigint
+  last_creatinine_mg_dl_raw varchar [not null]
+  last_creatinine_mg_dl_clean decimal(18,6)
+  last_ldl_mg_dl_raw varchar [not null]
+  last_ldl_mg_dl_clean bigint
+  last_hemoglobin_g_dl_raw varchar [not null]
+  last_hemoglobin_g_dl_clean decimal(18,6)
+  hospitalizations_12mo_raw varchar [not null]
+  hospitalizations_12mo_clean bigint
+  ed_visits_12mo_raw varchar [not null]
+  ed_visits_12mo_clean bigint
+
+  // Social and administrative
+  housing_status_raw varchar [not null]
+  housing_status_clean varchar
+  transportation_barrier_raw varchar [not null]
+  transportation_barrier_clean boolean
+  advance_directive_on_file_raw varchar [not null]
+  advance_directive_on_file_clean boolean
+  code_status_raw varchar [not null]
+  code_status_clean varchar
+  pa_request_count_raw varchar [not null]
+  pa_request_count_clean bigint
+
+  // System audit fields
+  created_at_raw varchar [not null]
+  created_at_clean timestamptz
+  updated_at_raw varchar [not null]
+  updated_at_clean timestamptz
+
+  indexes { (bronze_id, transformation_version) [unique] }
+  Note: 'One successfully transformed patient per bronze row. All 76 fields have adjacent raw/clean pairs in source order. Legitimate blanks can become typed null under explicit field rules; failed conversions block export. Retain source patient_id separately from lineage UUIDs. pa_request_count_clean remains a historical supplied value, not a count of application requests.'
+}
+
+// File-local metadata reference.
+Ref: bronze.patients.source_file_id > bronze.source_files.source_file_id
+
+// Logical references between separate files; enforce by validation joins.
+Ref: silver.patients.bronze_id > bronze.patients.bronze_id
+Ref: silver.build_metadata.patient_source_file_id > bronze.source_files.source_file_id

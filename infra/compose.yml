@@ -1,0 +1,111 @@
+# Default stack: compiled React frontend, FastAPI foundation and PostgreSQL.
+# Entry points set project_directory to the repository root for these build paths.
+x-postgres: &postgres
+  image: postgres:17-alpine@sha256:526f86d93c6ea08fd3f1fe5605650cacc781b2c6013169a0ad8f42c7d3d84f32
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+    interval: 3s
+    timeout: 3s
+    retries: 20
+    start_period: 5s
+
+services:
+  db:
+    <<: *postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sample_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sample_password}
+      POSTGRES_DB: ${POSTGRES_DB:-sample_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+
+  backend:
+    build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
+      target: runtime
+    init: true
+    environment:
+      APP_ENV: development
+      POSTGRES_HOST: db
+      POSTGRES_USER: ${POSTGRES_USER:-sample_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sample_password}
+      POSTGRES_DB: ${POSTGRES_DB:-sample_db}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:5173","http://127.0.0.1:5173"]}
+      MIGRATE_ON_STARTUP: ${MIGRATE_ON_STARTUP:-false}
+      SEED_ON_STARTUP: ${SEED_ON_STARTUP:-false}
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=3)"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/docker/frontend.Dockerfile
+      target: runtime
+      args:
+        VITE_DATA_MODE: ${VITE_DATA_MODE:-demo}
+        VITE_API_BASE: ${VITE_API_BASE:-/api}
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-8080}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/healthz"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  frontend-checks:
+    profiles: [checks]
+    build:
+      context: .
+      dockerfile: infra/docker/frontend.Dockerfile
+      target: checks
+
+  test-db:
+    <<: *postgres
+    profiles: [checks]
+    environment:
+      POSTGRES_USER: test_runner
+      POSTGRES_PASSWORD: test_only
+      POSTGRES_DB: ascertain_tests
+      # Data's privilege tests create temporary LOGIN roles without passwords.
+      # Trust applies ONLY to this ephemeral, unexposed test-network database.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    tmpfs:
+      - /var/lib/postgresql/data
+    networks: [checks]
+
+  checks:
+    profiles: [checks]
+    build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
+      target: checks
+    init: true
+    environment:
+      PATIENT_DATA_TEST_DATABASE_URL: postgresql+psycopg://test_runner:test_only@test-db:5432/ascertain_tests
+      TEST_DATABASE_URL: postgresql+psycopg://test_runner:test_only@test-db:5432/ascertain_tests
+    depends_on:
+      test-db:
+        condition: service_healthy
+    networks: [checks]
+
+volumes:
+  postgres_data:
+
+networks:
+  checks:
+    internal: true

@@ -1,0 +1,24 @@
+.DS_Store
+# Personal study material is not part of the public project.
+/study_mats/
+# Local environment values stay private; the sample template is committed.
+.env
+.env.*
+!.env.example
+**/.venv/
+**/node_modules/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.cache/
+**/.coverage*
+**/htmlcov/
+**/dist/
+**/build/
+**/*.egg-info/
+*.log
+data/*.duckdb*
+data/work/
+infra/artifacts/

@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  COMPOSE_PROJECT_NAME: ascertain-ci-${{ github.run_id }}-${{ github.run_attempt }}
+  COMPOSE_ANSI: never
+
+jobs:
+  verify:
+    name: Application checks and Docker startup
+    # PRs and manual runs are checked; push runs apply to the repository's default branch.
+    if: >-
+      github.event_name != 'push' ||
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out source
+        id: checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Check tools and Compose configuration
+        run: |
+          docker version
+          docker compose version
+          python3 --version
+          docker compose --profile checks config --quiet
+
+      - name: Build images and run application checks
+        run: |
+          docker compose --profile checks build
+          docker compose --profile checks run --rm checks
+          docker compose --profile checks run --rm frontend-checks
+
+      - name: Verify application startup, HTTP routing, and database persistence
+        run: python3 infra/scripts/verify_stack.py
+
+      - name: Show container diagnostics on failure
+        if: failure() && steps.checkout.outcome == 'success'
+        run: |
+          docker compose --profile checks ps --all
+          docker compose --profile checks logs --no-color --tail 200
+
+      - name: Remove this run's test containers and volumes
+        if: always() && steps.checkout.outcome == 'success'
+        run: docker compose --profile checks down --volumes --remove-orphans
+
+  browser:
+    name: Frontend browser journeys
+    if: >-
+      github.event_name != 'push' ||
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+        shell: bash
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install locked dependencies and Chrome
+        run: |
+          npm install --global npm@11.19.0 --no-audit --no-fund
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chrome
+
+      - name: Test desktop and mobile demo journeys
+        run: npm run e2e
+
+      - name: Test the browser HTTP adapter with contract fixtures
+        run: npx playwright test --config playwright.api.config.ts
+
+      - name: Upload browser failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: browser-failure-${{ github.run_attempt }}
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+            frontend/e2e-api/results/
+          if-no-files-found: ignore
+          retention-days: 7

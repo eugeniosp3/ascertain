@@ -1,0 +1,237 @@
+@import 'tailwindcss' source('../');
+@import 'tw-animate-css';
+
+/* This product is light-only. Never inherit dark variants from the OS setting. */
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Selected values from reference/design-system/tokens.css, not an import.
+ * [site] = measured brand CSS; [video] = sampled product UI; [new] = product adaptation.
+ * Keep raw reference names such as --text-xs out of the global namespace.
+ */
+:root {
+  color-scheme: light;
+  --ac-paper: #f4f3ef; /* tokens.css --app-paper [video] */
+  --ac-surface: #ffffff; /* tokens.css --white [site] */
+  --ac-surface-warm: #faf9f7; /* UI_mocks/index.html --ac-surface-2 [new] */
+  --ac-ink: #121212; /* tokens.css --ink [site] */
+  --ac-ink-soft: #3b3a38; /* tokens.css --neutral-800 [site] */
+  --ac-text-secondary: #5e5a56; /* tokens.css --text-secondary [site] */
+  --ac-text-disabled: #9b9b9b; /* tokens.css --text-muted [site], disabled only (05) */
+  --ac-selected: #e7e6e2; /* tokens.css --app-selected [video] */
+  --ac-hairline: rgb(18 18 18 / 12%); /* UI_mocks/index.html --ac-hair-2 [new] */
+  --ac-line: #e6e4df; /* UI_mocks/index.html --ac-line [new] */
+  --ac-control-border: #767676; /* 05_accessibility_and_responsive.md §2 [new] */
+  --ac-violet: #d4c1ff; /* tokens.css --violet [site] */
+  --ac-violet-marker: #8e72e6; /* UI_mocks/index.html --ac-violet-mark [new] */
+  --ac-lilac: #ece8f8; /* tokens.css --ai-fill [video] */
+  --ac-lilac-ink: #4f3a9e; /* UI_mocks/index.html --ac-lilac-ink [new] */
+  --ac-mint-bg: #d8f4ec; /* tokens.css --status-approved-bg [video] */
+  --ac-mint-fg: #17785c; /* IMPLEMENTATION.md Theme rules, contrast fix [new] */
+  --ac-grey-bg: #ebeae6; /* UI_mocks/index.html --ac-grey-bg [new] */
+  --ac-grey-fg: #5f5f5f; /* IMPLEMENTATION.md Theme rules, contrast fix [new] */
+  --ac-danger: #b3203a; /* tokens.css --status-denied-fg [video] */
+  --ac-danger-bg: #fbeef0; /* UI_mocks/index.html --ac-rose-bg [new] */
+  --ac-danger-hover: #951a30; /* UI_mocks/index.html .btn-danger:hover [new] */
+  --ac-radius-tag: 8px; /* tokens.css --radius-s [site] */
+  --ac-radius-control: 10px; /* tokens.css --radius-btn [site] */
+  --ac-radius-surface: 12px; /* tokens.css --radius-m [site] */
+  --ac-font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif; /* UI_mocks/components.html --font [new] */
+  --ac-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; /* UI mock [new] */
+  --ac-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* tokens.css --ease-out-quad [site] */
+
+  /* Explicit shadcn semantic bridge. Hairlines and interactive edges are separate. */
+  --background: var(--ac-paper);
+  --foreground: var(--ac-ink);
+  --card: var(--ac-surface);
+  --card-foreground: var(--ac-ink);
+  --popover: var(--ac-surface);
+  --popover-foreground: var(--ac-ink);
+  --primary: var(--ac-ink);
+  --primary-foreground: var(--ac-surface);
+  --secondary: var(--ac-selected);
+  --secondary-foreground: var(--ac-ink);
+  --muted: var(--ac-surface-warm);
+  --muted-foreground: var(--ac-text-secondary);
+  --accent: var(--ac-lilac);
+  --accent-foreground: var(--ac-ink);
+  --destructive: var(--ac-danger);
+  --destructive-foreground: var(--ac-surface);
+  --border: var(--ac-hairline);
+  --input: var(--ac-control-border);
+  --ring: var(--ac-ink);
+  --radius: var(--ac-radius-control);
+}
+
+@theme inline {
+  --font-sans: var(--ac-font-sans);
+  --font-mono: var(--ac-font-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-paper: var(--ac-paper);
+  --color-surface: var(--ac-surface);
+  --color-selected: var(--ac-selected);
+  --color-violet: var(--ac-violet);
+  --color-violet-marker: var(--ac-violet-marker);
+  --color-lilac: var(--ac-lilac);
+  --color-lilac-ink: var(--ac-lilac-ink);
+  --color-status-active: var(--ac-mint-bg);
+  --color-status-active-foreground: var(--ac-mint-fg);
+  --color-status-inactive: var(--ac-grey-bg);
+  --color-status-inactive-foreground: var(--ac-grey-fg);
+  --color-danger-soft: var(--ac-danger-bg);
+  --color-disabled: var(--ac-text-disabled);
+  --radius-sm: var(--ac-radius-tag);
+  --radius-md: var(--ac-radius-tag);
+  --radius-lg: var(--ac-radius-control);
+  --radius-xl: var(--ac-radius-surface);
+  --ease-ac: var(--ac-ease);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    min-width: 320px;
+    background: var(--ac-paper);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100dvh;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--ac-font-sans);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100dvh;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+    letter-spacing: inherit;
+  }
+
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  ::selection {
+    background: var(--ac-violet);
+    color: var(--ac-ink);
+  }
+}
+
+/* Outside layers so a utility shadow cannot erase the keyboard focus indicator. */
+:focus-visible {
+  outline: 2px solid var(--ac-ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--ac-violet);
+}
+
+/* Sonner supplies the interaction and live region; these are product theme values. */
+.toaster [data-sonner-toast][data-styled='true'] {
+  box-shadow: none;
+  font-family: var(--ac-font-sans);
+  font-size: 14px;
+}
+
+.toaster [data-sonner-toast] [data-description] {
+  color: var(--ac-surface);
+}
+
+.toaster [data-sonner-toast] :focus-visible {
+  outline-color: var(--ac-surface);
+}
+
+@media (width < 48rem) {
+  body {
+    font-size: 16px;
+  }
+
+  [data-slot='input'],
+  [data-slot='textarea'],
+  [data-slot='select-trigger'],
+  [data-slot='select-item'],
+  [data-slot='table'],
+  [data-slot='dialog-description'],
+  [data-slot='alert-dialog-description'],
+  [data-slot='sheet-description'] {
+    font-size: 16px;
+  }
+}
+
+@media (width < 48rem), (pointer: coarse) {
+  :where(
+    button,
+    [role='button'],
+    [data-slot='button'],
+    [data-slot='input'],
+    [data-slot='select-trigger'],
+    [data-slot='select-item'],
+    [role='menuitem'],
+    [role='menuitemcheckbox'],
+    [role='menuitemradio']
+  ) {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  [data-slot='tabs-list'] {
+    height: auto;
+    min-height: 50px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

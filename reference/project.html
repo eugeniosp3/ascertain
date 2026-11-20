@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Healthcare Dashboard — requirements and progress</title>
+<style>
+:root { font-family: var(--font-sans, system-ui, -apple-system, sans-serif); color: var(--foreground, #202020); color-scheme: light dark; }
+html, body { margin: 0; background: transparent; }
+main { max-width: 900px; margin: 0 auto; }
+body { font-size: 16px; line-height: 1.65; }
+h1, h2, h3 { line-height: 1.25; font-weight: 650; }
+h1 { font-size: 1.9rem; margin: 1.3rem 0 .8rem; }
+h2 { font-size: 1.4rem; margin-top: 2.2rem; }
+h3 { font-size: 1.15rem; margin-top: 1.6rem; }
+p { margin: .6rem 0; }
+ul, ol { padding-left: 1.6rem; }
+li { margin: .4rem 0; }
+li > p { margin: .35rem 0; }
+code { font-family: var(--font-mono, ui-monospace, monospace); font-size: .9em; overflow-wrap: anywhere; }
+a { color: var(--primary, #2955a3); text-underline-offset: 3px; }
+.progress-note, .progress-note a, .progress-note-link { color: var(--destructive, red); }
+.progress-note { display: inline; font-weight: 450; }
+hr { border: 0; border-top: 1px solid var(--border, #d8d8d8); margin: 1.8rem 0; }
+@media print { :root { color: black; color-scheme: light; } .progress-note, .progress-note a, .progress-note-link { color: red !important; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Full Stack: Take Home</h1>
+<h1><strong>Healthcare Dashboard</strong></h1>
+<p><span class="progress-note">Progress snapshot: 20 November 2026, 10:49–10:51 AM EST. Implementation continues; completion below reflects evidence available at that time.</span></p>
+<h2><strong>Overview</strong></h2>
+<p>Build a modern, scalable React (TypeScript) healthcare dashboard with a FastAPI backend and PostgreSQL database. This assessment evaluates your architectural decisions, technical choices, and ability to create maintainable and performant full-stack applications.</p>
+<p><strong>Context</strong>: You're building a patient management dashboard for a medical practice. The application will grow over time to include multiple user types, complex workflows, and real-time features.</p>
+<p><strong>Time Estimate:</strong> We recommend spending no more than 2-4 hours on this exercise. Complete as many core tasks and stretch goals as possible within that timeframe.</p>
+<p><span class="progress-note">We are building the patient dashboard with Vite/React, FastAPI and PostgreSQL. The 100-patient dataset is ready; frontend/backend integration is in progress. Discussion, note links and unread notifications are selected additions.</span></p>
+<p><strong>Submission Requirements</strong>:</p>
+<ul>
+<li>
+<p>Share a public GitHub repository.</p>
+<p><span class="progress-note">Pending: public repository publication and a fresh-clone verification.</span></p>
+</li>
+<li>
+<p>Comprehensive yet succinct <code>README.md</code>, with instructions to run locally.</p>
+<p><span class="progress-note">Root and infra READMEs exist. Their database-only and skeleton descriptions need updating to match the latest code.</span></p>
+</li>
+<li>
+<p>A functioning <code>docker-compose.yml</code> that can be used to launch the service easily.</p>
+<p><span class="progress-note">Three-service Compose exists and the development containers are healthy. A clean compiled startup with real API data and automatic seeding is still pending.</span></p>
+</li>
+</ul>
+<hr />
+<h2><strong>Evaluation Criteria</strong></h2>
+<p>We'll assess your submission based on:</p>
+<ul>
+<li>
+<p>Technical decision-making: architecture, library choices, state management, performance optimizations</p>
+<p><span class="progress-note">Typed APIs, reusable utilities and separate server, URL and UI state are in place. Performance results still need verification.</span></p>
+</li>
+<li>
+<p>Code quality and employing best practices in software development</p>
+<p><span class="progress-note">Lint, formatting, strict typing and test tooling are configured. Final checks must run against the assembled application.</span></p>
+</li>
+<li>
+<p>API design and error handling</p>
+<p><span class="progress-note">Required API routes and structured errors exist. Frontend/backend contracts still need alignment, especially unread comments.</span></p>
+</li>
+<li>
+<p>Documentation and ease of local setup</p>
+<p><span class="progress-note">Setup instructions and sample environment values exist; documentation needs reconciliation with current startup and seeding behavior.</span></p>
+</li>
+<li>
+<p>Correctness and completeness of each part</p>
+<p><span class="progress-note">Health, data validation and focused foundation tests pass. Complete patient journeys, persistence and production startup remain unverified.</span></p>
+</li>
+<li>
+<p>Capability of understanding and applying requirements</p>
+<p><span class="progress-note">Original requirements are retained here. Additional UI acceptance cases are recorded in <a href="../chatroom/frontend-updates.md" class="progress-note-link">frontend-updates.md</a>.</span></p>
+</li>
+</ul>
+<hr />
+<h2><strong>Part 1: Project Foundation &amp; Architecture</strong></h2>
+<p>Create a new React application and FastAPI backend from scratch, establishing your architectural foundation.</p>
+<p><strong>Frontend Tasks:</strong></p>
+<ol>
+<li>
+<p><strong>Initialize your project,</strong> preferably using Vite.</p>
+<p><span class="progress-note">Vite/React/TypeScript scaffold exists. Missing page/workspace modules were still being implemented at this snapshot.</span></p>
+</li>
+<li>
+<p><strong>Choose and configure your core dependencies</strong>:</p>
+<ul>
+<li>
+<p>UI framework/component library</p>
+<p><span class="progress-note">Tailwind-styled shadcn/Radix components and design tokens are implemented.</span></p>
+</li>
+<li>
+<p>State management solution</p>
+<p><span class="progress-note">TanStack Query owns API data; Zustand owns shared UI preferences and return-to-list state.</span></p>
+</li>
+<li>
+<p>Routing solution</p>
+<p><span class="progress-note">TanStack Router declares the required routes; complete route rendering remains under construction.</span></p>
+</li>
+<li>
+<p>Styling approach</p>
+<p><span class="progress-note">Tailwind and the Ascertain design tokens are configured in <a href="../frontend/src/styles/globals.css" class="progress-note-link">globals.css</a>.</span></p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Set up development tooling</strong>:</p>
+<ul>
+<li>
+<p>Linting and formatting</p>
+<p><span class="progress-note">ESLint and Prettier configuration/scripts exist; the full assembled-app checks are pending.</span></p>
+</li>
+<li>
+<p>TypeScript configuration</p>
+<p><span class="progress-note">Strict TypeScript is configured; final typecheck depends on the remaining frontend modules.</span></p>
+</li>
+</ul>
+</li>
+</ol>
+<p><strong>Backend Tasks:</strong></p>
+<ol>
+<li>
+<p><strong>Initialize a FastAPI application</strong> with a health-check endpoint (<code>GET /health</code>) returning <code>{&quot;status&quot;: &quot;ok&quot;}</code>.</p>
+<p><span class="progress-note">Verified: both an in-process check and the running API returned HTTP 200 with exactly {&quot;status&quot;:&quot;ok&quot;}.</span></p>
+</li>
+<li>
+<p><strong>Set up PostgreSQL</strong> with a schema for storing patients. Ensure another developer can easily recreate this database (migrations or init scripts).</p>
+<p><span class="progress-note">PostgreSQL is running. SQLAlchemy models and the initial Alembic migration exist; clean migration and schema verification remain pending.</span></p>
+</li>
+<li>
+<p><strong>Seed the database</strong> with realistic sample data (15-20 patients minimum) on startup.</p>
+<p><span class="progress-note">Bronze/silver DuckDB contain 100 validated patients; all 21 data checks and 18 backend source-loader checks passed. <a href="../backend/app/seed.py" class="progress-note-link">app.seed</a> reads those files, but Compose still disables migration and seed on startup. Automatic import and restart safety remain to be verified.</span></p>
+</li>
+</ol>
+<hr />
+<h2><strong>Part 2: Core Dashboard Implementation</strong></h2>
+<p>Build the main dashboard with basic navigation and a patient list loading data from the backend.</p>
+<p><strong>Tasks:</strong></p>
+<ol>
+<li><strong>Implement patient CRUD endpoints</strong>:
+<ul>
+<li>
+<p><code>GET /patients</code> — List patients with pagination</p>
+</li>
+<li>
+<p><code>GET /patients/{id}</code> — Get a specific patient</p>
+</li>
+<li>
+<p><code>POST /patients</code> — Create a patient</p>
+</li>
+<li>
+<p><code>PUT /patients/{id}</code> — Update a patient</p>
+</li>
+<li>
+<p><code>DELETE /patients/{id}</code> — Delete a patient</p>
+<p><span class="progress-note">All five routes exist and register in OpenAPI. Database-backed acceptance is pending: the running GET /patients returned HTTP 500 during inventory. See <a href="../backend/app/routers/patients.py" class="progress-note-link">patient routes</a>.</span></p>
+</li>
+</ul>
+</li>
+<li><strong>Create a responsive layout</strong> with:
+<ul>
+<li>
+<p>Header with navigation</p>
+</li>
+<li>
+<p>Sidebar</p>
+</li>
+<li>
+<p>Main content area</p>
+<p><span class="progress-note"><a href="../frontend/src/app/AppShell.tsx" class="progress-note-link">AppShell</a> implements header, collapsible sidebar and mobile navigation. Final responsive checks are pending.</span></p>
+</li>
+</ul>
+</li>
+<li><strong>Implement a PatientList component</strong> that displays:
+<ul>
+<li>
+<p>Patient cards/rows with: name, age, last visit, status</p>
+</li>
+<li>
+<p>Search/filter functionality</p>
+</li>
+<li>
+<p>Sorting capabilities</p>
+</li>
+<li>
+<p>Pagination or infinite scroll</p>
+<p><span class="progress-note">API list fields, search/filter/sort/pagination, UI filters and pagination helpers exist. The React list is still being assembled; demo mode currently uses in-memory fixtures rather than PostgreSQL.</span></p>
+</li>
+</ul>
+</li>
+<li><strong>Add routing</strong> for:
+<ul>
+<li>
+<p>Dashboard home (/)</p>
+</li>
+<li>
+<p>Patient list (/patients)</p>
+</li>
+<li>
+<p>Individual patient view (/patients/:id)</p>
+</li>
+<li>
+<p>404 page</p>
+<p><span class="progress-note">All required paths are declared in <a href="../frontend/src/app/router.tsx" class="progress-note-link">router.tsx</a>. Some page/detail modules were absent at this snapshot; direct-link and 404 acceptance remain open.</span></p>
+</li>
+</ul>
+</li>
+</ol>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li>
+<p>List should handle 100+ patients efficiently</p>
+<p><span class="progress-note">100 cleaned patients are ready. Server-side paging and stable sorting exist; full-dataset performance has not yet been measured.</span></p>
+</li>
+<li>
+<p>Search should be non-blocking</p>
+<p><span class="progress-note">Search has a 250 ms debounce and query cancellation. Verify typing remains responsive in the finished list.</span></p>
+</li>
+<li>
+<p>The application should be responsive for lower resolution screens</p>
+<p><span class="progress-note">Mobile navigation and responsive HTML mocks exist. The integrated React screens still need desktop, tablet and phone checks.</span></p>
+</li>
+<li>
+<p>Implement proper input validation and error handling with appropriate HTTP status codes</p>
+<p><span class="progress-note">Pydantic validation and shared error handling exist; verify errors through the real UI. Unread filtering currently differs: frontend sends has_unread_comments, backend expects unread_only.</span></p>
+</li>
+</ul>
+<hr />
+<h2><strong>Part 3: Patient Notes</strong></h2>
+<p>Add the ability to attach clinical notes to patients.</p>
+<p><strong>Backend Tasks:</strong></p>
+<ol>
+<li>
+<p><strong>Create endpoints for patient notes</strong>:</p>
+<ul>
+<li>
+<p><code>POST /patients/{id}/notes</code> — Add a note (accepts timestamp and text content)</p>
+</li>
+<li>
+<p><code>GET /patients/{id}/notes</code> — List all notes for a patient</p>
+</li>
+<li>
+<p><code>DELETE /patients/{id}/notes/{note_id}</code> — Delete a note</p>
+<p><span class="progress-note">Required note routes are implemented, including timezone-aware timestamps, authors and separate creation/update times. PostgreSQL-backed add/list/delete verification is pending.</span></p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Create a summary endpoint</strong> (<code>GET /patients/{id}/summary</code>) that synthesizes a human-readable summary from the patient's profile and notes. The summary should include:</p>
+<ul>
+<li>Basic patient identifiers (name, age, blood type)</li>
+<li>A coherent narrative generated from the notes</li>
+<li>Key clinical information (conditions, allergies)</li>
+</ul>
+<p><em>Hint: an LLM can be helpful here, but a simple template-based approach is also acceptable.</em></p>
+<p><span class="progress-note"><a href="../backend/app/services/summaries.py" class="progress-note-link">Template summaries</a> include the required patient facts and active clinical notes, with no API key. Discussion and deleted notes are excluded. Verify the no-notes case and updates against the running database.</span></p>
+</li>
+</ol>
+<p><strong>Frontend Tasks:</strong></p>
+<ol>
+<li>
+<p><strong>Add a notes section</strong> to the patient detail view:</p>
+<ul>
+<li>
+<p>Display existing notes with timestamps</p>
+</li>
+<li>
+<p>Form to add new notes</p>
+</li>
+<li>
+<p>Delete functionality</p>
+<p><span class="progress-note">HTTP/demo adapters and HTML mocks support notes. The React detail workspace is still being built; real add/delete and count refresh remain unverified.</span></p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Add a summary view</strong> that displays the generated patient summary.</p>
+<p><span class="progress-note">The summary API and frontend adapter exist; the integrated summary view is pending. Discussion is separate: read acknowledgement payloads, per-comment unread state and notification fields still need frontend/backend agreement.</span></p>
+</li>
+</ol>
+<hr />
+<h2><strong>Part 4: State &amp; Form Management</strong></h2>
+<p>Add patient creation/editing with form handling.</p>
+<p><strong>Tasks:</strong></p>
+<ol>
+<li><strong>Build a patient form</strong> with:
+<ul>
+<li>
+<p>Personal information (name, DOB, contact, address)</p>
+</li>
+<li>
+<p>Medical information (allergies, conditions, blood type, status)</p>
+<p><span class="progress-note">Patient-write types and server schemas cover these fields. TanStack Form/Zod are selected; the actual create/edit form was not yet present at the snapshot.</span></p>
+</li>
+</ul>
+</li>
+<li><strong>Implement form features</strong>:
+<ul>
+<li>
+<p>Client-side and server-side validation</p>
+</li>
+<li>
+<p>Meaningful error messages displayed to the user</p>
+<p><span class="progress-note">Server validation and client error mapping exist. Align field limits, including phone/state/postal code, and verify messages appear beside the correct controls.</span></p>
+</li>
+</ul>
+</li>
+<li><strong>Error handling</strong> for:
+<ul>
+<li>
+<p>Network failures</p>
+</li>
+<li>
+<p>Validation errors</p>
+<p><span class="progress-note">The API adapter handles network failures, cancellation and structured errors. Form retry, recovery and successful save navigation still need integrated tests.</span></p>
+</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2><strong>Part 5: Containerization</strong></h2>
+<p>Package everything for easy local development.</p>
+<p><strong>Tasks:</strong></p>
+<ol>
+<li>
+<p>Create a <code>Dockerfile</code> for the FastAPI backend.</p>
+<p><span class="progress-note"><a href="../infra/docker/backend.Dockerfile" class="progress-note-link">Backend Dockerfile</a> exists with locked dependencies, a nonroot runtime and packaged seed data.</span></p>
+</li>
+<li>
+<p>Create a <code>Dockerfile</code> for the React frontend (or serve via the backend).</p>
+<p><span class="progress-note"><a href="../infra/docker/frontend.Dockerfile" class="progress-note-link">Frontend Dockerfile</a> has development, checks and compiled nginx targets. The compiled build was blocked by frontend modules still arriving.</span></p>
+</li>
+<li>
+<p>Create a <code>docker-compose.yml</code> that starts:</p>
+<ul>
+<li>
+<p>Backend API</p>
+</li>
+<li>
+<p>PostgreSQL database</p>
+</li>
+<li>
+<p>Frontend</p>
+<p><span class="progress-note"><a href="../docker-compose.yml" class="progress-note-link">Compose</a> defines all three services, health checks and persistent PostgreSQL storage. Configuration and live development health checks pass. Default demo mode and disabled migrations/seeding still prevent full application acceptance.</span></p>
+</li>
+</ul>
+</li>
+<li>
+<p>Include <code>.env.example</code> with required environment variables.</p>
+<p><span class="progress-note"><a href="../.env.example" class="progress-note-link">.env.example</a> contains sample settings; .gitignore and .dockerignore exclude local environment files. Final clean-start, API-mode and restart-persistence checks remain open.</span></p>
+</li>
+</ol>
+<hr />
+<h2><strong>Stretch Goals (Choose Based on Time &amp; Strengths)</strong></h2>
+<p>Choose 1-2 individual features from the list below that best demonstrate your expertise and/or interests:</p>
+<p><span class="progress-note">Alembic, filtering, tests, CI, hot reload and virtualization have active work or assignments. Optional features below are not complete merely because they appear in the plan.</span></p>
+<h3><strong>Performance Optimization</strong></h3>
+<ul>
+<li>
+<p>Implement virtualization for large patient lists</p>
+<p><span class="progress-note">TanStack Virtual is installed and assigned; the virtualized React table and keyboard/performance verification are still pending.</span></p>
+</li>
+<li>
+<p>Add code splitting and lazy loading</p>
+<p><span class="progress-note">Not implemented at this snapshot: routes currently use eager imports.</span></p>
+</li>
+<li>
+<p>Optimize re-renders with memoization</p>
+<p><span class="progress-note">Some shared context is memoized; no measured patient-list rendering improvement is verified yet.</span></p>
+</li>
+</ul>
+<h3><strong>Advanced Backend</strong></h3>
+<ul>
+<li>
+<p>Add sorting/filtering query parameters to list endpoint</p>
+<p><span class="progress-note">Implemented in the backend query schemas and SQL service. Real endpoint tests remain to be confirmed.</span></p>
+</li>
+<li>
+<p>Implement request logging middleware</p>
+<p><span class="progress-note">Not implemented: existing exception-log redaction does not provide request duration or request-ID middleware.</span></p>
+</li>
+<li>
+<p>Add database migrations with Alembic</p>
+<p><span class="progress-note">The initial migration exists. Clean upgrade, downgrade/upgrade and model agreement checks remain pending.</span></p>
+</li>
+</ul>
+<h3><strong>Advanced UI/UX</strong></h3>
+<ul>
+<li>
+<p>Dark/light theme switching</p>
+<p><span class="progress-note">Optional and not implemented; the current UI uses the light theme.</span></p>
+</li>
+<li>
+<p>Advanced search with filters</p>
+<p><span class="progress-note">Basic search/status filtering exists. Blood type, condition, age-range and visit-range filters are not implemented.</span></p>
+</li>
+<li>
+<p>Data visualization (patient status chart)</p>
+<p><span class="progress-note">Backend dashboard totals exist; no React status chart was present at this snapshot.</span></p>
+</li>
+</ul>
+<h3><strong>Testing &amp; Quality</strong></h3>
+<ul>
+<li>
+<p>Unit tests for API endpoints</p>
+<p><span class="progress-note">20 focused backend foundation tests passed. CRUD/notes/summary and migration tests exist but still require a migrated disposable PostgreSQL test run; earlier data-fixture test results do not prove this integration.</span></p>
+</li>
+<li>
+<p>Component tests for critical UI</p>
+<p><span class="progress-note">Vitest/Testing Library tests cover UI primitives, adapters and dates. Critical assembled list/form tests and a full passing run are pending.</span></p>
+</li>
+<li>
+<p>E2E tests for main user journeys</p>
+<p><span class="progress-note">Playwright configuration exists, but no E2E test directory was present. Verify real API journeys and all <a href="../chatroom/frontend-updates.md" class="progress-note-link">frontend addition checks</a>, including unread state, notifications and focus restoration.</span></p>
+</li>
+</ul>
+<h3><strong>Developer Experience</strong></h3>
+<ul>
+<li>
+<p>Set up CI/CD pipeline configuration</p>
+<p><span class="progress-note"><a href="../.github/workflows/ci.yml" class="progress-note-link">CI configuration</a> exists; hosted results are pending. Wire the backend TEST_DATABASE_URL/migrations and Playwright into checks. The current smoke test disables seeding and checks an empty schema, so it does not yet prove the seeded dashboard.</span></p>
+</li>
+<li>
+<p>Hot reloading in Docker for both frontend and backend</p>
+<p><span class="progress-note"><a href="../infra/compose.dev.yml" class="progress-note-link">Development Compose</a> mounts source for Vite and Uvicorn --reload; the development stack is running. Verify frontend and Python edits reload without rebuilding.</span></p>
+</li>
+</ul>
+
+</main>
+</body>
+</html>

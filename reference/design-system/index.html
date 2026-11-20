@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ascertain Design System</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* ---------- Document chrome (not part of the system) ---------- */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--font-body), "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: var(--link-current); }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; box-shadow: 0 0 0 4px var(--violet); }
+.serif { font-family: var(--font-display); }
+.layout { display: grid; grid-template-columns: 15rem minmax(0, 1fr); max-width: 90rem; margin: 0 auto; }
+.toc { position: sticky; top: 0; align-self: start; height: 100vh; overflow: auto; padding: 2rem 1rem 2rem 2rem; border-right: 1px solid var(--line-hairline); }
+.toc b { display: block; font-size: 14px; margin-bottom: 1rem; }
+.toc a { display: block; padding: .35rem .6rem; border-radius: var(--radius-s); color: var(--text-secondary); text-decoration: none; font-size: 14px; }
+.toc a:hover { background: var(--surface-stone); color: var(--ink); }
+.toc small { display: block; margin: 1rem 0 .25rem .6rem; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
+main { padding: 0 2rem 6rem; min-width: 0; }
+section { padding: 4rem 0 1rem; border-bottom: 1px solid var(--line-hairline); }
+section:last-child { border-bottom: 0; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 300; letter-spacing: var(--track-display); margin: 0; }
+h1 { font-size: var(--text-m); line-height: 1.1; }
+h2 { font-size: var(--text-s); line-height: 1.2; margin-bottom: .5rem; }
+h3 { font-size: 22px; line-height: 1.2; margin: 2rem 0 .75rem; font-weight: 400; }
+.lede { color: var(--text-secondary); max-width: 40rem; margin: .5rem 0 2rem; }
+.tag-src { display: inline-block; font-size: 11px; letter-spacing: .5px; padding: 2px 8px; border-radius: var(--radius-pill); background: var(--surface-lavender-top); color: var(--link-current); margin-left: .5rem; vertical-align: middle; }
+code { font: 13px/1.4 ui-monospace, Menlo, monospace; background: var(--surface-warm); padding: 1px 5px; border-radius: 4px; }
+.grid { display: grid; gap: 1rem; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+.g4 { grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
+.card { background: var(--white); border: 1px solid var(--line-hairline); border-radius: var(--radius-m); padding: 1rem; }
+.hero { padding: 5rem 0 3rem; }
+.hero p { max-width: 36rem; color: var(--text-secondary); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: .6rem .75rem; border-bottom: 1px solid var(--line-divider); vertical-align: top; }
+th { font-weight: 500; color: var(--text-secondary); }
+.scroll-x { overflow-x: auto; }
+
+/* ---------- Swatches ---------- */
+.swatch { border: 1px solid var(--line-hairline); border-radius: var(--radius-m); overflow: hidden; background: var(--white); }
+.swatch i { display: block; height: 4.5rem; border-bottom: 1px solid var(--line-hairline); }
+.swatch div { padding: .6rem .75rem; font-size: 13px; line-height: 1.35; }
+.swatch b { display: block; font-weight: 500; }
+.swatch span { color: var(--text-secondary); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+
+/* ---------- System components (live specimens) ---------- */
+.btn { display: inline-flex; align-items: center; gap: .5rem; padding: .8rem 1.5rem .7rem; border: 0; border-radius: var(--radius-btn); font: 400 16px var(--font-control), Helvetica, Arial, sans-serif; color: #f5f5f5; background: rgba(152, 148, 144, .1); backdrop-filter: var(--blur-glass); text-decoration: none; cursor: pointer; transition: all var(--motion-fast) var(--ease-ui); }
+.btn.gray { background: var(--neutral-800); }
+.btn.black { background: var(--ink); }
+.btn.violet { background: var(--violet); color: var(--ink); }
+.btn.outline { background: transparent; color: var(--ink); border: 1px solid #000; }
+.btn.light { background: var(--white); color: var(--ink); }
+.btn.glass { color: var(--ink); }
+.btn.gray:hover, .btn.black:hover { background: var(--violet); color: var(--neutral-900); }
+.btn-nav { gap: .5rem; padding: .75rem; background: var(--neutral-800); border-radius: var(--radius-s); color: #fff; font: 400 15px var(--font-body), Arial, sans-serif; display: inline-flex; align-items: center; text-decoration: none; transition: all var(--motion-base); }
+.btn-nav:hover { background: var(--violet); color: var(--neutral-800); }
+.btn-nav i { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border: 1px solid rgba(177, 172, 167, .25); border-radius: 4px; font-style: normal; font-size: 12px; }
+.pill { display: inline-block; padding: 1rem 1.5rem; background: var(--paper); border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); box-shadow: var(--shadow-pill); }
+.pill.static { padding: .5rem 1rem; box-shadow: none; }
+.pill.ghost { background: transparent; border-color: var(--text-secondary); color: var(--paper); }
+.tag { display: inline-block; padding: .5rem .7rem; background: rgba(0, 43, 186, .05); border-radius: var(--radius-s); color: var(--brand-blue); font: 500 15px var(--font-control), Arial, sans-serif; }
+.chip-check { display: inline-flex; gap: .25rem; padding: .75rem; background: var(--white); border: 1px solid #e6e6e6; border-radius: var(--radius-s); font: 14px Arial, sans-serif; }
+.field { display: block; width: 100%; padding: 1.5rem 1rem; background: var(--white); border: 1px solid var(--line-input); border-radius: var(--radius-btn); font: 16px var(--font-control), Arial, sans-serif; color: var(--ink); }
+.field:focus { border-color: var(--violet); outline: none; }
+.filter { display: inline-flex; padding: .5rem 1.5rem; border-radius: var(--radius-s); background: var(--surface-warm); font-size: 18px; }
+.filter.on { background: var(--ink); color: var(--white); }
+.surface-dark { background: var(--ink); color: var(--paper); border-radius: var(--radius-xl); padding: 2rem; }
+.surface-dark .muted { color: #b0aca7; }
+.box { background: rgba(255, 255, 255, .4); border: 1px solid var(--line-hairline); border-radius: var(--radius-s); padding: 1rem; backdrop-filter: var(--blur-glass); }
+.box.warm { background: var(--surface-warm); border-radius: var(--radius-xl); padding: 2rem; }
+.box.violet { background: var(--gradient-violet-card); min-height: 11rem; }
+.box.dark { background: var(--surface-dark); color: #fff; }
+.quote { background: var(--surface-dark); color: #fff; border: 1px solid rgba(255, 255, 255, .05); border-radius: 13px; padding: 1.5rem; }
+.quote small { color: #fff; opacity: .8; display: block; }
+.faq { border-top: 1px solid var(--line-hairline); padding: 1rem 0; display: flex; justify-content: space-between; gap: 1rem; }
+.faq span { opacity: .5; font-size: 24px; line-height: 1; }
+.blob { position: relative; overflow: hidden; border-radius: var(--radius-xl); background: var(--paper); padding: 4rem 2rem; text-align: center; border: 1px solid var(--line-hairline); }
+.blob::before { content: ""; position: absolute; left: 50%; top: 50%; width: 30rem; height: 30rem; transform: translate(-50%, -50%); background: var(--violet); border-radius: 50%; filter: blur(50px); opacity: .4; }
+.blob > * { position: relative; }
+.radius-demo { height: 4.5rem; background: var(--surface-stone); border: 1px solid var(--line-hairline); display: grid; place-items: center; font-size: 12px; }
+.space-row { display: flex; align-items: center; gap: 1rem; margin: .35rem 0; font-size: 13px; }
+.space-row i { display: block; height: 1rem; background: var(--violet); border-radius: 2px; }
+.type-row { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 1rem; align-items: baseline; padding: .9rem 0; border-bottom: 1px solid var(--line-divider); }
+.type-row small { color: var(--text-secondary); font-size: 12px; line-height: 1.35; }
+
+/* ---------- Product UI specimens ---------- */
+.stage { background: linear-gradient(200deg, var(--backdrop-top), #8a7f94 55%, var(--backdrop-bottom)); border-radius: var(--radius-xl); padding: 2rem; }
+.bezel { background: rgba(198, 189, 207, .75); border-radius: 28px; padding: 14px; }
+.app { background: var(--app-paper); border-radius: 10px; overflow: hidden; display: grid; grid-template-columns: 11rem minmax(0, 1fr); font-size: 13px; }
+.app nav { padding: 1rem .6rem; border-right: 1px solid var(--line-hairline); }
+.app nav div { padding: .45rem .6rem; border-radius: var(--radius-s); color: #333; }
+.app nav div.on { background: var(--app-selected); color: var(--ink); }
+.app .logo { font-weight: 500; font-size: 17px; padding: 0 .6rem 1rem; }
+.app .body { padding: 1rem 1.25rem; min-width: 0; }
+.app-tabs { display: flex; gap: 1.25rem; border-bottom: 1px solid var(--line-hairline); margin-bottom: .75rem; color: var(--text-secondary); }
+.app-tabs b { color: var(--ink); font-weight: 500; border-bottom: 2px solid var(--ink); padding-bottom: .45rem; }
+.status { display: inline-block; white-space: nowrap; padding: 2px 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 500; }
+.s-approved { background: var(--status-approved-bg); color: var(--status-approved-fg); }
+.s-review { background: var(--status-review-bg); color: var(--status-review-fg); }
+.s-denied { background: var(--status-denied-bg); color: var(--status-denied-fg); }
+.s-pending { background: var(--status-pending-bg); color: var(--status-pending-fg); }
+.s-info { background: var(--status-info-bg); color: var(--status-info-fg); }
+.s-draft { background: var(--status-draft-bg); color: var(--status-draft-fg); }
+.s-submitting { background: var(--status-submitting-bg); color: var(--status-submitting-fg); }
+.cov { white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; background: #fcfcfc; border-radius: var(--radius-pill); font-size: 11px; }
+.cov::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--progress-complete); }
+.app table { font-size: 12px; background: var(--app-row); border-radius: 8px; }
+.app th, .app td { padding: .75rem .6rem; border-bottom: 1px solid var(--app-row-line); }
+.app th { color: var(--ink); font-weight: 500; }
+.app-btn { display: inline-block; padding: .35rem .8rem; border-radius: 5px; font-size: 12px; background: var(--ink); color: #fff; }
+.app-btn.sec { background: var(--app-card-fill); color: var(--ink); }
+.ai-pill { display: inline-flex; align-items: center; gap: .5rem; padding: .6rem 1.1rem; border-radius: var(--radius-pill); background: var(--ai-fill); color: var(--ai-text); font-size: 14px; font-weight: 500; box-shadow: 0 6px 18px rgba(112, 63, 228, .18); }
+.orb { width: 60px; height: 60px; border-radius: 50%; background: #fff; border: 4px solid transparent; background-clip: padding-box; position: relative; display: grid; place-items: center; color: var(--ai-text); }
+.orb::before { content: ""; position: absolute; inset: -4px; border-radius: 50%; background: conic-gradient(#f4b6c8, #f9d3b0, #a8d4f6, #cdb8f6, #f4b6c8); z-index: -1; animation: spin 1.2s linear infinite; }
+.orb.done { color: var(--status-approved-fg); background: var(--status-approved-bg); }
+.orb.done::before { animation: none; background: rgba(42, 168, 138, .25); inset: -10px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.stepper { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.step { display: inline-flex; align-items: center; gap: .5rem; padding: .55rem .8rem; border: 1px solid var(--line-input); border-radius: 8px; font-size: 12px; background: var(--app-paper); }
+.step::before { content: ""; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #aaa; }
+.step.done::before { background: var(--progress-complete); border-color: var(--progress-complete); }
+.link { color: var(--text-secondary); font-size: 12px; }
+.bar { height: 6px; border-radius: 3px; background: var(--app-track); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--ink); }
+.bar.complete i { background: var(--progress-complete); }
+.stat-tile { background: var(--app-paper); border: 1px solid var(--line-hairline); padding: .75rem; }
+.stat-tile i { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 6px; margin-bottom: .5rem; font-style: normal; font-size: 13px; }
+.drawer { background: var(--app-paper); border-radius: 10px; padding: 1rem; box-shadow: 0 12px 40px rgba(0, 0, 0, .25); }
+.drawer dl { display: grid; grid-template-columns: 7rem 1fr; gap: .5rem; margin: .75rem 0; font-size: 12px; }
+.drawer dt { color: var(--text-secondary); }
+.drawer dd { margin: 0; }
+.timeline { width: 100%; border-collapse: collapse; font-size: 13px; }
+.timeline th, .timeline td { padding: .5rem .6rem; }
+.motion-demo { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 1rem; }
+.motion-demo .card button { margin-top: .5rem; }
+.slide-box { height: 3rem; border-radius: 8px; background: var(--violet); transition: transform var(--motion-slow) var(--ease-out-quad), opacity var(--motion-slow); }
+.card:hover .slide-box { transform: translateX(40%); }
+.fade-box { height: 3rem; border-radius: 8px; background: var(--ink); opacity: 1; transition: opacity var(--motion-fade) ease-in-out; }
+.card:hover .fade-box { opacity: .15; }
+.scale-box { height: 3rem; border-radius: 8px; background: var(--surface-stone); transition: transform var(--motion-slow); }
+.card:hover .scale-box { transform: scale(1.05); }
+.pass { color: #0b7a4f; font-weight: 500; }
+.fail { color: #b3203a; font-weight: 500; }
+@media (max-width: 991px) { .layout { grid-template-columns: 1fr; } .toc { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line-hairline); } .app { grid-template-columns: 1fr; } .app nav { display: none; } .type-row { grid-template-columns: 1fr; } }
+@media (max-width: 479px) { main { padding: 0 1.5rem 4rem; } h1 { font-size: var(--text-m); } }
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="toc" aria-label="Contents">
+  <b>Ascertain Design System</b>
+  <small>Foundations</small>
+  <a href="#color">Color</a>
+  <a href="#type">Typography</a>
+  <a href="#space">Spacing and layout</a>
+  <a href="#shape">Shape and depth</a>
+  <a href="#motion">Motion</a>
+  <small>Components</small>
+  <a href="#buttons">Buttons</a>
+  <a href="#chips">Pills, tags, forms</a>
+  <a href="#cards">Cards and surfaces</a>
+  <a href="#patterns">Layout patterns</a>
+  <small>Product UI</small>
+  <a href="#status">Status language</a>
+  <a href="#product">Product screens</a>
+  <a href="#ai">AI layer</a>
+  <small>Guidance</small>
+  <a href="#voice">Voice</a>
+  <a href="#a11y">Accessibility</a>
+  <a href="#files">Files</a>
+</aside>
+
+<main>
+<header class="hero">
+  <h1>Warm paper, ink, one lilac accent.</h1>
+  <p>A design system reverse-engineered from ascertain.com (every page) and the hero product video. Live specimens below use the real token values. Fonts fall back to Georgia and system sans because the originals (Rhetorik Serif, Neue Haas Unica, PP Neue Montreal) are licensed.</p>
+  <p><span class="tag-src">site</span> read from the real CSS &nbsp; <span class="tag-src">video</span> sampled from pixels &nbsp; <span class="tag-src">new</span> added by this document</p>
+</header>
+
+<!-- ====================== FOUNDATIONS ====================== -->
+<section id="color">
+  <h2>Color</h2>
+  <p class="lede">Page is paper, never pure white. Ink for text and the primary button. One accent: lilac. Mint means decoration on the site and success in the product.</p>
+  <h3>Core <span class="tag-src">site</span></h3>
+  <div class="grid g4">
+    <div class="swatch"><i style="background:var(--paper)"></i><div><b>Paper</b><span>#f6f4f1</span><br>Page background</div></div>
+    <div class="swatch"><i style="background:var(--ink)"></i><div><b>Ink</b><span>#121212</span><br>Text, dark sections</div></div>
+    <div class="swatch"><i style="background:var(--white)"></i><div><b>White</b><span>#ffffff</span><br>Cards, inputs, chips</div></div>
+    <div class="swatch"><i style="background:var(--violet)"></i><div><b>Violet</b><span>#d4c1ff</span><br>Accent, hover, CTA</div></div>
+    <div class="swatch"><i style="background:var(--brand-blue)"></i><div><b>Brand blue</b><span>#002bba</span><br>Links, tag text</div></div>
+    <div class="swatch"><i style="background:var(--surface-dark)"></i><div><b>Surface dark</b><span>#242322</span><br>Dark cards, banner</div></div>
+    <div class="swatch"><i style="background:var(--neutral-800)"></i><div><b>Neutral 800</b><span>#3b3a38</span><br>Dark button</div></div>
+    <div class="swatch"><i style="background:var(--text-secondary)"></i><div><b>Text secondary</b><span>#5e5a56</span><br>Grey paragraph</div></div>
+  </div>
+  <h3>Surfaces and lines <span class="tag-src">site</span></h3>
+  <div class="grid g4">
+    <div class="swatch"><i style="background:var(--surface-warm)"></i><div><b>Surface warm</b><span>#f6f4f2</span></div></div>
+    <div class="swatch"><i style="background:var(--surface-stone)"></i><div><b>Surface stone</b><span>#e1deda</span></div></div>
+    <div class="swatch"><i style="background:var(--surface-lavender-top)"></i><div><b>Lavender top</b><span>#f0eafc</span></div></div>
+    <div class="swatch"><i style="background:var(--mint)"></i><div><b>Mint</b><span>#d4f3f0</span></div></div>
+    <div class="swatch"><i style="background:var(--accent-on-light)"></i><div><b>Accent on light</b><span>#814aff</span></div></div>
+    <div class="swatch"><i style="background:var(--link-article)"></i><div><b>Article link</b><span>#9a6eff</span><br>Fails AA on white</div></div>
+    <div class="swatch"><i style="background:var(--link-current)"></i><div><b>Link current</b><span>#6e30f7</span></div></div>
+    <div class="swatch"><i style="background:var(--text-muted)"></i><div><b>Text muted</b><span>#9b9b9b</span><br>Disabled only</div></div>
+  </div>
+  <h3>Gradients <span class="tag-src">site</span></h3>
+  <div class="grid g4">
+    <div class="swatch"><i style="background:var(--gradient-lavender)"></i><div><b>Lavender wash</b></div></div>
+    <div class="swatch"><i style="background:var(--gradient-violet-card)"></i><div><b>Violet card</b></div></div>
+    <div class="swatch"><i style="background:var(--gradient-hero-mint)"></i><div><b>Mint hero</b></div></div>
+    <div class="swatch"><i style="background:var(--gradient-hero-violet)"></i><div><b>Violet hero</b></div></div>
+    <div class="swatch"><i style="background:var(--gradient-footer)"></i><div><b>Footer light</b></div></div>
+    <div class="swatch"><i style="background:var(--gradient-footer-dark)"></i><div><b>Footer dark</b></div></div>
+  </div>
+</section>
+
+<section id="type">
+  <h2>Typography</h2>
+  <p class="lede">Serif for headlines, sans for everything else. Headlines are light and tight.</p>
+  <div class="type-row"><small>Headline XL<br>80 / 1.0 / -0.75<br>neue-haas 300</small><div style="font-size:80px;line-height:1;font-weight:300;letter-spacing:-.75px">95%</div></div>
+  <div class="type-row"><small>Headline L<br>64 / 1.0 / -0.75<br>neue-haas 300</small><div style="font-size:64px;line-height:1;font-weight:300;letter-spacing:-.75px">67%</div></div>
+  <div class="type-row"><small>Headline M<br>48 / 1.1 / -0.5<br>Rhetorik Serif 300</small><div class="serif" style="font-size:48px;line-height:1.1;font-weight:300;letter-spacing:-.5px">Automate the work that slows healthcare down</div></div>
+  <div class="type-row"><small>Headline S<br>36 / 1.2 / -0.5<br>Rhetorik Serif 300</small><div class="serif" style="font-size:36px;line-height:1.2;font-weight:300;letter-spacing:-.5px">ROI in months, not years.</div></div>
+  <div class="type-row"><small>Headline XXS<br>28 / 1.2 / -0.5<br>Rhetorik Serif 400</small><div class="serif" style="font-size:28px;line-height:1.2;letter-spacing:-.5px">Four agents, one cardiology workflow.</div></div>
+  <div class="type-row"><small>Headline XS<br>18 / 1.5 / -0.25<br>neue-haas 400</small><div style="font-size:18px;line-height:1.5;letter-spacing:-.25px">Listen · Configure · Deploy · Scale</div></div>
+  <div class="type-row"><small>Copy<br>16 / 1.5<br>neue-haas 400 (500 semi)</small><div>Ascertain runs eligibility, prior auth, referrals, and care gap closure end to end, so your teams reclaim capacity and patients get to care sooner. <b style="font-weight:500">Semi-bold lead-in.</b></div></div>
+  <div class="type-row"><small>Copy grey<br>16 / 1.5<br>#5e5a56</small><div style="color:var(--text-secondary)">Measurable cost savings, improved approval rates, and faster patient access in under 90 days.</div></div>
+  <div class="type-row"><small>Copy small<br>14 / 1.3</small><div style="font-size:14px;line-height:1.3">Trusted and backed by leading health systems</div></div>
+  <div class="type-row"><small>Article body<br>18 / 1.4</small><div style="font-size:18px;line-height:1.4;max-width:42rem">Keep reading lines near 70 characters. The source runs near 100, which is too long to read comfortably.</div></div>
+  <div class="type-row"><small>Product caption<br>10 / label 12 / body 13 <span class="tag-src">video</span></small><div><span style="font-size:10px;color:var(--text-secondary)">DOB</span> <span style="font-size:12px">03/10/1992</span> &nbsp; <span style="font-size:13px">Aetna Managed Choice Open Access</span></div></div>
+  <h3>Two-tone headlines</h3>
+  <div class="grid g3">
+    <div class="card"><div class="serif" style="font-size:28px;line-height:1.2;font-weight:300">ROI in months, not years. <span style="color:var(--text-secondary)">Measurable savings in under 90 days.</span></div></div>
+    <div class="surface-dark" style="border-radius:12px"><div class="serif" style="font-size:28px;line-height:1.2;font-weight:300">Made by <span style="color:var(--accent-on-dark)">healthcare teams.</span></div></div>
+    <div class="card"><div class="serif" style="font-size:28px;line-height:1.2;font-weight:300"><span style="color:var(--accent-on-light)">See what's possible</span> with Ascertain.</div></div>
+  </div>
+</section>
+
+<section id="space">
+  <h2>Spacing and layout</h2>
+  <p class="lede">Rem scale 0.25 · 0.5 · 1 to 8. Sections are 7 rem tall padding inside an 80 rem wrapper (85 at 1440, 90 at 1920).</p>
+  <div class="grid g2">
+    <div>
+      <div class="space-row"><i style="width:.25rem"></i>--space-025 · 0.25 rem</div>
+      <div class="space-row"><i style="width:.5rem"></i>--space-05 · 0.5 rem</div>
+      <div class="space-row"><i style="width:1rem"></i>--space-1 · 1 rem</div>
+      <div class="space-row"><i style="width:2rem"></i>--space-2 · 2 rem</div>
+      <div class="space-row"><i style="width:3rem"></i>--space-3 · 3 rem</div>
+      <div class="space-row"><i style="width:4rem"></i>--space-4 · 4 rem</div>
+      <div class="space-row"><i style="width:5rem"></i>--space-5 · 5 rem</div>
+      <div class="space-row"><i style="width:6rem"></i>--space-6 · 6 rem</div>
+      <div class="space-row"><i style="width:7rem"></i>--space-7 · 7 rem (section padding)</div>
+      <div class="space-row"><i style="width:8rem"></i>--space-8 · 8 rem</div>
+    </div>
+    <div class="scroll-x"><table>
+      <tr><th>Breakpoint</th><th>What changes</th></tr>
+      <tr><td>≥1920</td><td>Container 90 rem</td></tr>
+      <tr><td>≥1440</td><td>Container 85 rem</td></tr>
+      <tr><td>≤991</td><td>Hamburger nav, grid stacks, section padding 4 rem, sticky headings static</td></tr>
+      <tr><td>≤767</td><td>One-column card grids</td></tr>
+      <tr><td>≤479</td><td>Type shrinks (48→32, 64→48, 36→28), side padding 1.5 rem</td></tr>
+    </table></div>
+  </div>
+</section>
+
+<section id="shape">
+  <h2>Shape and depth</h2>
+  <p class="lede">Flat surfaces. Hairlines and glass blur do the work shadows usually do. Only two real shadows exist.</p>
+  <div class="grid g4">
+    <div class="radius-demo" style="border-radius:4px">4 · xs</div>
+    <div class="radius-demo" style="border-radius:8px">8 · s</div>
+    <div class="radius-demo" style="border-radius:10px">10 · btn</div>
+    <div class="radius-demo" style="border-radius:12px">12 · m</div>
+    <div class="radius-demo" style="border-radius:16px">16 · l</div>
+    <div class="radius-demo" style="border-radius:24px">24 · xl</div>
+    <div class="radius-demo" style="border-radius:100px">100 · pill</div>
+    <div class="radius-demo" style="border-radius:50%">circle</div>
+  </div>
+  <h3>Glass and shadow</h3>
+  <div class="grid g3" style="background:var(--gradient-violet-card);padding:2rem;border-radius:var(--radius-xl)">
+    <div class="box">Glass box<br><code>white 40% · blur 25 · hairline</code></div>
+    <div class="pill">Floating pill<br><code>0 2px 40px 5%</code></div>
+    <div class="box" style="background:rgba(241,241,241,.6);border-radius:12px;box-shadow:var(--shadow-modal)">Cookie card<br><code>0 4px 1rem 5%</code></div>
+  </div>
+</section>
+
+<section id="motion">
+  <h2>Motion</h2>
+  <p class="lede">Calm and slow. Hover over the cards. Reduced-motion users get none of it.</p>
+  <div class="motion-demo">
+    <div class="card"><b>Slide / ease-out-quad 0.4 s</b><div class="slide-box"></div><small>Hover</small></div>
+    <div class="card"><b>Fade 0.8 s ease-in-out</b><div class="fade-box"></div><small>Hover (carousel slides)</small></div>
+    <div class="card"><b>Scale 1.05 · 0.4 s</b><div class="scale-box"></div><small>Hover (imagery only)</small></div>
+    <div class="card"><b>Orb spin 1.2 s linear</b><div class="orb" style="margin:.5rem"><span>✦</span></div></div>
+  </div>
+  <div class="scroll-x" style="margin-top:1.5rem"><table>
+    <tr><th>Use</th><th>Value</th></tr>
+    <tr><td>Hover color shifts</td><td><code>all 0.2s</code> (0.3 s nav button and search, 0.4 s image scale)</td></tr>
+    <tr><td>Marquee</td><td>50 s linear, infinite, reversed; pauses on hover</td></tr>
+    <tr><td>Vertical photo column</td><td>20 s linear, infinite</td></tr>
+    <tr><td>Scroll scenes</td><td>Sticky headings, 300 vh pinned scene, horizontal rail, scroll-fill timeline, parallax (image 120% tall)</td></tr>
+    <tr><td>Product video</td><td>Slow camera push (≈1.5×), 0.5 s cross-fades, drawers slide 0.4 s, check morph 0.5 s</td></tr>
+  </table></div>
+</section>
+
+<!-- ====================== COMPONENTS ====================== -->
+<section id="buttons">
+  <h2>Buttons</h2>
+  <p class="lede">One primary action per view, label "Request a demo". Hover fills violet.</p>
+  <div class="grid g2" style="background:var(--paper)">
+    <div class="card"><b>On light</b><br><br>
+      <a class="btn gray" href="#buttons">Request a demo</a>
+      <a class="btn black" href="#buttons">Black</a>
+      <a class="btn outline" href="#buttons">Learn more</a>
+    </div>
+    <div class="surface-dark" style="border-radius:12px"><b>On dark</b><br><br>
+      <a class="btn violet" href="#buttons">Our mission</a>
+      <a class="btn light" href="#buttons">Request a demo</a>
+    </div>
+    <div class="card"><b>Nav CTA</b><br><br><a class="btn-nav" href="#buttons">Request a demo <i>→</i></a></div>
+    <div class="card" style="background:var(--gradient-violet-card)"><b>Glass (over imagery)</b><br><br><a class="btn glass" href="#buttons">Glass button</a></div>
+  </div>
+</section>
+
+<section id="chips">
+  <h2>Pills, tags and forms</h2>
+  <div class="grid g2">
+    <div class="card"><b>Pills and tags</b><br><br>
+      <span class="pill">Prior auth submissions</span>
+      <span class="pill static">Who we serve</span>
+      <span class="tag">Tag</span>
+      <span class="chip-check">✓ HIPAA BAA standard</span>
+      <br><br>
+      <span class="filter on">All</span> <span class="filter">Blogs</span> <span class="filter">News</span>
+    </div>
+    <div class="surface-dark" style="border-radius:12px"><b>On dark</b><br><br><span class="pill static ghost">Results from the field</span></div>
+    <div class="card"><b>Form fields</b><br><br>
+      <label style="font-size:14px">Company email*<input class="field" placeholder="Company email" style="margin-top:.5rem"></label>
+      <br>
+      <a class="btn black" href="#chips" style="width:100%;justify-content:center;border-radius:16px">Send Request</a>
+    </div>
+    <div class="card"><b>FAQ row</b>
+      <div class="faq"><div>What is Ascertain?<div style="color:var(--text-secondary)">Answer text in grey, expands beneath.</div></div><span>⊕</span></div>
+      <div class="faq"><div>How quickly can Ascertain be deployed?</div><span>⊕</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="cards">
+  <h2>Cards and surfaces</h2>
+  <div class="grid g3">
+    <div class="box warm"><div class="serif" style="font-size:28px">Referrals</div><p style="color:var(--text-secondary)">Ingests faxed referrals, EHR messages, and portal uploads.</p></div>
+    <div class="box violet"><div class="serif" style="font-size:28px">Doing More with Less</div><p style="color:var(--text-secondary)">The Financial Impact of Agentic AI in Healthcare</p></div>
+    <div class="quote"><div style="font-size:20px;line-height:1.5">"Having started in a health system, Ascertain has a unique understanding of the complexities of health systems."</div><hr style="border:0;border-top:1px solid rgba(255,255,255,.05);margin:1rem 0"><b>Jill Kalman, MD</b><small>Chief Medical Officer</small><small>Northwell Health</small></div>
+  </div>
+  <h3>Pinned-scene blob</h3>
+  <div class="blob"><div class="serif" style="font-size:48px;line-height:1.1;font-weight:300">Connect. Automate. Scale.</div><p style="color:var(--text-secondary)">Prove value fast.</p><span class="pill">Eligibility verification</span> <span class="pill">Denials and appeals</span></div>
+</section>
+
+<section id="patterns">
+  <h2>Layout patterns</h2>
+  <div class="grid g3">
+    <div class="card"><b>Sticky heading</b><div style="display:grid;grid-template-columns:5fr 7fr;gap:.5rem;margin-top:.75rem"><div style="background:var(--violet);height:5rem;border-radius:8px"></div><div style="background:var(--surface-stone);height:5rem;border-radius:8px"></div></div><small>Left heading sticks at 15 vh, right scrolls. The most-used pattern on the site.</small></div>
+    <div class="card"><b>Split hero</b><div style="display:grid;grid-template-columns:62fr 38fr;gap:.5rem;margin-top:.75rem"><div style="background:var(--surface-stone);height:5rem;border-radius:12px"></div><div style="background:var(--surface-warm);height:5rem;border-radius:8px"></div></div><small>62/38 home · 30/70 Who we serve · 50/50 Cardiology.</small></div>
+    <div class="card"><b>Card grid</b><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.75rem"><div style="background:var(--surface-warm);height:5rem;border-radius:12px"></div><div style="background:var(--surface-warm);height:5rem;border-radius:12px"></div><div style="background:var(--surface-warm);height:5rem;border-radius:12px"></div></div><small>2×2 agents · 3-up team and resources · 4-up stats.</small></div>
+  </div>
+  <p class="lede" style="margin-top:1.5rem">Rhythm: light hero → light content → black proof → violet or light CTA → footer. Full recipes per page are in <a href="03_layouts_imagery_and_voice.md">03_layouts_imagery_and_voice.md</a>.</p>
+</section>
+
+<!-- ====================== PRODUCT UI ====================== -->
+<section id="status">
+  <h2>Status language <span class="tag-src">video</span></h2>
+  <p class="lede">The product's most important data. Soft tinted pill plus a word. Never color alone.</p>
+  <div class="card">
+    <span class="status s-approved">Approved</span>
+    <span class="status s-review">Needs Review</span>
+    <span class="status s-denied">Denied</span>
+    <span class="status s-pending">Pending</span>
+    <span class="status s-info">No Auth</span>
+    <span class="status s-draft">Draft</span>
+    <span class="status s-submitting">Submitting...</span>
+    <span class="cov">Active</span>
+  </div>
+  <div class="grid g4" style="margin-top:1rem">
+    <div class="stat-tile"><i style="background:var(--status-review-bg)">⚑</i><div style="font-size:18px">1</div><small>Needs Review</small></div>
+    <div class="stat-tile"><i style="background:var(--status-info-bg)">i</i><div style="font-size:18px">0</div><small>Request for info</small></div>
+    <div class="stat-tile"><i style="background:var(--status-denied-bg)">⊘</i><div style="font-size:18px">1</div><small>Denials</small></div>
+    <div class="stat-tile"><i style="background:var(--status-pending-bg)">↻</i><div style="font-size:18px">2</div><small>Pending</small></div>
+  </div>
+</section>
+
+<section id="product">
+  <h2>Product screens <span class="tag-src">video</span></h2>
+  <p class="lede">The app sits in a frosted lilac bezel on a mauve backdrop. These are rebuilt from the video's frames, not copied pixels.</p>
+  <div class="stage"><div class="bezel"><div class="app">
+    <nav><div class="logo">&gt;— Ascertain</div><div>Statuses</div><div>Inbox</div><div class="on">Cases</div><div>Recipients</div><div>Providers</div><div>Locations</div><div>Rules</div></nav>
+    <div class="body">
+      <div class="app-tabs"><b>All Cases</b><span>Needs Review</span><span>Draft</span><span>Submitted</span><span>Approved</span><span>Denied</span></div>
+      <div class="scroll-x"><table>
+        <tr><th>Patient</th><th>Authorization Types</th><th>Service Date</th><th>Insurance</th><th>Coverage</th><th>Status</th></tr>
+        <tr><td><b style="font-weight:500">Giana Lindsey</b><br><small class="link">DOB: 12/04/1987</small></td><td>Follow Up Consult</td><td>01/29/2026</td><td>Anthem Blue Access PPO</td><td><span class="cov">Active</span></td><td><span class="status s-approved">Approved</span></td></tr>
+        <tr><td><b style="font-weight:500">Daniel Thompson</b><br><small class="link">DOB: 02/14/1988</small></td><td>Imaging</td><td>01/28/2026</td><td>Blue Cross Blue Shield CT</td><td><span class="cov">Active</span></td><td><span class="status s-review">Needs Review</span></td></tr>
+        <tr><td><b style="font-weight:500">Christopher Lewis</b><br><small class="link">DOB: 03/10/1992</small></td><td>PET CT's</td><td>01/29/2026</td><td>Aetna Managed Choice Open Access</td><td><span class="status s-draft">checking...</span></td><td><span class="status s-draft">Draft</span></td></tr>
+        <tr><td><b style="font-weight:500">Rachel Wilson</b><br><small class="link">DOB: 06/18/1986</small></td><td>Medications</td><td>01/02/2026</td><td>Anthem Blue Access PPO</td><td><span class="cov">Active</span></td><td><span class="status s-denied">Denied</span></td></tr>
+      </table></div>
+    </div>
+  </div></div></div>
+
+  <h3>Wizard bar and stepper</h3>
+  <div class="grid g2">
+    <div class="card"><div style="display:flex;gap:.75rem;align-items:center"><span class="app-btn sec">Back</span><div class="bar" style="flex:1"><i style="width:55%"></i></div><span class="app-btn">Next</span></div><br><div style="display:flex;gap:.75rem;align-items:center"><span class="app-btn sec">Back</span><div class="bar complete" style="flex:1"><i style="width:100%"></i></div><span class="app-btn">Submit</span></div></div>
+    <div class="card"><div class="stepper"><span class="step done">New Case</span><span class="step done">Submit in portal</span><span class="step">In review</span><span class="step">Decision</span></div></div>
+  </div>
+
+  <h3>Side panel (drawer)</h3>
+  <div class="grid g2">
+    <div class="drawer">
+      <div style="display:flex;justify-content:space-between"><div><b style="font-size:16px;font-weight:500">Christopher Lewis</b><br><small class="link">DOB : 03/10/1992</small></div><span>✕</span></div>
+      <dl><dt>Type</dt><dd>PET CT's</dd><dt>Service date</dt><dd>01/09/2026</dd><dt>Submitted via</dt><dd><span class="cov" style="background:#fff">Payer portal</span></dd><dt>Submitted on</dt><dd>01/21/2026</dd></dl>
+      <div style="background:var(--app-row);padding:.6rem;border-radius:6px;display:flex;justify-content:space-between;font-size:12px"><span>UHC</span><span class="status s-approved">Approved</span></div>
+      <div style="display:flex;justify-content:space-between;margin-top:1rem"><span class="link">← Back to details</span><span class="app-btn">Run check now</span></div>
+    </div>
+    <div class="card"><b>Rules</b><ul style="margin:.5rem 0 0 1rem;font-size:14px;color:var(--text-secondary)"><li>About 322 px wide, radius 10 px, 14 px from the window edge.</li><li>A scrim of about 35% black dims the page behind.</li><li>Header: name, DOB caption, close. Footer: secondary left, black primary right.</li><li>Slides in from the right in about 0.4 s.</li></ul></div>
+  </div>
+</section>
+
+<section id="ai">
+  <h2>The AI layer <span class="tag-src">video</span></h2>
+  <p class="lede">AI is a floating, temporary, violet layer. It never changes a result silently: the result appears as a normal status pill and a human presses the black button.</p>
+  <div class="grid g3">
+    <div class="card"><b>AI analyzing pill</b><br><br><span class="ai-pill">✦ AI analyzing</span><br><br><small>Floats to wherever work is happening. In 0.4 s, hold 1.5–3 s, out 0.4 s.</small></div>
+    <div class="card"><b>Orb, running</b><br><br><div class="orb" style="margin:.5rem"><span>✦</span></div><br><small>White disc, pastel rotating ring, violet sparkle.</small></div>
+    <div class="card"><b>Orb, done</b><br><br><div class="orb done" style="margin:.5rem"><span>✓</span></div><br><small>Morphs to a teal check with a soft halo, then "Approved".</small></div>
+  </div>
+</section>
+
+<!-- ====================== GUIDANCE ====================== -->
+<section id="voice">
+  <h2>Voice</h2>
+  <div class="grid g3">
+    <div class="card"><b>Principles</b><ul style="margin:.5rem 0 0 1rem;font-size:14px"><li>Short, declarative, sentence case, usually a full stop.</li><li>Benefit first, number close behind.</li><li>"X, not Y." Fragments in threes.</li><li>No exclamation marks, no emoji, no "Get started".</li></ul></div>
+    <div class="card"><b>Headlines</b><ul style="margin:.5rem 0 0 1rem;font-size:14px"><li>ROI in months, not years.</li><li>Connect. Automate. Scale.</li><li>Patient access, automated.</li><li>Made by healthcare teams.</li></ul></div>
+    <div class="card"><b>Calls to action</b><ul style="margin:.5rem 0 0 1rem;font-size:14px"><li><b>Request a demo</b> (primary, everywhere)</li><li>Learn more · Our mission · Open Roles</li><li>Send Request (form)</li><li>Verb first, one primary per view.</li></ul></div>
+  </div>
+</section>
+
+<section id="a11y">
+  <h2>Accessibility</h2>
+  <p class="lede">What the source gets right, what it gets wrong, and the fix this system adopts.</p>
+  <div class="scroll-x"><table>
+    <tr><th>Pair</th><th>Ratio</th><th>Verdict</th></tr>
+    <tr><td>Ink on paper</td><td>17.1</td><td class="pass">AAA</td></tr>
+    <tr><td>Secondary #5e5a56 on paper</td><td>6.2</td><td class="pass">AA</td></tr>
+    <tr><td>Violet-hover text #3b3a38 on #d4c1ff</td><td>7.0</td><td class="pass">AA</td></tr>
+    <tr><td>Article link #9a6eff on white</td><td>3.47</td><td class="fail">Fails. Use #6e30f7 (5.6)</td></tr>
+    <tr><td>Muted #9b9b9b on white</td><td>2.8</td><td class="fail">Fails. Disabled only</td></tr>
+    <tr><td>#b0aca7 on paper</td><td>2.1</td><td class="fail">Fails. Use on black only</td></tr>
+  </table></div>
+  <ul style="font-size:14px;color:var(--text-secondary)">
+    <li>No <code>:focus-visible</code> styles and no reduced-motion handling in the source. This page adds both.</li>
+    <li>Status is always color plus a word. Keep it.</li>
+    <li>Full audit and checklist: <a href="05_accessibility_and_responsive.md">05_accessibility_and_responsive.md</a>.</li>
+  </ul>
+</section>
+
+<section id="files">
+  <h2>Files</h2>
+  <div class="scroll-x"><table>
+    <tr><th>File</th><th>What it holds</th></tr>
+    <tr><td><a href="README.md">README.md</a></td><td>Index, sources, method, caveats</td></tr>
+    <tr><td><a href="01_foundations.md">01_foundations.md</a></td><td>Color, type, spacing, shape, depth, motion</td></tr>
+    <tr><td><a href="02_components.md">02_components.md</a></td><td>Marketing components (A) and product components (B)</td></tr>
+    <tr><td><a href="03_layouts_imagery_and_voice.md">03_layouts_imagery_and_voice.md</a></td><td>Page skeleton, 12 layout patterns, page recipes, imagery, voice</td></tr>
+    <tr><td><a href="04_product_ui_and_motion.md">04_product_ui_and_motion.md</a></td><td>Frame-by-frame breakdown of the hero video, status language, AI layer, motion</td></tr>
+    <tr><td><a href="05_accessibility_and_responsive.md">05_accessibility_and_responsive.md</a></td><td>Contrast audit, gaps, rules, breakpoints</td></tr>
+    <tr><td><a href="tokens.css">tokens.css</a></td><td>All tokens as CSS variables (this page uses it)</td></tr>
+  </table></div>
+</section>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,164 @@
+.patient-form-page {
+  width: min(100%, 960px);
+  margin-inline: auto;
+  padding: clamp(16px, 3vw, 32px);
+  color: var(--ac-ink, #121212);
+  background: var(--ac-paper, #f4f3ef);
+  font-size: 14px;
+}
+
+.patient-form-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.patient-form-header h1 {
+  margin: 0 0 8px;
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.patient-form,
+.patient-form-body,
+.patient-form-repeat {
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+}
+
+.patient-form-body,
+.patient-form-choices {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.patient-form-section {
+  min-width: 0;
+  gap: 20px;
+  padding-block: 24px;
+  border-radius: 12px;
+  background: white;
+}
+
+.patient-form-section > [data-slot='card-header'],
+.patient-form-section > [data-slot='card-content'] {
+  padding-inline: 24px;
+}
+
+.patient-form-section h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.patient-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 24px;
+}
+
+.patient-form [data-slot='input'],
+.patient-form [data-slot='select-trigger'],
+.patient-form [data-slot='button'],
+.patient-form-page > header [data-slot='button'] {
+  min-height: 44px;
+  border-radius: 10px;
+}
+
+.patient-form [data-slot='input'],
+.patient-form [data-slot='select-trigger'] {
+  font-size: 16px;
+}
+
+.patient-form :focus-visible,
+.patient-form-page > header :focus-visible {
+  outline: 2px solid var(--ac-ink, #121212);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--ac-violet, #d4c1ff);
+}
+
+.patient-form-hint {
+  color: var(--ac-text-secondary, #5e5a56);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.patient-form-medical {
+  display: grid;
+  gap: 28px;
+}
+
+.patient-form-row {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--ac-hairline, #e6e4df);
+  border-radius: 10px;
+}
+
+.patient-form-row legend,
+.patient-form-choices legend {
+  padding-inline: 4px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.patient-form-row > button {
+  margin-top: 8px;
+}
+
+.patient-form-allergy-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.patient-form-choice-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 8px;
+}
+
+.patient-form-choice {
+  min-height: 44px;
+  gap: 10px;
+}
+
+.patient-form-choice input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--ac-ink, #121212);
+}
+
+.patient-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-block: 4px 20px;
+}
+
+@media (max-width: 639px) {
+  .patient-form-page {
+    font-size: 16px;
+  }
+
+  .patient-form-grid,
+  .patient-form-allergy-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .patient-form-section > [data-slot='card-header'],
+  .patient-form-section > [data-slot='card-content'] {
+    padding-inline: 16px;
+  }
+
+  .patient-form-actions > button {
+    flex: 1;
+  }
+}
