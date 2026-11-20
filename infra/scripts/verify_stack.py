@@ -24,9 +24,11 @@ def require(condition: bool, message: str) -> None:
         raise RuntimeError(message)
 
 
-def response(url: str, expected_status: int = 200) -> tuple[bytes, str]:
+def response(
+    url: str, expected_status: int = 200, *, recovery_timeout: float = 20
+) -> tuple[bytes, str]:
     """Allow a bounded recovery window while nginx re-resolves a recreated API."""
-    deadline = time.monotonic() + 20
+    deadline = time.monotonic() + recovery_timeout
     while True:
         try:
             try:
@@ -381,8 +383,17 @@ def main() -> None:
                 )
                 before = compose("ps", "-q", "backend")
                 compose("restart", "backend")
-                # Wait on the existing container: `up` may reconcile/recreate it.
-                compose("start", "--wait", "--wait-timeout", "120", "backend")
+                # Poll the API without reconciling containers or requiring newer
+                # Compose `start --wait` support. Serving begins after seeding.
+                backend_address = "http://" + compose("port", "backend", "8000")
+                ready, ready_type = response(
+                    backend_address + "/ready", recovery_timeout=120
+                )
+                require(
+                    ready_type == "application/json"
+                    and json.loads(ready) == {"status": "ready"},
+                    "Restarted backend did not become ready.",
+                )
                 require(
                     compose("ps", "-q", "backend") == before,
                     "Expected an ordinary backend restart without container replacement.",
